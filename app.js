@@ -33,6 +33,16 @@ function initials(name='Membru'){return String(name).trim().split(/\s+/).slice(0
 function avatarUrl(profile){return profile?.avatar_path?publicStorageUrl('profile-avatars',profile.avatar_path):'';}
 function avatarHtml(profile,cls='avatar'){const name=profile?.display_name||'Membru',url=avatarUrl(profile);return url?`<span class="${cls} has-image"><img src="${esc(url)}" alt="${esc(name)}"></span>`:`<span class="${cls}">${esc(initials(name))}</span>`;}
 
+async function shareContent(title,text,url){
+  if(navigator.share){try{await navigator.share({title,text,url});return;}catch(e){if(e?.name==='AbortError')return;}}
+  try{await navigator.clipboard.writeText(url);toast('Link copiat.');}catch(e){prompt('Copiază linkul:',url);}
+}
+function listingShareUrl(id){return `${location.origin}/?listing=${encodeURIComponent(id)}`;}
+async function shareListing(id){
+  const l=state.listings.find(x=>x.id===id);if(!l)return;
+  await shareContent(l.title,`${l.title} · ${money(l.price,l.currency)} · Support Hub Giuleștean 1923`,listingShareUrl(id));
+}
+
 async function init(){
   bindStaticEvents();
   showListingSkeletons();
@@ -41,6 +51,8 @@ async function init(){
   await Promise.all([loadCategories(), loadListings()]);
   if(state.user) await loadFavorites();
   renderAll();
+  const sharedListingId=new URLSearchParams(location.search).get('listing');
+  if(sharedListingId&&state.listings.some(l=>l.id===sharedListingId))setTimeout(()=>openDetail(sharedListingId),80);
   db.auth.onAuthStateChange(async (event, session)=>{await applySession(session);await loadListings();if(state.user)await loadFavorites();else state.favorites.clear();renderAll()});
 }
 
@@ -108,6 +120,7 @@ function cardHtml(l){
   const cat=state.categories.find(c=>c.id===l.category_id);const own=state.user?.id===l.seller_id;const image=l.images?.[0];
   return `<article class="listing-card" data-id="${l.id}">
     <button class="fav ${state.favorites.has(l.id)?'active':''}" data-fav="${l.id}" aria-label="Favorite">${state.favorites.has(l.id)?'♥':'♡'}</button>
+    <button class="listing-share" data-share-listing="${l.id}" aria-label="Distribuie anunțul">↗</button>
     <div class="listing-image ${image?'has-photo':''}"><span class="badge">${esc(conditionLabels[l.condition]||l.condition)}</span>${image?`<img src="${esc(image)}" alt="${esc(l.title)}" loading="lazy" onerror="this.hidden=true;this.parentElement.classList.remove('has-photo')">`:`<span class="placeholder-icon">${icons[cat?.slug]||'◈'}</span>`}${own?'<span class="owner-badge">Al tău</span>':''}</div>
     <div class="listing-body"><h3 class="listing-title">${esc(l.title)}</h3><div class="price">${money(l.price,l.currency)}</div><div class="listing-meta"><span>${esc(l.location)}</span><span>${since(l.created_at)}</span></div></div>
   </article>`;
@@ -115,6 +128,7 @@ function cardHtml(l){
 
 function bindListingCards(root=document){
   $$('[data-fav]',root).forEach(b=>b.onclick=async e=>{e.stopPropagation();await toggleFavorite(b.dataset.fav);});
+  $$('[data-share-listing]',root).forEach(b=>b.onclick=async e=>{e.stopPropagation();await shareListing(b.dataset.shareListing);});
   $$('.listing-card',root).forEach(c=>c.onclick=()=>openDetail(c.dataset.id));
 }
 
@@ -134,9 +148,10 @@ async function openDetail(id){
   const cat=state.categories.find(c=>c.id===l.category_id);const own=state.user?.id===l.seller_id;const photos=l.images?.length?`<div class="photo-grid">${l.images.map((u,i)=>`<button class="photo-thumb ${i===0?'main':''}" data-photo="${esc(u)}"><img src="${esc(u)}" alt="Fotografie ${i+1} — ${esc(l.title)}" loading="lazy"></button>`).join('')}</div>`:`<div class="detail-photo placeholder">${icons[cat?.slug]||'◈'}</div>`;
   $('#detailContent').innerHTML=`<div class="modal-head"><div><span class="kicker">${esc(cat?.name||'ANUNȚ')}</span><h2>${esc(l.title)}</h2></div><button class="close" type="button" data-close="detailModal">×</button></div>
     ${photos}<div class="detail-layout"><div><p class="detail-price">${money(l.price,l.currency)} ${l.negotiable?'<small>negociabil</small>':''}</p><p class="detail-desc">${esc(l.description).replace(/\n/g,'<br>')}</p><p class="listing-meta"><span>${esc(l.location)} • ${esc(conditionLabels[l.condition]||l.condition)}</span><span>${since(l.created_at)}</span></p></div>
-    <aside class="seller-box"><div class="seller-profile">${avatarHtml(profile,'seller-avatar')}<div><span class="kicker">${own?'ANUNȚUL TĂU':'VÂNZĂTOR'}</span><h3>${esc(profile?.display_name||'Membru')}${flag?.verified?' <span class="verified">✓</span>':''}</h3></div></div><p>${profile?.location?`${esc(profile.location)} • `:''}${profile?.created_at?`Membru din ${new Intl.DateTimeFormat('ro-RO',{month:'long',year:'numeric'}).format(new Date(profile.created_at))}`:''}</p>${profile?.bio?`<p class="seller-bio">${esc(profile.bio)}</p>`:''}${own?'<button class="ghost" id="detailEditBtn">Editează anunțul</button><button class="danger detail-delete" id="detailDeleteBtn">Șterge anunțul</button>':'<button class="primary" id="detailMessageBtn">Trimite mesaj</button><button class="ghost" id="detailContactBtn">Telefon / WhatsApp</button><button class="report-btn" id="detailReportBtn">Raportează anunțul</button>'}</aside></div>`;
+    <aside class="seller-box"><div class="seller-profile">${avatarHtml(profile,'seller-avatar')}<div><span class="kicker">${own?'ANUNȚUL TĂU':'VÂNZĂTOR'}</span><h3>${esc(profile?.display_name||'Membru')}${flag?.verified?' <span class="verified">✓</span>':''}</h3></div></div><p>${profile?.location?`${esc(profile.location)} • `:''}${profile?.created_at?`Membru din ${new Intl.DateTimeFormat('ro-RO',{month:'long',year:'numeric'}).format(new Date(profile.created_at))}`:''}</p>${profile?.bio?`<p class="seller-bio">${esc(profile.bio)}</p>`:''}${own?'<button class="ghost" id="detailEditBtn">Editează anunțul</button><button class="ghost detail-share" id="detailShareBtn">↗ Distribuie anunțul</button><button class="danger detail-delete" id="detailDeleteBtn">Șterge anunțul</button>':'<button class="primary" id="detailMessageBtn">Trimite mesaj</button><button class="ghost" id="detailContactBtn">Telefon / WhatsApp</button><button class="ghost detail-share" id="detailShareBtn">↗ Distribuie anunțul</button><button class="report-btn" id="detailReportBtn">Raportează anunțul</button>'}</aside></div>`;
   bindCloseButtons($('#detailContent'));
   if(own){$('#detailEditBtn').onclick=()=>{closeDialog('detailModal');openEditListing(l.id,false);};$('#detailDeleteBtn').onclick=()=>deleteListing(l.id,true);}else{$('#detailMessageBtn').onclick=()=>openMessage(l);$('#detailContactBtn').onclick=()=>showContact(l);$('#detailReportBtn').onclick=()=>reportListing(l);}
+  $('#detailShareBtn').onclick=()=>shareListing(l.id);
   $$('.photo-thumb',$('#detailContent')).forEach(b=>b.onclick=()=>openPhoto(b.dataset.photo));
   $('#detailModal').showModal();
 }

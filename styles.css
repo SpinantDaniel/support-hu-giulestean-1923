@@ -23,3 +23,5 @@ button:disabled{opacity:.6;cursor:not-allowed}.muted{color:var(--muted);font-siz
 /* v5 admin/newsletter access */
 .admin-access-zone{margin-top:18px;border:1px solid #d8c6cc;background:#fbf6f8;border-radius:14px;padding:15px;display:flex;align-items:center;justify-content:space-between;gap:14px}.admin-access-zone[hidden]{display:none}.admin-access-zone b,.admin-access-zone span{display:block}.admin-access-zone b{color:var(--wine);font-size:13px}.admin-access-zone span{margin-top:4px;color:var(--muted);font-size:11px;line-height:1.4}.account-suspension{margin:8px 0 2px;padding:9px 11px;border-radius:9px;background:#fff0f0;color:#a52626;font-size:11px;font-weight:700;line-height:1.4}
 @media(max-width:650px){.admin-access-zone{align-items:stretch;flex-direction:column}.admin-access-zone .ghost{width:100%}}
+
+.listing-share{position:absolute;right:10px;top:52px;background:#fff;width:35px;height:35px;border:0;border-radius:50%;font-size:17px;font-weight:900;color:var(--wine);cursor:pointer;box-shadow:0 3px 12px rgba(0,0,0,.1);z-index:3}.listing-share:hover{background:#f7eef1}.detail-share{width:100%;margin-top:8px}

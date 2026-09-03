@@ -19,6 +19,19 @@
       <h1>Noutăți din comunitate.</h1>
       <p>Povești, deplasări, proiecte și informații publicate de echipa Support Hub și colaboratorii autorizați.</p>
     </section>
+    <section class="news-controls" id="newsControls">
+      <div class="news-search">
+        <span aria-hidden="true">⌕</span>
+        <input id="newsSearch" type="search" placeholder="Caută în noutăți..." autocomplete="off">
+      </div>
+      <select id="newsSort" aria-label="Sortează articolele">
+        <option value="none">Fără filtru</option>
+        <option value="date-asc">Dată: crescător</option>
+        <option value="date-desc">Dată: descrescător</option>
+        <option value="az">Titlu: A–Z</option>
+        <option value="za">Titlu: Z–A</option>
+      </select>
+    </section>
     <section class="news-wrap" id="newsList"><div class="loading">Se încarcă articolele…</div></section>
     <article class="article-wrap" id="articleView" hidden></article>
   </main>
