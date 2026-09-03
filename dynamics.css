@@ -417,3 +417,190 @@ dialog{
     padding:8px 8px 0;
   }
 }
+
+
+/* v5.8 — condition overlays, full portrait detail photos, CTA branding and real parallax */
+
+html{
+  --paper-parallax-y:0px;
+  background:#f7f4f3!important;
+}
+body{
+  position:relative;
+  isolation:isolate;
+  background:none!important;
+  background-image:none!important;
+}
+body::before{
+  content:"";
+  position:fixed;
+  z-index:-2;
+  pointer-events:none;
+  left:-90px;
+  right:-90px;
+  top:-180px;
+  bottom:-180px;
+  background-color:#f7f4f3;
+  background-image:
+    linear-gradient(rgba(255,255,255,.66),rgba(255,255,255,.66)),
+    var(--site-paper);
+  background-repeat:repeat;
+  background-position:center top;
+  background-size:auto,720px auto;
+  transform:translate3d(0,var(--paper-parallax-y),0);
+  will-change:transform;
+}
+body::after{
+  content:"";
+  position:fixed;
+  inset:0;
+  z-index:-1;
+  pointer-events:none;
+  background:linear-gradient(180deg,rgba(255,255,255,.08),rgba(255,255,255,.01) 35%,rgba(111,21,48,.018));
+}
+
+/* Status and owner chips float over the image and never consume image space. */
+.listing-image .badge{
+  position:absolute!important;
+  z-index:6!important;
+  left:12px!important;
+  top:12px!important;
+  right:auto!important;
+  bottom:auto!important;
+  margin:0!important;
+  max-width:calc(100% - 80px);
+  pointer-events:none;
+  background:rgba(255,255,255,.94)!important;
+  border:1px solid rgba(255,255,255,.72);
+  box-shadow:0 7px 20px rgba(28,15,20,.10);
+  -webkit-backdrop-filter:blur(9px);
+  backdrop-filter:blur(9px);
+}
+.listing-image .owner-badge{
+  position:absolute!important;
+  z-index:6!important;
+  left:12px!important;
+  bottom:12px!important;
+  top:auto!important;
+  right:auto!important;
+  margin:0!important;
+  pointer-events:none;
+  box-shadow:0 7px 20px rgba(28,15,20,.12);
+}
+.listing-image + .listing-body{
+  position:relative;
+  z-index:2;
+}
+
+/* Detail preview: full image, no crop. */
+.photo-grid{
+  grid-auto-rows:112px!important;
+  align-items:stretch;
+}
+.photo-thumb{
+  position:relative;
+  isolation:isolate;
+  overflow:hidden!important;
+  background:linear-gradient(135deg,rgba(255,255,255,.94),rgba(240,233,236,.88))!important;
+}
+.photo-thumb.main{
+  grid-row:span 3!important;
+}
+.photo-thumb img{
+  position:relative;
+  z-index:1;
+  width:100%!important;
+  height:100%!important;
+  object-fit:contain!important;
+  object-position:center center!important;
+  padding:6px;
+  background:transparent!important;
+  filter:drop-shadow(0 6px 14px rgba(28,15,20,.07));
+}
+
+/* CTA with transparent community logo. */
+.cta{
+  position:relative;
+  overflow:hidden;
+}
+.cta-brand-copy{
+  display:flex;
+  align-items:center;
+  gap:24px;
+  min-width:0;
+}
+.cta-community-logo{
+  width:116px;
+  height:116px;
+  flex:0 0 116px;
+  object-fit:contain;
+  object-position:center;
+  filter:drop-shadow(0 12px 20px rgba(25,7,13,.25));
+  transform:rotate(-1.5deg);
+  transition:transform .45s cubic-bezier(.2,.75,.2,1),filter .45s ease;
+}
+.cta:hover .cta-community-logo{
+  transform:rotate(1deg) translateY(-4px) scale(1.035);
+  filter:drop-shadow(0 16px 26px rgba(25,7,13,.32));
+}
+.cta-brand-copy>div{min-width:0}
+.cta .kicker.light{
+  display:block;
+  line-height:1.45;
+}
+.cta p{max-width:650px}
+
+@media(min-width:651px){
+  body{background-attachment:scroll!important}
+}
+@media(max-width:650px){
+  body{
+    background-attachment:scroll!important;
+    background-size:initial!important;
+  }
+  body::before{
+    left:-55px;
+    right:-55px;
+    top:-120px;
+    bottom:-120px;
+    background-size:auto,560px auto;
+  }
+  .photo-grid{
+    grid-auto-rows:86px!important;
+  }
+  .photo-thumb.main{
+    grid-column:span 3!important;
+    grid-row:span 4!important;
+  }
+  .cta{
+    align-items:stretch!important;
+  }
+  .cta-brand-copy{
+    align-items:flex-start;
+    gap:14px;
+  }
+  .cta-community-logo{
+    width:82px;
+    height:82px;
+    flex-basis:82px;
+  }
+}
+@media(max-width:430px){
+  .cta-brand-copy{
+    display:grid;
+    grid-template-columns:68px 1fr;
+    gap:12px;
+  }
+  .cta-community-logo{
+    width:68px;
+    height:68px;
+    flex-basis:68px;
+  }
+  .cta h2{
+    font-size:30px!important;
+  }
+}
+@media(prefers-reduced-motion:reduce){
+  body::before{transform:none!important}
+  .cta-community-logo{transition:none!important}
+}
