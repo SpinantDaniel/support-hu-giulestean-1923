@@ -7,7 +7,7 @@ const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, 
 
 const $ = (s, el=document) => el.querySelector(s);
 const $$ = (s, el=document) => [...el.querySelectorAll(s)];
-const state = { session:null, user:null, profile:null, userFlag:null, adminRole:'none', categories:[], listings:[], favorites:new Set(), homeNews:[], selectedListing:null, authMode:'login', accountTab:'listings', editingListingId:null, editReturnToAccount:false };
+const state = { session:null, user:null, profile:null, userFlag:null, adminRole:'none', categories:[], listings:[], favorites:new Set(), homeNews:[], selectedListing:null, authMode:'login', accountTab:'listings', editingListingId:null, editReturnToAccount:false, marketPage:1, marketPageSize:150 };
 const icons = { 'rapid-colectii':'⚑','auto-moto':'◉','electronice':'▣','telefoane':'▯','haine-incaltaminte':'♢','casa-gradina':'⌂','servicii':'✦','bilete':'▥','imobiliare':'▤','joburi':'▰','donez-caut':'♡','diverse':'•••' };
 const conditionLabels = {new:'Nou',like_new:'Ca nou',used:'Utilizat',damaged:'Cu defecte',service:'Serviciu',not_applicable:'N/A'};
 
@@ -266,12 +266,37 @@ async function loadFavorites(){
   if(error){console.error(error);return;}state.favorites=new Set((data||[]).map(x=>x.listing_id));
 }
 
+function syncCategorySelection(){
+  const selected=$('#categoryFilter')?.value||'all';
+  $$('.category').forEach(button=>{
+    const active=button.dataset.cat===selected;
+    button.classList.toggle('is-selected',active);
+    button.setAttribute('aria-pressed',active?'true':'false');
+  });
+}
+
+function resetMarketPage(){state.marketPage=1;}
+
 function renderCategories(){
-  const grid=$('#categoryGrid');grid.innerHTML=state.categories.map(c=>`<button class="category" data-cat="${c.id}"><span class="icon">${icons[c.slug]||c.icon||'◈'}</span><b>${esc(c.name)}</b><small>Vezi anunțurile</small></button>`).join('');
+  const grid=$('#categoryGrid');
+  const previous=$('#categoryFilter')?.value||'all';
+
+  grid.innerHTML=state.categories.map(c=>`<button class="category" data-cat="${c.id}" aria-pressed="false"><span class="icon">${icons[c.slug]||c.icon||'◈'}</span><b>${esc(c.name)}</b><small>Vezi anunțurile</small></button>`).join('');
+
   const opts=state.categories.map(c=>`<option value="${c.id}">${esc(c.name)}</option>`).join('');
   $('#categoryFilter').innerHTML='<option value="all">Toate categoriile</option>'+opts;
+  if(previous==='all'||state.categories.some(c=>c.id===previous))$('#categoryFilter').value=previous;
   $('#sellCategory').innerHTML='<option value="">Alege categoria</option>'+opts;
-  $$('.category').forEach(b=>b.onclick=()=>{$('#categoryFilter').value=b.dataset.cat;renderListings();$('#anunturi').scrollIntoView({behavior:'smooth'});});
+
+  $$('.category').forEach(b=>b.onclick=()=>{
+    $('#categoryFilter').value=b.dataset.cat;
+    resetMarketPage();
+    syncCategorySelection();
+    renderListings();
+    $('#anunturi').scrollIntoView({behavior:'smooth'});
+  });
+
+  syncCategorySelection();
 }
 
 function filteredListings(){
@@ -281,10 +306,68 @@ function filteredListings(){
   return rows;
 }
 
+function paginationButton(label,target,{disabled=false,current=false,title='' }={}){
+  return `<button type="button" class="page-control${current?' current':''}" data-market-page="${target}" ${disabled?'disabled':''} ${current?'aria-current="page"':''} title="${esc(title)}">${label}</button>`;
+}
+
+function renderMarketPagination(totalRows){
+  const pageSize=state.marketPageSize;
+  const totalPages=Math.max(1,Math.ceil(totalRows/pageSize));
+  state.marketPage=Math.min(Math.max(1,state.marketPage),totalPages);
+
+  const navs=[$('#marketPaginationTop'),$('#marketPaginationBottom')].filter(Boolean);
+  if(totalPages<=1){
+    navs.forEach(nav=>{nav.hidden=true;nav.innerHTML='';});
+    return;
+  }
+
+  const current=state.marketPage;
+  const groupStart=Math.floor((current-1)/5)*5+1;
+  const groupEnd=Math.min(totalPages,groupStart+4);
+  const firstItem=(current-1)*pageSize+1;
+  const lastItem=Math.min(totalRows,current*pageSize);
+
+  const pages=[];
+  for(let p=groupStart;p<=groupEnd;p++)pages.push(paginationButton(String(p),p,{current:p===current,title:`Pagina ${p}`}));
+
+  const html=`<div class="pagination-summary">${firstItem}–${lastItem} din ${totalRows} anunțuri</div>
+    <div class="pagination-controls">
+      ${paginationButton('⇤',1,{disabled:current===1,title:'Prima pagină'})}
+      ${paginationButton('«',Math.max(1,current-5),{disabled:current===1,title:'Înapoi 5 pagini'})}
+      ${paginationButton('←',Math.max(1,current-1),{disabled:current===1,title:'Pagina anterioară'})}
+      <span class="pagination-pages">${pages.join('')}</span>
+      ${paginationButton('→',Math.min(totalPages,current+1),{disabled:current===totalPages,title:'Pagina următoare'})}
+      ${paginationButton('»',Math.min(totalPages,current+5),{disabled:current===totalPages,title:'Înainte 5 pagini'})}
+      ${paginationButton('⇥',totalPages,{disabled:current===totalPages,title:'Ultima pagină'})}
+    </div>`;
+
+  navs.forEach(nav=>{
+    nav.hidden=false;
+    nav.innerHTML=html;
+    $$('[data-market-page]',nav).forEach(button=>button.onclick=()=>{
+      if(button.disabled)return;
+      const target=Number(button.dataset.marketPage);
+      if(!Number.isFinite(target)||target===state.marketPage)return;
+      state.marketPage=target;
+      renderListings();
+      requestAnimationFrame(()=>$('#marketPaginationTop')?.scrollIntoView({behavior:'smooth',block:'start'}));
+    });
+  });
+}
+
 function renderListings(){
-  const rows=filteredListings();$('#emptyState').hidden=rows.length>0;
-  $('#listingGrid').innerHTML=rows.map(cardHtml).join('');
+  const rows=filteredListings();
+  const totalPages=Math.max(1,Math.ceil(rows.length/state.marketPageSize));
+  state.marketPage=Math.min(Math.max(1,state.marketPage),totalPages);
+
+  const start=(state.marketPage-1)*state.marketPageSize;
+  const pageRows=rows.slice(start,start+state.marketPageSize);
+
+  $('#emptyState').hidden=rows.length>0;
+  $('#listingGrid').innerHTML=pageRows.map(cardHtml).join('');
   bindListingCards($('#listingGrid'));
+  renderMarketPagination(rows.length);
+  syncCategorySelection();
 }
 
 function cardHtml(l){
@@ -586,9 +669,9 @@ function bindStaticEvents(){
   $('#authForm').addEventListener('submit',submitAuth);$('#forgotPasswordBtn').onclick=requestPasswordReset;$('#passwordResetForm').addEventListener('submit',submitPasswordReset);$('#sellForm').addEventListener('submit',publishListing);$('#messageForm').addEventListener('submit',sendMessage);
   $('#logoutBtn').onclick=async()=>{await db.auth.signOut();closeDialog('accountModal');toast('Ai ieșit din cont.');};$('#editProfileBtn').onclick=openProfileEditor;$('#adminPanelBtn').onclick=()=>window.open('/admin.html','_blank','noopener');$('#profileForm').addEventListener('submit',saveProfile);$('#deleteAccountBtn').onclick=openDeleteAccount;$('#deleteAccountForm').addEventListener('submit',deleteAccount);$('#profileForm [name=avatar]').onchange=e=>{const f=e.target.files?.[0];if(f){const u=URL.createObjectURL(f);$('#profilePreview').innerHTML=`<span class="profile-preview-avatar has-image"><img src="${esc(u)}" alt="Preview avatar"></span>`;}};
   $$('[data-account-tab]').forEach(b=>b.onclick=async()=>{state.accountTab=b.dataset.accountTab;updateAccountTabButtons();await renderAccount();});
-  $('#searchBtn').onclick=()=>{renderListings();$('#anunturi').scrollIntoView({behavior:'smooth'});};$('#searchInput').addEventListener('keydown',e=>{if(e.key==='Enter')$('#searchBtn').click();});
+  $('#searchBtn').onclick=()=>{resetMarketPage();renderListings();$('#anunturi').scrollIntoView({behavior:'smooth'});};$('#searchInput').addEventListener('keydown',e=>{if(e.key==='Enter')$('#searchBtn').click();});
   $$('[data-search]').forEach(b=>b.onclick=()=>{$('#searchInput').value=b.dataset.search;$('#searchBtn').click();});
-  $('#categoryFilter').onchange=renderListings;$('#sortSelect').onchange=renderListings;$('#allCategories').onclick=()=>{$('#categoryFilter').value='all';renderListings();};
+  $('#categoryFilter').onchange=()=>{resetMarketPage();syncCategorySelection();renderListings();};$('#sortSelect').onchange=()=>{resetMarketPage();renderListings();};$('#allCategories').onclick=()=>{$('#categoryFilter').value='all';resetMarketPage();syncCategorySelection();renderListings();};
   $$('[data-focus-search]').forEach(b=>b.onclick=()=>{scrollTo({top:0,behavior:'smooth'});setTimeout(()=>$('#searchInput').focus(),300);});$$('[data-home]').forEach(b=>b.onclick=()=>scrollTo({top:0,behavior:'smooth'}));$$('[data-favorites]').forEach(b=>b.onclick=()=>openAccount('favorites'));
   $$('[data-legal]').forEach(a=>a.onclick=e=>{e.preventDefault();openLegal(a.dataset.legal);});
   $('#sellForm [name=images]').onchange=e=>{const n=e.target.files.length;$('#imageHelp').textContent=n?`${n} fotografie${n===1?'':'i'} selectată${n===1?'':'e'}.`:'JPG, PNG sau WEBP. Recomandat sub 5 MB / imagine.';};

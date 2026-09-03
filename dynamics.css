@@ -604,3 +604,148 @@ body::after{
   body::before{transform:none!important}
   .cta-community-logo{transition:none!important}
 }
+
+
+/* v5.9 — selected category negative state + compact mobile categories + marketplace pagination */
+
+/* Selected category: explicit negative/dark state. */
+.category.is-selected{
+  background:var(--ink)!important;
+  color:#fff!important;
+  border-color:var(--ink)!important;
+  box-shadow:0 11px 28px rgba(24,23,26,.18)!important;
+  transform:translateY(-2px);
+}
+.category.is-selected .icon{
+  background:rgba(255,255,255,.12)!important;
+  color:#fff!important;
+}
+.category.is-selected small{
+  color:#c9c5c8!important;
+}
+@media(hover:hover){
+  .category.is-selected:hover{
+    background:#242226!important;
+    border-color:#242226!important;
+    box-shadow:0 14px 31px rgba(24,23,26,.22)!important;
+  }
+}
+
+/* Pagination appears above and below the listing grid only when > 150 filtered results. */
+.market-pagination{
+  margin:4px 0 18px;
+  padding:5px 0;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:18px;
+  scroll-margin-top:92px;
+}
+.market-pagination[hidden]{display:none!important}
+#marketPaginationBottom{
+  margin:22px 0 0;
+}
+.pagination-summary{
+  color:var(--muted);
+  font-size:10px;
+  font-weight:700;
+  white-space:nowrap;
+}
+.pagination-controls{
+  display:flex;
+  align-items:center;
+  justify-content:flex-end;
+  gap:3px;
+  min-width:0;
+}
+.pagination-pages{
+  display:flex;
+  align-items:center;
+  gap:2px;
+  margin:0 3px;
+}
+.page-control{
+  appearance:none;
+  -webkit-appearance:none;
+  min-width:34px;
+  height:36px;
+  padding:0 7px;
+  border:0!important;
+  border-bottom:2px solid transparent!important;
+  border-radius:0!important;
+  background:transparent!important;
+  color:var(--wine)!important;
+  font-size:17px;
+  line-height:1;
+  font-weight:900;
+  cursor:pointer;
+  box-shadow:none!important;
+  transition:transform var(--motion-fast) ease,color var(--motion-fast) ease,border-color var(--motion-fast) ease,opacity var(--motion-fast) ease;
+}
+.pagination-pages .page-control{
+  min-width:30px;
+  font-size:12px;
+  font-weight:800;
+}
+.page-control.current{
+  color:var(--ink)!important;
+  border-bottom-color:var(--wine)!important;
+  cursor:default;
+}
+.page-control:disabled{
+  opacity:.22;
+  cursor:default;
+}
+@media(hover:hover){
+  .page-control:not(:disabled):not(.current):hover{
+    color:var(--wine2)!important;
+    transform:translateY(-2px) scale(1.07);
+  }
+}
+
+/* Mobile: category footprint is roughly half the old area and cards become square. */
+@media(max-width:650px){
+  .category-grid{
+    grid-template-columns:repeat(3,minmax(0,1fr))!important;
+    gap:8px!important;
+  }
+  .category{
+    aspect-ratio:1/1;
+    min-width:0;
+    padding:10px!important;
+    overflow:hidden;
+  }
+
+  .market-pagination{
+    flex-direction:column;
+    align-items:stretch;
+    gap:7px;
+    margin:2px 0 14px;
+  }
+  #marketPaginationBottom{
+    margin-top:17px;
+  }
+  .pagination-summary{
+    text-align:center;
+    font-size:9px;
+  }
+  .pagination-controls{
+    justify-content:center;
+    width:100%;
+    gap:1px;
+  }
+  .pagination-pages{
+    gap:0;
+    margin:0 1px;
+  }
+  .page-control{
+    min-width:31px;
+    height:34px;
+    padding:0 4px;
+    font-size:16px;
+  }
+  .pagination-pages .page-control{
+    min-width:27px;
+    font-size:11px;
+  }
+}
