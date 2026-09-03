@@ -44,6 +44,89 @@ async function shareListing(id){
 }
 
 
+
+const photoGalleryState={images:[],index:0,title:'',bound:false,touchStartX:null};
+
+function bindPhotoLightbox(){
+  if(photoGalleryState.bound)return;
+  const dialog=$('#photoLightbox'),stage=$('#photoLightboxStage');
+  if(!dialog||!stage)return;
+  photoGalleryState.bound=true;
+
+  $('#photoLightboxClose').onclick=()=>closePhotoGallery();
+  $('#photoLightboxPrev').onclick=()=>stepPhotoGallery(-1);
+  $('#photoLightboxNext').onclick=()=>stepPhotoGallery(1);
+
+  dialog.addEventListener('click',e=>{
+    if(e.target===dialog)closePhotoGallery();
+  });
+
+  document.addEventListener('keydown',e=>{
+    if(!dialog.open)return;
+    if(e.key==='ArrowLeft'){e.preventDefault();stepPhotoGallery(-1);}
+    else if(e.key==='ArrowRight'){e.preventDefault();stepPhotoGallery(1);}
+    else if(e.key==='Escape'){e.preventDefault();closePhotoGallery();}
+  });
+
+  stage.addEventListener('touchstart',e=>{
+    photoGalleryState.touchStartX=e.changedTouches?.[0]?.clientX??null;
+  },{passive:true});
+  stage.addEventListener('touchend',e=>{
+    const start=photoGalleryState.touchStartX;
+    const end=e.changedTouches?.[0]?.clientX;
+    photoGalleryState.touchStartX=null;
+    if(start==null||end==null)return;
+    const delta=end-start;
+    if(Math.abs(delta)>45)stepPhotoGallery(delta<0?1:-1);
+  },{passive:true});
+}
+
+function openPhotoGallery(images,startIndex=0,title='Fotografie anunț'){
+  const clean=(images||[]).filter(Boolean);
+  if(!clean.length)return;
+  bindPhotoLightbox();
+  photoGalleryState.images=clean;
+  photoGalleryState.index=Math.max(0,Math.min(Number(startIndex)||0,clean.length-1));
+  photoGalleryState.title=title||'Fotografie anunț';
+  renderPhotoGallery();
+  const dialog=$('#photoLightbox');
+  if(dialog&&!dialog.open)dialog.showModal();
+}
+
+function renderPhotoGallery(){
+  const image=$('#photoLightboxImage');
+  const dialog=$('#photoLightbox');
+  if(!image||!dialog||!photoGalleryState.images.length)return;
+  const url=photoGalleryState.images[photoGalleryState.index];
+  image.classList.add('is-loading');
+  image.removeAttribute('data-orientation');
+  image.onload=()=>{
+    image.classList.remove('is-loading');
+    image.dataset.orientation=image.naturalHeight>image.naturalWidth?'portrait':(image.naturalWidth>image.naturalHeight?'landscape':'square');
+    $('#photoLightboxStage')?.setAttribute('data-orientation',image.dataset.orientation);
+  };
+  image.src=url;
+  image.alt=`${photoGalleryState.title} — fotografia ${photoGalleryState.index+1}`;
+  $('#photoLightboxTitle').textContent=photoGalleryState.title;
+  $('#photoLightboxCounter').textContent=`${photoGalleryState.index+1} / ${photoGalleryState.images.length}`;
+  const multiple=photoGalleryState.images.length>1;
+  $('#photoLightboxPrev').hidden=!multiple;
+  $('#photoLightboxNext').hidden=!multiple;
+}
+
+function stepPhotoGallery(direction){
+  const n=photoGalleryState.images.length;
+  if(n<2)return;
+  photoGalleryState.index=(photoGalleryState.index+direction+n)%n;
+  renderPhotoGallery();
+}
+
+function closePhotoGallery(){
+  const dialog=$('#photoLightbox');
+  if(dialog?.open)dialog.close();
+}
+
+
 let homeNewsAutoplayTimer=null;
 let homeNewsResumeTimer=null;
 let homeNewsRefreshTimer=null;
@@ -209,7 +292,7 @@ function cardHtml(l){
   return `<article class="listing-card" data-id="${l.id}">
     <button class="fav ${state.favorites.has(l.id)?'active':''}" data-fav="${l.id}" aria-label="Favorite">${state.favorites.has(l.id)?'♥':'♡'}</button>
     <button class="listing-share" data-share-listing="${l.id}" aria-label="Distribuie anunțul">↗</button>
-    <div class="listing-image ${image?'has-photo':''}"><span class="badge">${esc(conditionLabels[l.condition]||l.condition)}</span>${image?`<img src="${esc(image)}" alt="${esc(l.title)}" loading="lazy" onerror="this.hidden=true;this.parentElement.classList.remove('has-photo')">`:`<span class="placeholder-icon">${icons[cat?.slug]||'◈'}</span>`}${own?'<span class="owner-badge">Al tău</span>':''}</div>
+    <div class="listing-image ${image?'has-photo':''}" ${image?`style="--listing-photo:url(\'${esc(image)}\')"`:''}><span class="badge">${esc(conditionLabels[l.condition]||l.condition)}</span>${image?`<img src="${esc(image)}" alt="${esc(l.title)}" loading="lazy" onerror="this.hidden=true;this.parentElement.classList.remove('has-photo')">`:`<span class="placeholder-icon">${icons[cat?.slug]||'◈'}</span>`}${own?'<span class="owner-badge">Al tău</span>':''}</div>
     <div class="listing-body"><h3 class="listing-title">${esc(l.title)}</h3><div class="price">${money(l.price,l.currency)}</div><div class="listing-meta"><span>${esc(l.location)}</span><span>${since(l.created_at)}</span></div></div>
   </article>`;
 }
@@ -233,18 +316,16 @@ async function openDetail(id){
     db.from('profiles').select('display_name,location,bio,avatar_path,created_at').eq('id',l.seller_id).maybeSingle(),
     db.from('user_flags').select('verified').eq('user_id',l.seller_id).maybeSingle()
   ]);
-  const cat=state.categories.find(c=>c.id===l.category_id);const own=state.user?.id===l.seller_id;const photos=l.images?.length?`<div class="photo-grid">${l.images.map((u,i)=>`<button class="photo-thumb ${i===0?'main':''}" data-photo="${esc(u)}"><img src="${esc(u)}" alt="Fotografie ${i+1} — ${esc(l.title)}" loading="lazy"></button>`).join('')}</div>`:`<div class="detail-photo placeholder">${icons[cat?.slug]||'◈'}</div>`;
+  const cat=state.categories.find(c=>c.id===l.category_id);const own=state.user?.id===l.seller_id;const photos=l.images?.length?`<div class="photo-grid">${l.images.map((u,i)=>`<button class="photo-thumb ${i===0?'main':''}" data-photo-index="${i}" aria-label="Deschide fotografia ${i+1}"><img src="${esc(u)}" alt="Fotografie ${i+1} — ${esc(l.title)}" loading="lazy"></button>`).join('')}</div>`:`<div class="detail-photo placeholder">${icons[cat?.slug]||'◈'}</div>`;
   $('#detailContent').innerHTML=`<div class="modal-head"><div><span class="kicker">${esc(cat?.name||'ANUNȚ')}</span><h2>${esc(l.title)}</h2></div><button class="close" type="button" data-close="detailModal">×</button></div>
     ${photos}<div class="detail-layout"><div><p class="detail-price">${money(l.price,l.currency)} ${l.negotiable?'<small>negociabil</small>':''}</p><p class="detail-desc">${esc(l.description).replace(/\n/g,'<br>')}</p><p class="listing-meta"><span>${esc(l.location)} • ${esc(conditionLabels[l.condition]||l.condition)}</span><span>${since(l.created_at)}</span></p></div>
     <aside class="seller-box"><div class="seller-profile">${avatarHtml(profile,'seller-avatar')}<div><span class="kicker">${own?'ANUNȚUL TĂU':'VÂNZĂTOR'}</span><h3>${esc(profile?.display_name||'Membru')}${flag?.verified?' <span class="verified">✓</span>':''}</h3></div></div><p>${profile?.location?`${esc(profile.location)} • `:''}${profile?.created_at?`Membru din ${new Intl.DateTimeFormat('ro-RO',{month:'long',year:'numeric'}).format(new Date(profile.created_at))}`:''}</p>${profile?.bio?`<p class="seller-bio">${esc(profile.bio)}</p>`:''}${own?'<button class="ghost" id="detailEditBtn">Editează anunțul</button><button class="ghost detail-share" id="detailShareBtn">↗ Distribuie anunțul</button><button class="danger detail-delete" id="detailDeleteBtn">Șterge anunțul</button>':'<button class="primary" id="detailMessageBtn">Trimite mesaj</button><button class="ghost" id="detailContactBtn">Telefon / WhatsApp</button><button class="ghost detail-share" id="detailShareBtn">↗ Distribuie anunțul</button><button class="report-btn" id="detailReportBtn">Raportează anunțul</button>'}</aside></div>`;
   bindCloseButtons($('#detailContent'));
   if(own){$('#detailEditBtn').onclick=()=>{closeDialog('detailModal');openEditListing(l.id,false);};$('#detailDeleteBtn').onclick=()=>deleteListing(l.id,true);}else{$('#detailMessageBtn').onclick=()=>openMessage(l);$('#detailContactBtn').onclick=()=>showContact(l);$('#detailReportBtn').onclick=()=>reportListing(l);}
   $('#detailShareBtn').onclick=()=>shareListing(l.id);
-  $$('.photo-thumb',$('#detailContent')).forEach(b=>b.onclick=()=>openPhoto(b.dataset.photo));
+  $$('.photo-thumb',$('#detailContent')).forEach(b=>b.onclick=()=>openPhotoGallery(l.images,Number(b.dataset.photoIndex)||0,l.title));
   $('#detailModal').showModal();
 }
-
-function openPhoto(url){window.open(url,'_blank','noopener,noreferrer');}
 
 async function showContact(l){
   if(!requireActive())return;
