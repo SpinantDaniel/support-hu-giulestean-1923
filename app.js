@@ -7,7 +7,7 @@ const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, 
 
 const $ = (s, el=document) => el.querySelector(s);
 const $$ = (s, el=document) => [...el.querySelectorAll(s)];
-const state = { session:null, user:null, profile:null, categories:[], listings:[], favorites:new Set(), selectedListing:null, authMode:'login', accountTab:'listings' };
+const state = { session:null, user:null, profile:null, categories:[], listings:[], favorites:new Set(), selectedListing:null, authMode:'login', accountTab:'listings', editingListingId:null, editReturnToAccount:false };
 const icons = { 'rapid-colectii':'⚑','auto-moto':'◉','electronice':'▣','telefoane':'▯','haine-incaltaminte':'♢','casa-gradina':'⌂','servicii':'✦','bilete':'▥','imobiliare':'▤','joburi':'▰','donez-caut':'♡','diverse':'•••' };
 const conditionLabels = {new:'Nou',like_new:'Ca nou',used:'Utilizat',damaged:'Cu defecte',service:'Serviciu',not_applicable:'N/A'};
 
@@ -121,9 +121,9 @@ async function openDetail(id){
   const cat=state.categories.find(c=>c.id===l.category_id);const own=state.user?.id===l.seller_id;const photos=l.images?.length?`<div class="photo-grid">${l.images.map((u,i)=>`<button class="photo-thumb ${i===0?'main':''}" data-photo="${esc(u)}"><img src="${esc(u)}" alt="Fotografie ${i+1} — ${esc(l.title)}" loading="lazy"></button>`).join('')}</div>`:`<div class="detail-photo placeholder">${icons[cat?.slug]||'◈'}</div>`;
   $('#detailContent').innerHTML=`<div class="modal-head"><div><span class="kicker">${esc(cat?.name||'ANUNȚ')}</span><h2>${esc(l.title)}</h2></div><button class="close" type="button" data-close="detailModal">×</button></div>
     ${photos}<div class="detail-layout"><div><p class="detail-price">${money(l.price,l.currency)} ${l.negotiable?'<small>negociabil</small>':''}</p><p class="detail-desc">${esc(l.description).replace(/\n/g,'<br>')}</p><p class="listing-meta"><span>${esc(l.location)} • ${esc(conditionLabels[l.condition]||l.condition)}</span><span>${since(l.created_at)}</span></p></div>
-    <aside class="seller-box"><div class="seller-profile">${avatarHtml(profile,'seller-avatar')}<div><span class="kicker">${own?'ANUNȚUL TĂU':'VÂNZĂTOR'}</span><h3>${esc(profile?.display_name||'Membru')}${flag?.verified?' <span class="verified">✓</span>':''}</h3></div></div><p>${profile?.location?`${esc(profile.location)} • `:''}${profile?.created_at?`Membru din ${new Intl.DateTimeFormat('ro-RO',{month:'long',year:'numeric'}).format(new Date(profile.created_at))}`:''}</p>${profile?.bio?`<p class="seller-bio">${esc(profile.bio)}</p>`:''}${own?'<button class="ghost" id="detailSoldBtn">Marchează vândut / reactivează</button><button class="danger detail-delete" id="detailDeleteBtn">Șterge anunțul</button>':'<button class="primary" id="detailMessageBtn">Trimite mesaj</button><button class="ghost" id="detailContactBtn">Telefon / WhatsApp</button><button class="report-btn" id="detailReportBtn">Raportează anunțul</button>'}</aside></div>`;
+    <aside class="seller-box"><div class="seller-profile">${avatarHtml(profile,'seller-avatar')}<div><span class="kicker">${own?'ANUNȚUL TĂU':'VÂNZĂTOR'}</span><h3>${esc(profile?.display_name||'Membru')}${flag?.verified?' <span class="verified">✓</span>':''}</h3></div></div><p>${profile?.location?`${esc(profile.location)} • `:''}${profile?.created_at?`Membru din ${new Intl.DateTimeFormat('ro-RO',{month:'long',year:'numeric'}).format(new Date(profile.created_at))}`:''}</p>${profile?.bio?`<p class="seller-bio">${esc(profile.bio)}</p>`:''}${own?'<button class="ghost" id="detailEditBtn">Editează anunțul</button><button class="danger detail-delete" id="detailDeleteBtn">Șterge anunțul</button>':'<button class="primary" id="detailMessageBtn">Trimite mesaj</button><button class="ghost" id="detailContactBtn">Telefon / WhatsApp</button><button class="report-btn" id="detailReportBtn">Raportează anunțul</button>'}</aside></div>`;
   bindCloseButtons($('#detailContent'));
-  if(own){$('#detailSoldBtn').onclick=async()=>{await markSold(l.id);closeDialog('detailModal');};$('#detailDeleteBtn').onclick=()=>deleteListing(l.id,true);}else{$('#detailMessageBtn').onclick=()=>openMessage(l);$('#detailContactBtn').onclick=()=>showContact(l);$('#detailReportBtn').onclick=()=>reportListing(l);}
+  if(own){$('#detailEditBtn').onclick=()=>{closeDialog('detailModal');openEditListing(l.id,false);};$('#detailDeleteBtn').onclick=()=>deleteListing(l.id,true);}else{$('#detailMessageBtn').onclick=()=>openMessage(l);$('#detailContactBtn').onclick=()=>showContact(l);$('#detailReportBtn').onclick=()=>reportListing(l);}
   $$('.photo-thumb',$('#detailContent')).forEach(b=>b.onclick=()=>openPhoto(b.dataset.photo));
   $('#detailModal').showModal();
 }
@@ -207,25 +207,80 @@ async function submitPasswordReset(e){
   }catch(err){console.error(err);toast('Codul este invalid sau expirat. Cere un cod nou și încearcă din nou.','error');}finally{setBusy(btn,false);}
 }
 
-function openSell(){if(!requireAuth())return;$('#sellModal').showModal();}
+function prepareSellForm(mode='new'){
+  const form=$('#sellForm');
+  form.reset();
+  form.elements.location.value='București';
+  $('#sellModal .kicker').textContent=mode==='edit'?'EDITARE ANUNȚ':'ANUNȚ NOU';
+  $('#sellModal h2').textContent=mode==='edit'?'Editează anunțul':'Ce vrei să vinzi?';
+  $('#publishBtn').textContent=mode==='edit'?'Salvează modificările':'Publică anunț';
+  $('#imageHelp').textContent=mode==='edit'?'Fotografiile existente rămân. Poți adăuga fotografii noi până la maximum 8 în total.':'JPG, PNG sau WEBP. Recomandat sub 5 MB / imagine.';
+}
+
+function openSell(){
+  if(!requireAuth())return;
+  state.editingListingId=null;state.editReturnToAccount=false;prepareSellForm('new');$('#sellModal').showModal();
+}
+
+async function openEditListing(id,returnToAccount=true){
+  if(!requireAuth())return;
+  const l=state.listings.find(x=>x.id===id);
+  if(!l||l.seller_id!==state.user?.id)return toast('Poți edita doar propriul anunț.','error');
+  state.editingListingId=id;state.editReturnToAccount=returnToAccount;
+  prepareSellForm('edit');
+  const form=$('#sellForm');
+  form.elements.title.value=l.title||'';
+  form.elements.category.value=l.category_id||'';
+  form.elements.price.value=l.price??'';
+  form.elements.currency.value=l.currency||'RON';
+  form.elements.condition.value=l.condition||'used';
+  form.elements.location.value=l.location||'';
+  form.elements.negotiable.checked=!!l.negotiable;
+  form.elements.description.value=l.description||'';
+  const {data:contact,error}=await db.from('listing_contacts').select('phone,whatsapp').eq('listing_id',id).maybeSingle();
+  if(error)console.warn('contact edit load',error);
+  form.elements.phone.value=contact?.phone||'';
+  form.elements.whatsapp.value=contact?.whatsapp||'';
+  const existing=l.image_paths?.length||0;
+  $('#imageHelp').textContent=existing?`${existing} fotografie${existing===1?'':'i'} existente. Poți adăuga încă maximum ${Math.max(0,8-existing)}.`:'Nu există fotografii. Poți adăuga maximum 8.';
+  closeDialog('accountModal');
+  $('#sellModal').showModal();
+}
+
 async function publishListing(e){
-  e.preventDefault();if(!requireAuth())return;const form=e.currentTarget,btn=$('#publishBtn'),fd=new FormData(form),files=[...form.elements.images.files];
-  if(files.length>8)return toast('Poți încărca maximum 8 fotografii.','error');if(!fd.get('phone')&&!fd.get('whatsapp'))return toast('Adaugă telefon sau WhatsApp pentru contact direct.','error');
-  setBusy(btn,true,'Se publică…');let listingId=null;
+  e.preventDefault();if(!requireAuth())return;
+  const form=e.currentTarget,btn=$('#publishBtn'),fd=new FormData(form),files=[...form.elements.images.files],editing=!!state.editingListingId;
+  const current=editing?state.listings.find(x=>x.id===state.editingListingId):null;
+  const existingCount=current?.image_paths?.length||0;
+  if(existingCount+files.length>8)return toast(`Poți avea maximum 8 fotografii. Anunțul are deja ${existingCount}.`,'error');
+  if(!fd.get('phone')&&!fd.get('whatsapp'))return toast('Adaugă telefon sau WhatsApp pentru contact direct.','error');
+  setBusy(btn,true,editing?'Se salvează…':'Se publică…');let listingId=state.editingListingId;
   try{
-    const row={seller_id:state.user.id,category_id:fd.get('category'),title:String(fd.get('title')).trim(),description:String(fd.get('description')).trim(),price:Number(fd.get('price')),currency:fd.get('currency'),condition:fd.get('condition'),location:String(fd.get('location')).trim(),negotiable:fd.get('negotiable')==='on'};
-    const r=await db.from('listings').insert(row).select('id').single();if(r.error)throw r.error;listingId=r.data.id;
-    const contact={listing_id:listingId,seller_id:state.user.id,phone:String(fd.get('phone')||'').trim()||null,whatsapp:String(fd.get('whatsapp')||'').trim()||null};const rc=await db.from('listing_contacts').insert(contact);if(rc.error)throw rc.error;
+    const row={category_id:fd.get('category'),title:String(fd.get('title')).trim(),description:String(fd.get('description')).trim(),price:Number(fd.get('price')),currency:fd.get('currency'),condition:fd.get('condition'),location:String(fd.get('location')).trim(),negotiable:fd.get('negotiable')==='on'};
+    if(editing){
+      if(!current||current.seller_id!==state.user.id)throw new Error('Anunțul nu îți aparține.');
+      const r=await db.from('listings').update({...row,state:'active',updated_at:new Date().toISOString()}).eq('id',listingId).eq('seller_id',state.user.id).select('id').single();if(r.error)throw r.error;
+      const contactPatch={phone:String(fd.get('phone')||'').trim()||null,whatsapp:String(fd.get('whatsapp')||'').trim()||null};
+      const rc=await db.from('listing_contacts').update(contactPatch).eq('listing_id',listingId).eq('seller_id',state.user.id);if(rc.error)throw rc.error;
+    }else{
+      const r=await db.from('listings').insert({...row,seller_id:state.user.id}).select('id').single();if(r.error)throw r.error;listingId=r.data.id;
+      const contact={listing_id:listingId,seller_id:state.user.id,phone:String(fd.get('phone')||'').trim()||null,whatsapp:String(fd.get('whatsapp')||'').trim()||null};const rc=await db.from('listing_contacts').insert(contact);if(rc.error)throw rc.error;
+    }
     for(let i=0;i<files.length;i++){
       const f=files[i];if(f.size>6*1024*1024)throw new Error(`Imaginea ${f.name} depășește 6 MB.`);
       const ext=(f.name.split('.').pop()||'jpg').toLowerCase().replace(/[^a-z0-9]/g,'');const path=`${state.user.id}/${listingId}/${crypto.randomUUID()}.${ext}`;
       const up=await db.storage.from('listing-images').upload(path,f,{cacheControl:'3600',upsert:false,contentType:f.type});if(up.error)throw up.error;
-      const ri=await db.from('listing_images').insert({listing_id:listingId,storage_path:path,sort_order:i});if(ri.error)throw ri.error;
+      const ri=await db.from('listing_images').insert({listing_id:listingId,storage_path:path,sort_order:existingCount+i});if(ri.error)throw ri.error;
     }
-    form.reset();form.elements.location.value='București';closeDialog('sellModal');await loadListings();renderListings();toast('Anunț publicat în Support Hub Giuleștean 1923.');$('#anunturi').scrollIntoView({behavior:'smooth'});
-  }catch(err){console.error(err);toast(err.message||'Anunțul nu a putut fi publicat.','error');if(listingId)await db.from('listings').delete().eq('id',listingId);}finally{setBusy(btn,false);}
+    const returnToAccount=state.editReturnToAccount;
+    state.editingListingId=null;state.editReturnToAccount=false;prepareSellForm('new');closeDialog('sellModal');await loadListings();renderListings();
+    if(editing){toast('Anunț actualizat.');if(returnToAccount)await openAccount('listings');}
+    else{toast('Anunț publicat în Support Hub Giuleștean 1923.');$('#anunturi').scrollIntoView({behavior:'smooth'});}
+  }catch(err){
+    console.error(err);toast(err.message||(editing?'Anunțul nu a putut fi actualizat.':'Anunțul nu a putut fi publicat.'),'error');
+    if(!editing&&listingId)await db.from('listings').delete().eq('id',listingId);
+  }finally{setBusy(btn,false);}
 }
-
 async function openAccount(tab='listings'){
   if(!requireAuth())return;state.accountTab=tab;$('#accountName').textContent=state.profile?.display_name||'Contul meu';$('#accountEmail').textContent=state.user.email||'';$('#accountAvatar').innerHTML=avatarHtml(state.profile,'account-avatar-inner');$('#adminTab').hidden=!isAdmin();updateAccountTabButtons();await renderAccount();$('#accountModal').showModal();
 }
@@ -236,8 +291,8 @@ async function renderAccount(){
     if(state.accountTab==='listings'){
       const own=state.listings.filter(l=>l.seller_id===state.user.id).sort((a,b)=>new Date(b.created_at)-new Date(a.created_at));
       let statuses={};if(own.length){const {data}=await db.from('listing_approvals').select('listing_id,status').in('listing_id',own.map(x=>x.id));(data||[]).forEach(x=>statuses[x.listing_id]=x.status);}
-      root.innerHTML=own.length?`<div class="account-list">${own.map(l=>`<div class="account-row"><div><b>${esc(l.title)}</b><small>${money(l.price,l.currency)} • ${esc(l.location)}</small></div><span class="status ${statuses[l.id]||'approved'}">${statuses[l.id]==='pending'?'În moderare':statuses[l.id]==='rejected'?'Respins':'Activ'}</span><button class="ghost mini" data-sold="${l.id}">${l.state==='sold'?'Vândut':'Marchează vândut'}</button><button class="danger mini" data-delete="${l.id}">Șterge</button></div>`).join('')}</div>`:'<div class="empty compact"><b>N-ai publicat încă.</b><span>Primul anunț poate fi pus chiar acum.</span></div>';
-      $$('[data-sold]',root).forEach(b=>b.onclick=()=>markSold(b.dataset.sold));$$('[data-delete]',root).forEach(b=>b.onclick=()=>deleteListing(b.dataset.delete));
+      root.innerHTML=own.length?`<div class="account-list">${own.map(l=>`<div class="account-row"><div><b>${esc(l.title)}</b><small>${money(l.price,l.currency)} • ${esc(l.location)}</small></div><span class="status ${statuses[l.id]||'approved'}">${statuses[l.id]==='pending'?'În moderare':statuses[l.id]==='rejected'?'Respins':'Activ'}</span><button class="ghost mini" data-edit="${l.id}">Editează</button><button class="danger mini" data-delete="${l.id}">Șterge</button></div>`).join('')}</div>`:'<div class="empty compact"><b>N-ai publicat încă.</b><span>Primul anunț poate fi pus chiar acum.</span></div>';
+      $$('[data-edit]',root).forEach(b=>b.onclick=()=>openEditListing(b.dataset.edit,true));$$('[data-delete]',root).forEach(b=>b.onclick=()=>deleteListing(b.dataset.delete));
     } else if(state.accountTab==='favorites'){
       const favs=state.listings.filter(l=>state.favorites.has(l.id));root.innerHTML=favs.length?`<div class="listing-grid account-grid">${favs.map(cardHtml).join('')}</div>`:'<div class="empty compact"><b>N-ai favorite.</b><span>Apasă ♡ pe un anunț ca să-l păstrezi aici.</span></div>';bindListingCards(root);
     } else if(state.accountTab==='messages'){
@@ -248,7 +303,6 @@ async function renderAccount(){
   }catch(err){console.error(err);root.innerHTML=`<div class="status-banner">${esc(err.message||'Nu am putut încărca această secțiune.')}</div>`;}
 }
 
-async function markSold(id){const l=state.listings.find(x=>x.id===id);if(!l)return;const next=l.state==='sold'?'active':'sold';const {error}=await db.from('listings').update({state:next}).eq('id',id);if(error)return toast(error.message,'error');await loadListings();renderListings();renderAccount();toast(next==='sold'?'Marcat ca vândut.':'Anunț reactivat.');}
 async function deleteListing(id,fromDetail=false){
   if(!confirm('Ștergi definitiv acest anunț și fotografiile lui?'))return;
   const l=state.listings.find(x=>x.id===id);if(!l||l.seller_id!==state.user?.id)return toast('Poți șterge doar propriul anunț.','error');
