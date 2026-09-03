@@ -155,24 +155,109 @@ function renderCommentComposer(){
   $('#commentForm').onsubmit=submitComment;
 }
 
+async function refreshCommentCount(postId){
+  const {data,error}=await db.from('blog_post_comment_counts').select('comments_count').eq('post_id',postId).maybeSingle();
+  if(!error)state.comments.set(postId,Number(data?.comments_count||0));
+  if(state.article?.id===postId){
+    renderArticleActions();
+    const total=$('#commentsTotal');if(total)total.textContent=count(state.comments,postId);
+  }
+}
+
 async function submitComment(e){
   e.preventDefault();
   if(!state.session?.user)return needAccount('comenta');
-  const btn=e.currentTarget.querySelector('button');
-  const body=String(new FormData(e.currentTarget).get('body')||'').trim();
+  const form=e.currentTarget;
+  if(form.dataset.submitting==='1')return;
+  const textarea=form.querySelector('textarea[name="body"]');
+  const btn=form.querySelector('button');
+  const body=String(textarea?.value||'').trim();
   if(!body)return;
-  btn.disabled=true;btn.textContent='Se publică…';
-  const {error}=await db.from('blog_comments').insert({post_id:state.article.id,user_id:state.session.user.id,body});
-  btn.disabled=false;btn.textContent='Publică comentariul';
-  if(error){console.error(error);alert('Comentariul nu a putut fi publicat.');return;}
-  e.currentTarget.reset();
-  state.comments.set(state.article.id,count(state.comments,state.article.id)+1);
-  renderArticleActions();$('#commentsTotal').textContent=count(state.comments,state.article.id);
-  await loadComments(state.article.id);
+
+  form.dataset.submitting='1';
+  btn.disabled=true;
+  btn.textContent='Se publică…';
+
+  try{
+    const {error}=await db.from('blog_comments').insert({
+      post_id:state.article.id,
+      user_id:state.session.user.id,
+      body,
+      parent_id:null
+    });
+    if(error)throw error;
+
+    form.reset();
+    if(textarea)textarea.value='';
+    await refreshCommentCount(state.article.id);
+    await loadComments(state.article.id);
+  }catch(error){
+    console.error(error);
+    alert('Comentariul nu a putut fi publicat.');
+  }finally{
+    delete form.dataset.submitting;
+    btn.disabled=false;
+    btn.textContent='Publică comentariul';
+  }
+}
+
+async function submitReply(e,parentId){
+  e.preventDefault();
+  if(!state.session?.user)return needAccount('răspunde');
+  const form=e.currentTarget;
+  if(form.dataset.submitting==='1')return;
+  const textarea=form.querySelector('textarea[name="body"]');
+  const btn=form.querySelector('button[type="submit"]');
+  const body=String(textarea?.value||'').trim();
+  if(!body)return;
+
+  form.dataset.submitting='1';
+  btn.disabled=true;
+  btn.textContent='Se publică…';
+
+  try{
+    const {error}=await db.from('blog_comments').insert({
+      post_id:state.article.id,
+      user_id:state.session.user.id,
+      body,
+      parent_id:parentId
+    });
+    if(error)throw error;
+
+    form.reset();
+    if(textarea)textarea.value='';
+    await refreshCommentCount(state.article.id);
+    await loadComments(state.article.id);
+  }catch(error){
+    console.error(error);
+    alert('Răspunsul nu a putut fi publicat.');
+  }finally{
+    delete form.dataset.submitting;
+    btn.disabled=false;
+    btn.textContent='Răspunde';
+  }
+}
+
+function openReplyForm(commentId,displayName){
+  if(!state.session?.user)return needAccount('răspunde');
+  $$('.reply-slot').forEach(slot=>slot.innerHTML='');
+  const slot=document.querySelector(`[data-reply-slot="${commentId}"]`);
+  if(!slot)return;
+  slot.innerHTML=`<form class="reply-form" data-reply-form="${commentId}">
+    <textarea name="body" maxlength="1000" required rows="2" placeholder="Răspunde lui ${esc(displayName)}..."></textarea>
+    <div class="reply-form-actions">
+      <button type="button" class="reply-cancel">Anulează</button>
+      <button type="submit">Răspunde</button>
+    </div>
+  </form>`;
+  const form=slot.querySelector('form');
+  form.onsubmit=e=>submitReply(e,commentId);
+  slot.querySelector('.reply-cancel').onclick=()=>{slot.innerHTML='';};
+  slot.querySelector('textarea').focus();
 }
 
 async function loadComments(postId){
-  const {data,error}=await db.from('blog_comments').select('id,user_id,body,created_at').eq('post_id',postId).order('created_at',{ascending:false});
+  const {data,error}=await db.from('blog_comments').select('id,user_id,parent_id,body,created_at').eq('post_id',postId).order('created_at',{ascending:false});
   if(error){console.error(error);$('#commentsList').innerHTML='<div class="empty">Comentariile nu sunt disponibile momentan.</div>';return;}
   state.articleComments=data||[];
   const ids=[...new Set(state.articleComments.map(c=>c.user_id))];
@@ -186,26 +271,64 @@ async function loadComments(postId){
 
 function renderComments(profiles){
   const root=$('#commentsList');
-  if(!state.articleComments.length){root.innerHTML='<div class="empty comments-empty">Fii primul care lasă un comentariu.</div>';return;}
+  if(!state.articleComments.length){
+    root.innerHTML='<div class="empty comments-empty">Fii primul care lasă un comentariu.</div>';
+    return;
+  }
+
   const admin=state.session?.user?.app_metadata?.role==='admin';
-  root.innerHTML=state.articleComments.map(c=>{
+  const byId=new Map(state.articleComments.map(c=>[c.id,c]));
+  const children=new Map();
+
+  state.articleComments.forEach(c=>{
+    if(c.parent_id&&byId.has(c.parent_id)){
+      const list=children.get(c.parent_id)||[];
+      list.push(c);
+      children.set(c.parent_id,list);
+    }
+  });
+
+  children.forEach(list=>list.sort((a,b)=>new Date(a.created_at)-new Date(b.created_at)));
+
+  const roots=state.articleComments
+    .filter(c=>!c.parent_id||!byId.has(c.parent_id))
+    .sort((a,b)=>new Date(b.created_at)-new Date(a.created_at));
+
+  const renderNode=(c,depth=0)=>{
     const p=profiles.get(c.user_id)||{display_name:'Membru'};
     const avatar=avatarUrl(p.avatar_path);
     const canDelete=state.session?.user&&(state.session.user.id===c.user_id||admin);
-    return `<article class="comment-item">
-      <div class="comment-avatar">${avatar?`<img src="${esc(avatar)}" alt="">`:esc(initials(p.display_name))}</div>
-      <div class="comment-main"><div class="comment-meta"><b>${esc(p.display_name||'Membru')}</b><span>${fmt(c.created_at)}</span></div><p>${esc(c.body).replace(/\n/g,'<br>')}</p>${canDelete?`<button class="comment-delete" data-delete-comment="${c.id}">Șterge</button>`:''}</div>
-    </article>`;
-  }).join('');
+    const canReply=!!state.session?.user;
+    const replies=children.get(c.id)||[];
+
+    return `<div class="comment-thread depth-${Math.min(depth,4)}">
+      <article class="comment-item ${depth?'is-reply':''}">
+        <div class="comment-avatar">${avatar?`<img src="${esc(avatar)}" alt="">`:esc(initials(p.display_name))}</div>
+        <div class="comment-main">
+          <div class="comment-meta"><b>${esc(p.display_name||'Membru')}</b><span>${fmt(c.created_at)}</span></div>
+          <p>${esc(c.body).replace(/\n/g,'<br>')}</p>
+          <div class="comment-actions">
+            ${canReply?`<button class="comment-reply" data-reply-comment="${c.id}" data-reply-name="${esc(p.display_name||'Membru')}">Răspunde</button>`:''}
+            ${canDelete?`<button class="comment-delete" data-delete-comment="${c.id}">Șterge</button>`:''}
+          </div>
+          <div class="reply-slot" data-reply-slot="${c.id}"></div>
+        </div>
+      </article>
+      ${replies.length?`<div class="comment-children">${replies.map(r=>renderNode(r,depth+1)).join('')}</div>`:''}
+    </div>`;
+  };
+
+  root.innerHTML=roots.map(c=>renderNode(c,0)).join('');
+
   $$('[data-delete-comment]').forEach(b=>b.onclick=()=>deleteComment(b.dataset.deleteComment));
+  $$('[data-reply-comment]').forEach(b=>b.onclick=()=>openReplyForm(b.dataset.replyComment,b.dataset.replyName));
 }
 
 async function deleteComment(id){
   if(!confirm('Ștergi acest comentariu?'))return;
   const {error}=await db.from('blog_comments').delete().eq('id',id);
   if(error){console.error(error);alert('Comentariul nu a putut fi șters.');return;}
-  state.comments.set(state.article.id,Math.max(0,count(state.comments,state.article.id)-1));
-  renderArticleActions();$('#commentsTotal').textContent=count(state.comments,state.article.id);
+  await refreshCommentCount(state.article.id);
   await loadComments(state.article.id);
 }
 
