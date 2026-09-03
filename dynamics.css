@@ -65,3 +65,137 @@ input:focus,textarea:focus,select:focus{box-shadow:0 0 0 3px rgba(111,21,48,.09)
 @media(prefers-reduced-motion:reduce){
   *,*::before,*::after{scroll-behavior:auto!important;animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}
 }
+
+
+/* v5.6 — Global paper texture and translucent surfaces */
+:root{
+  --site-paper:url('/background-site.jpg');
+  --surface-glass:rgba(255,255,255,.91);
+  --surface-glass-strong:rgba(255,255,255,.965);
+  --surface-glass-soft:rgba(255,255,255,.82);
+  --surface-paper-border:rgba(111,21,48,.105);
+  --paper-shadow:0 10px 30px rgba(45,18,27,.055);
+}
+
+/* Same background on Marketplace, Noutăți/article and Admin. */
+html{
+  background:#f7f4f3;
+}
+body{
+  min-height:100vh;
+  background-color:#f7f4f3!important;
+  background-image:
+    linear-gradient(rgba(255,255,255,.66),rgba(255,255,255,.66)),
+    var(--site-paper)!important;
+  background-repeat:repeat!important;
+  background-position:top center!important;
+  background-size:auto,720px auto!important;
+}
+
+/* Keep page-level wrappers transparent so the texture is actually visible. */
+main,.hero,.wrap,.categories,.market,.trust,.home-news,.news-hero,.news-controls,.news-wrap,.article-wrap,.admin-shell,.content,.panel{
+  background-color:transparent;
+}
+
+/* High-legibility chrome over the paper background. */
+.site-header,.news-header,.admin-header,.sidebar,.mobile-nav{
+  background:var(--surface-glass-strong)!important;
+  -webkit-backdrop-filter:blur(12px) saturate(1.03);
+  backdrop-filter:blur(12px) saturate(1.03);
+}
+
+/* Shared footer keeps the same brand layout but now belongs visually to the page. */
+footer.global-footer{
+  background:var(--surface-glass-strong)!important;
+  -webkit-backdrop-filter:blur(10px);
+  backdrop-filter:blur(10px);
+}
+
+/* Content surfaces: translucent enough to reveal the texture without hurting readability. */
+.searchbox,
+.category,
+.listing-card,
+.trust-card:not(.dark),
+.home-news-card,
+.news-card,
+.news-search,
+.news-controls select,
+.section-card,
+.admin-row,
+.stat,
+.post-item,
+.seller-box,
+.conversation-card,
+.account-row,
+.comment-form,
+.comment-item,
+.reply-form,
+.empty,
+.modal{
+  background-color:var(--surface-glass)!important;
+  border-color:var(--surface-paper-border)!important;
+  box-shadow:var(--paper-shadow);
+  -webkit-backdrop-filter:blur(5px);
+  backdrop-filter:blur(5px);
+}
+
+/* Inputs stay cleaner/whiter than their parent card for strong form affordance. */
+input,textarea,select,
+.ghost,.engage-btn,.duration,.reply-cancel,
+.home-news-arrows button{
+  background-color:rgba(255,255,255,.94);
+}
+
+/* Preserve intentionally dark / brand-color surfaces. */
+.hero-panel,.trust-card.dark,.cta,.primary,.searchbox button{
+  -webkit-backdrop-filter:none;
+  backdrop-filter:none;
+}
+
+/* Dialog itself is transparent; modal provides the readable surface. */
+dialog{
+  background:transparent!important;
+}
+
+/* Universal uploaded-media treatment:
+   crop only inside designed frames, keep original aspect ratio, always center. */
+.listing-image img,
+.photo-thumb img,
+.detail-photo img,
+.seller-avatar img,
+.account-avatar-inner img,
+.profile-preview-avatar img,
+.nav-avatar img,
+.mobile-avatar img,
+.news-image img,
+.article-hero,
+.comment-avatar img,
+.image-preview img,
+.home-news-image img{
+  width:100%!important;
+  height:100%!important;
+  display:block!important;
+  object-fit:cover!important;
+  object-position:center center!important;
+  image-orientation:from-image;
+}
+
+/* Hero/article photos get a subtle frame against the paper background. */
+.article-hero,.photo-thumb,.image-preview{
+  box-shadow:0 8px 26px rgba(45,18,27,.07);
+}
+
+/* Desktop can safely keep the paper visually anchored.
+   iOS/mobile deliberately uses normal scrolling to avoid Safari repaint glitches. */
+@media(min-width:651px){
+  body{background-attachment:fixed!important}
+}
+@media(max-width:650px){
+  body{
+    background-attachment:scroll!important;
+    background-size:auto,560px auto!important;
+  }
+  .site-header,.news-header,.admin-header,.mobile-nav{
+    background:rgba(255,255,255,.975)!important;
+  }
+}
