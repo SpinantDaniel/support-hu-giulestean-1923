@@ -7,10 +7,14 @@
   <meta name="description" content="Noutăți, povești și anunțuri editoriale din comunitatea Support Hub Giuleștean 1923.">
   <title>Noutăți — Support Hub Giuleștean 1923</title>
   <link rel="stylesheet" href="/newsletter.css">
+  <link rel="stylesheet" href="/brand.css">
 </head>
 <body>
   <header class="news-header">
-    <a class="news-brand" href="/"><span class="mark">SH</span><span><b>Support Hub</b><small>Giuleștean 1923</small></span></a>
+    <a class="brand-lockup" href="/" aria-label="Support Hub Giuleștean 1923">
+      <img class="brand-lockup-logo" src="/brand-logo.jpg" alt="Support Hub Giuleștean 1923">
+      <span class="brand-lockup-copy"><strong>SUPPORT HUB</strong><span>GIULEȘTEAN 1923</span></span>
+    </a>
     <nav><a href="/">Marketplace</a><a class="active" href="/newsletter.html">Noutăți</a></nav>
   </header>
   <main>
@@ -35,7 +39,14 @@
     <section class="news-wrap" id="newsList"><div class="loading">Se încarcă articolele…</div></section>
     <article class="article-wrap" id="articleView" hidden></article>
   </main>
-  <footer><a href="/">← Înapoi la marketplace</a><span>Support Hub Giuleștean 1923 · platformă independentă a comunității</span></footer>
+  <footer class="global-footer">
+    <div class="global-footer-brand"><a class="brand-lockup" href="/" aria-label="Support Hub Giuleștean 1923">
+      <img class="brand-lockup-logo" src="/brand-logo.jpg" alt="Support Hub Giuleștean 1923">
+      <span class="brand-lockup-copy"><strong>SUPPORT HUB</strong><span>GIULEȘTEAN 1923</span></span>
+    </a></div>
+    <p class="global-footer-note">Noutăți, povești și informații publicate de echipa Support Hub și colaboratorii autorizați ai comunității.</p>
+    <nav class="global-footer-links"><a href="/">Marketplace</a><a href="/newsletter.html">Noutăți</a><a href="mailto:contact@hubgiulestean.ro">Contact</a></nav>
+  </footer>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.112.4/dist/umd/supabase.min.js"></script>
   <script src="/newsletter.js"></script>
 </body>

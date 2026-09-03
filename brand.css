@@ -1,0 +1,140 @@
+
+/* Shared brand lockup — single source of truth across Marketplace, Noutăți and Admin */
+.brand-lockup{
+  display:inline-flex!important;
+  align-items:center!important;
+  gap:11px!important;
+  color:#18171a!important;
+  text-decoration:none!important;
+  flex:0 0 auto;
+  min-width:0;
+}
+.brand-lockup-logo{
+  display:block;
+  width:48px!important;
+  height:48px!important;
+  object-fit:cover!important;
+  border-radius:12px!important;
+  border:1px solid #e8e3e5!important;
+  background:#fff!important;
+  box-shadow:0 3px 12px rgba(0,0,0,.08)!important;
+  flex:0 0 48px;
+}
+.brand-lockup-copy{
+  display:flex!important;
+  flex-direction:column!important;
+  justify-content:center!important;
+  min-width:0;
+  line-height:1!important;
+  white-space:nowrap!important;
+}
+.brand-lockup-copy strong{
+  display:block!important;
+  margin:0!important;
+  color:#18171a!important;
+  font-size:20px!important;
+  font-weight:900!important;
+  letter-spacing:-.025em!important;
+  line-height:1!important;
+}
+.brand-lockup-copy span{
+  display:block!important;
+  margin-top:6px!important;
+  color:#777277!important;
+  font-size:9px!important;
+  font-weight:700!important;
+  letter-spacing:.16em!important;
+  line-height:1!important;
+}
+
+/* Same brand area in every footer */
+footer.global-footer{
+  box-sizing:border-box!important;
+  width:min(1180px,100%)!important;
+  max-width:1180px!important;
+  margin:0 auto!important;
+  padding:28px 24px 55px!important;
+  border-top:1px solid #e8e3e5!important;
+  display:grid!important;
+  grid-template-columns:minmax(210px,.8fr) minmax(280px,1.5fr) minmax(180px,.8fr)!important;
+  align-items:center!important;
+  gap:30px!important;
+  background:#fff!important;
+  color:#777277!important;
+}
+footer.global-footer .global-footer-brand{
+  display:flex!important;
+  justify-content:flex-start!important;
+}
+footer.global-footer .global-footer-note{
+  margin:0!important;
+  color:#777277!important;
+  font-size:10px!important;
+  line-height:1.55!important;
+  text-align:center!important;
+}
+footer.global-footer .global-footer-links{
+  display:flex!important;
+  gap:14px!important;
+  justify-content:flex-end!important;
+  align-items:center!important;
+  flex-wrap:wrap!important;
+}
+footer.global-footer .global-footer-links a{
+  color:#4f4b50!important;
+  text-decoration:none!important;
+  font-size:12px!important;
+  font-weight:700!important;
+}
+footer.global-footer .global-footer-links a:hover{
+  color:#6f1530!important;
+}
+
+@media(max-width:900px){
+  footer.global-footer{
+    grid-template-columns:1fr 1fr!important;
+  }
+  footer.global-footer .global-footer-brand{
+    display:flex!important;
+  }
+  footer.global-footer .global-footer-note{
+    grid-column:1/-1!important;
+    grid-row:2!important;
+    text-align:left!important;
+  }
+  footer.global-footer .global-footer-links{
+    justify-content:flex-end!important;
+  }
+}
+@media(max-width:650px){
+  .brand-lockup{
+    gap:9px!important;
+  }
+  .brand-lockup-logo{
+    width:40px!important;
+    height:40px!important;
+    flex-basis:40px!important;
+    border-radius:10px!important;
+  }
+  .brand-lockup-copy strong{
+    font-size:17px!important;
+  }
+  .brand-lockup-copy span{
+    margin-top:5px!important;
+    font-size:8px!important;
+    letter-spacing:.14em!important;
+  }
+  footer.global-footer{
+    grid-template-columns:1fr!important;
+    padding:28px 20px 90px!important;
+    gap:18px!important;
+  }
+  footer.global-footer .global-footer-note{
+    grid-column:auto!important;
+    grid-row:auto!important;
+    text-align:left!important;
+  }
+  footer.global-footer .global-footer-links{
+    justify-content:flex-start!important;
+  }
+}
