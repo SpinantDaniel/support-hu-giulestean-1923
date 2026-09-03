@@ -1,0 +1,67 @@
+/* Motion, image handling and homepage editorial carousel */
+:root{--motion-fast:160ms;--motion:240ms;--lift-shadow:0 14px 34px rgba(45,18,27,.10);--lift-shadow-soft:0 9px 24px rgba(45,18,27,.075)}
+
+/* Uploaded imagery: keep source ratio, crop only to the designed frame, always centered. */
+.listing-image img,.photo-thumb img,.seller-avatar img,.account-avatar-inner img,.profile-preview-avatar img,.nav-avatar img,.mobile-avatar img,
+.news-image img,.article-hero,.comment-avatar img,.image-preview img,.home-news-image img{
+  display:block;width:100%;height:100%;object-fit:cover;object-position:50% 50%;image-orientation:from-image;
+}
+.article-hero{height:clamp(240px,52vw,520px)!important;max-height:520px!important;background:#f4eef0}
+.news-image{aspect-ratio:16/10}
+.image-preview{position:relative}
+
+/* Homepage latest-news carousel */
+.home-news{padding-bottom:64px}
+.home-news-head{align-items:center;margin-bottom:18px}
+.home-news-head h2{font-size:32px;letter-spacing:-.045em;margin:6px 0 0}
+.home-news-head-actions{display:flex;align-items:center;gap:12px}
+.home-news-arrows{display:flex;gap:7px}
+.home-news-arrows button{width:38px;height:38px;border:1px solid var(--line);border-radius:50%;background:#fff;color:var(--wine);font-size:18px;font-weight:900;cursor:pointer}
+.home-news-arrows button:disabled{opacity:.35;cursor:default;transform:none!important;box-shadow:none!important}
+.home-news-all{text-decoration:none;font-size:12px}
+.home-news-carousel{display:flex;gap:14px;overflow-x:auto;scroll-snap-type:x mandatory;scroll-behavior:smooth;overscroll-behavior-inline:contain;scrollbar-width:none;padding:5px 2px 17px;touch-action:pan-x;-webkit-overflow-scrolling:touch}
+.home-news-carousel::-webkit-scrollbar{display:none}
+.home-news-card{flex:0 0 calc((100% - 28px)/3);min-width:0;scroll-snap-align:start;border:1px solid var(--line);border-radius:18px;overflow:hidden;background:#fff;color:var(--ink);text-decoration:none;box-shadow:0 5px 18px rgba(45,18,27,.035);transform:translateZ(0)}
+.home-news-image{aspect-ratio:16/9;background:linear-gradient(135deg,#f4ecef,#e9dde1);overflow:hidden;display:grid;place-items:center;color:var(--wine);font-size:24px;font-weight:950}
+.home-news-body{padding:16px}
+.home-news-meta{font-size:9px;line-height:1.3;text-transform:uppercase;letter-spacing:.08em;color:var(--wine);font-weight:900}
+.home-news-card h3{margin:8px 0 7px;font-size:19px;line-height:1.12;letter-spacing:-.035em;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.home-news-card p{margin:0;color:var(--muted);font-size:11px;line-height:1.5;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.home-news-empty{flex:1 0 100%;padding:35px 18px;border:1px dashed #d8cfd2;border-radius:16px;text-align:center;color:var(--muted)}
+.home-news-skeleton{flex:0 0 calc((100% - 28px)/3);height:250px;border-radius:18px;background:linear-gradient(90deg,#f0ecee 25%,#faf8f9 50%,#f0ecee 75%);background-size:200% 100%;animation:homeNewsShimmer 1.3s linear infinite}
+@keyframes homeNewsShimmer{to{background-position:-200% 0}}
+
+/* Consistent motion language across the whole product. */
+button,a,.category,.listing-card,.trust-card,.cta,.hero-panel,.searchbox,.seller-box,.account-row,.conversation-card,.news-card,.section-card,.admin-row,.stat,.post-item,.home-news-card{
+  transition:transform var(--motion-fast) ease,box-shadow var(--motion) ease,border-color var(--motion-fast) ease,background-color var(--motion-fast) ease,color var(--motion-fast) ease,opacity var(--motion-fast) ease;
+}
+button:active,.primary:active,.ghost:active,.white-button:active,.engage-btn:active{transform:scale(.975)}
+input,textarea,select{transition:border-color var(--motion-fast) ease,box-shadow var(--motion-fast) ease,background-color var(--motion-fast) ease}
+input:focus,textarea:focus,select:focus{box-shadow:0 0 0 3px rgba(111,21,48,.09)}
+
+@media(hover:hover){
+  .primary:hover,.white-button:hover,.home-news-arrows button:hover,.ghost:hover,.engage-btn:hover,.sidebar button:hover,.form-actions button:hover{transform:translateY(-2px);box-shadow:0 8px 20px rgba(45,18,27,.12)}
+  .category:hover,.listing-card:hover,.trust-card:hover,.news-card:hover,.home-news-card:hover,.section-card:hover,.admin-row:hover,.stat:hover,.post-item:hover,.seller-box:hover,.conversation-card:hover{transform:translateY(-3px);box-shadow:var(--lift-shadow-soft)}
+  .cta:hover,.hero-panel:hover{transform:translateY(-2px);box-shadow:var(--lift-shadow)}
+  .home-news-card:hover .home-news-image img,.listing-card:hover .listing-image img,.news-card:hover .news-image img{transform:scale(1.025)}
+  .home-news-image img,.listing-image img,.news-image img{transition:transform 420ms cubic-bezier(.2,.75,.2,1)}
+}
+
+@media(max-width:850px){
+  .home-news-card,.home-news-skeleton{flex-basis:calc((100% - 14px)/2)}
+}
+@media(max-width:650px){
+  .home-news{padding:6px 17px 46px}
+  .home-news-head{align-items:flex-end;gap:12px}
+  .home-news-head h2{font-size:27px}
+  .home-news-head-actions{gap:7px}
+  .home-news-all{display:none}
+  .home-news-arrows button{width:34px;height:34px}
+  .home-news-carousel{margin-right:-17px;padding-right:17px;gap:10px}
+  .home-news-card,.home-news-skeleton{flex-basis:84%;max-width:360px}
+  .home-news-body{padding:14px}
+  .home-news-card h3{font-size:18px}
+}
+@media(prefers-reduced-motion:reduce){
+  *,*::before,*::after{scroll-behavior:auto!important;animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}
+}

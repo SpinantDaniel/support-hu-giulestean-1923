@@ -7,7 +7,7 @@ const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, 
 
 const $ = (s, el=document) => el.querySelector(s);
 const $$ = (s, el=document) => [...el.querySelectorAll(s)];
-const state = { session:null, user:null, profile:null, userFlag:null, adminRole:'none', categories:[], listings:[], favorites:new Set(), selectedListing:null, authMode:'login', accountTab:'listings', editingListingId:null, editReturnToAccount:false };
+const state = { session:null, user:null, profile:null, userFlag:null, adminRole:'none', categories:[], listings:[], favorites:new Set(), homeNews:[], selectedListing:null, authMode:'login', accountTab:'listings', editingListingId:null, editReturnToAccount:false };
 const icons = { 'rapid-colectii':'⚑','auto-moto':'◉','electronice':'▣','telefoane':'▯','haine-incaltaminte':'♢','casa-gradina':'⌂','servicii':'✦','bilete':'▥','imobiliare':'▤','joburi':'▰','donez-caut':'♡','diverse':'•••' };
 const conditionLabels = {new:'Nou',like_new:'Ca nou',used:'Utilizat',damaged:'Cu defecte',service:'Serviciu',not_applicable:'N/A'};
 
@@ -43,14 +43,102 @@ async function shareListing(id){
   await shareContent(l.title,`${l.title} · ${money(l.price,l.currency)} · Support Hub Giuleștean 1923`,listingShareUrl(id));
 }
 
+
+let homeNewsAutoplayTimer=null;
+let homeNewsResumeTimer=null;
+let homeNewsRefreshTimer=null;
+let homeNewsBound=false;
+let homeNewsLoading=false;
+
+function homeNewsImageUrl(path){return path?publicStorageUrl('blog-images',path):'';}
+function homeNewsDate(iso){return new Intl.DateTimeFormat('ro-RO',{day:'2-digit',month:'short',year:'numeric'}).format(new Date(iso));}
+function homeNewsSignature(rows){return rows.map(x=>`${x.id}:${x.updated_at||x.published_at||''}`).join('|');}
+
+async function loadHomeNewsCarousel(silent=false){
+  if(homeNewsLoading)return;
+  const root=$('#homeNewsCarousel');if(!root)return;
+  homeNewsLoading=true;
+  try{
+    const {data,error}=await db.from('blog_posts')
+      .select('id,title,slug,excerpt,image_path,author_name,published_at,updated_at')
+      .eq('status','published')
+      .order('published_at',{ascending:false})
+      .limit(10);
+    if(error)throw error;
+    const rows=data||[];
+    const changed=homeNewsSignature(rows)!==homeNewsSignature(state.homeNews);
+    state.homeNews=rows;
+    if(changed||!root.querySelector('.home-news-card'))renderHomeNewsCarousel();
+  }catch(error){
+    console.warn('home news carousel',error);
+    if(!silent)root.innerHTML='<div class="home-news-empty">Noutățile nu sunt disponibile momentan.</div>';
+  }finally{homeNewsLoading=false;}
+}
+
+function renderHomeNewsCarousel(){
+  const root=$('#homeNewsCarousel');if(!root)return;
+  if(!state.homeNews.length){root.innerHTML='<div class="home-news-empty">Nu există încă articole publicate.</div>';stopHomeNewsAutoplay();return;}
+  root.innerHTML=state.homeNews.map(p=>{
+    const image=homeNewsImageUrl(p.image_path);
+    return `<a class="home-news-card" href="/newsletter.html?post=${encodeURIComponent(p.slug)}" aria-label="${esc(p.title)}">
+      <div class="home-news-image">${image?`<img src="${esc(image)}" alt="${esc(p.title)}" loading="lazy">`:'<span>SH</span>'}</div>
+      <div class="home-news-body"><div class="home-news-meta">${esc(p.author_name||'Support Hub')} · ${homeNewsDate(p.published_at)}</div><h3>${esc(p.title)}</h3><p>${esc(p.excerpt||'Deschide articolul pentru a citi mai mult.')}</p></div>
+    </a>`;
+  }).join('');
+  root.scrollTo({left:0,behavior:'auto'});
+  updateHomeNewsControls();
+  bindHomeNewsCarousel();
+  startHomeNewsAutoplay();
+}
+
+function homeNewsStepSize(){
+  const root=$('#homeNewsCarousel');const card=root?.querySelector('.home-news-card');if(!root||!card)return 0;
+  const styles=getComputedStyle(root);const gap=parseFloat(styles.columnGap||styles.gap||'0')||0;
+  return card.getBoundingClientRect().width+gap;
+}
+function homeNewsCanScroll(){const root=$('#homeNewsCarousel');return !!root&&root.scrollWidth>root.clientWidth+4;}
+function updateHomeNewsControls(){const can=homeNewsCanScroll();const prev=$('#homeNewsPrev'),next=$('#homeNewsNext');if(prev)prev.disabled=!can;if(next)next.disabled=!can;}
+function stepHomeNews(direction=1){
+  const root=$('#homeNewsCarousel');if(!root||!homeNewsCanScroll())return;
+  const step=homeNewsStepSize();const max=Math.max(0,root.scrollWidth-root.clientWidth);
+  if(direction>0&&root.scrollLeft>=max-step*.45)root.scrollTo({left:0,behavior:'smooth'});
+  else if(direction<0&&root.scrollLeft<=step*.45)root.scrollTo({left:max,behavior:'smooth'});
+  else root.scrollBy({left:direction*step,behavior:'smooth'});
+}
+function stopHomeNewsAutoplay(){clearInterval(homeNewsAutoplayTimer);homeNewsAutoplayTimer=null;}
+function startHomeNewsAutoplay(){stopHomeNewsAutoplay();if(!homeNewsCanScroll()||document.hidden)return;homeNewsAutoplayTimer=setInterval(()=>stepHomeNews(1),5000);}
+function scheduleHomeNewsAutoplay(delay=5000){stopHomeNewsAutoplay();clearTimeout(homeNewsResumeTimer);homeNewsResumeTimer=setTimeout(startHomeNewsAutoplay,delay);}
+function userTouchedHomeNews(){stopHomeNewsAutoplay();clearTimeout(homeNewsResumeTimer);}
+function userReleasedHomeNews(){scheduleHomeNewsAutoplay(5000);}
+function bindHomeNewsCarousel(){
+  if(homeNewsBound)return;homeNewsBound=true;
+  const root=$('#homeNewsCarousel'),prev=$('#homeNewsPrev'),next=$('#homeNewsNext');if(!root)return;
+  prev?.addEventListener('click',()=>{userTouchedHomeNews();stepHomeNews(-1);userReleasedHomeNews();});
+  next?.addEventListener('click',()=>{userTouchedHomeNews();stepHomeNews(1);userReleasedHomeNews();});
+  root.addEventListener('pointerdown',userTouchedHomeNews,{passive:true});
+  root.addEventListener('pointerup',userReleasedHomeNews,{passive:true});
+  root.addEventListener('pointercancel',userReleasedHomeNews,{passive:true});
+  root.addEventListener('touchstart',userTouchedHomeNews,{passive:true});
+  root.addEventListener('touchend',userReleasedHomeNews,{passive:true});
+  root.addEventListener('wheel',()=>{userTouchedHomeNews();userReleasedHomeNews();},{passive:true});
+  root.addEventListener('mouseenter',userTouchedHomeNews);
+  root.addEventListener('mouseleave',userReleasedHomeNews);
+  root.addEventListener('focusin',userTouchedHomeNews);
+  root.addEventListener('focusout',userReleasedHomeNews);
+  window.addEventListener('resize',()=>{updateHomeNewsControls();scheduleHomeNewsAutoplay(1200);},{passive:true});
+  document.addEventListener('visibilitychange',()=>document.hidden?stopHomeNewsAutoplay():scheduleHomeNewsAutoplay(1200));
+}
+function initHomeNewsRefresh(){clearInterval(homeNewsRefreshTimer);homeNewsRefreshTimer=setInterval(()=>loadHomeNewsCarousel(true),60000);}
+
 async function init(){
   bindStaticEvents();
   showListingSkeletons();
   const {data:{session}}=await db.auth.getSession();
   await applySession(session);
-  await Promise.all([loadCategories(), loadListings()]);
+  await Promise.all([loadCategories(), loadListings(), loadHomeNewsCarousel()]);
   if(state.user) await loadFavorites();
   renderAll();
+  initHomeNewsRefresh();
   const sharedListingId=new URLSearchParams(location.search).get('listing');
   if(sharedListingId&&state.listings.some(l=>l.id===sharedListingId))setTimeout(()=>openDetail(sharedListingId),80);
   db.auth.onAuthStateChange(async (event, session)=>{await applySession(session);await loadListings();if(state.user)await loadFavorites();else state.favorites.clear();renderAll()});
