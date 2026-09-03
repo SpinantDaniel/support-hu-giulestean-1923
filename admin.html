@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="ro">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#3b0c13">
+  <meta name="robots" content="noindex,nofollow">
+  <title>Panou administrare — Support Hub Giuleștean 1923</title>
+  <link rel="stylesheet" href="/admin.css">
+</head>
+<body>
+  <header class="admin-header">
+    <a class="brand" href="/"><span class="brand-mark">SH</span><span><b>Support Hub</b><small>Panou administrare</small></span></a>
+    <div class="header-right"><span class="role-badge" id="roleBadge">Verificare acces…</span><a class="back-link" href="/">Marketplace ↗</a></div>
+  </header>
+
+  <main>
+    <section class="gate" id="gate"><div class="loader"></div><h1>Se verifică accesul…</h1><p>Panoul folosește aceeași sesiune cu contul Support Hub.</p></section>
+
+    <div class="admin-shell" id="adminApp" hidden>
+      <aside class="sidebar">
+        <button data-tab="overview" data-admin-only>Privire generală</button>
+        <button data-tab="users" data-admin-only>Utilizatori</button>
+        <button data-tab="reports" data-admin-only>Raportări</button>
+        <button data-tab="listings" data-admin-only>Anunțuri</button>
+        <button data-tab="newsletter">Newsletter / Blog</button>
+        <button data-tab="editors" data-admin-only>Editori newsletter</button>
+      </aside>
+
+      <section class="content">
+        <div class="panel" data-panel="overview" data-admin-only>
+          <div class="panel-head"><div><span class="eyebrow">ADMIN FULL</span><h1>Control central</h1></div><button class="ghost" id="refreshDashboard">Reîmprospătează</button></div>
+          <div class="stats" id="stats"></div>
+          <div class="section-card"><h2>Utilizatori raportați</h2><div id="reportedPreview"></div></div>
+        </div>
+
+        <div class="panel" data-panel="users" data-admin-only hidden>
+          <div class="panel-head"><div><span class="eyebrow">ACCES & ÎNCREDERE</span><h1>Utilizatori</h1></div><input class="search" id="userSearch" placeholder="Caută după nume sau email"></div>
+          <div id="usersList" class="stack"></div>
+        </div>
+
+        <div class="panel" data-panel="reports" data-admin-only hidden>
+          <div class="panel-head"><div><span class="eyebrow">MODERARE</span><h1>Raportări</h1></div></div>
+          <div id="reportsList" class="stack"></div>
+        </div>
+
+        <div class="panel" data-panel="listings" data-admin-only hidden>
+          <div class="panel-head"><div><span class="eyebrow">MARKETPLACE</span><h1>Anunțuri</h1></div><input class="search" id="listingSearch" placeholder="Caută titlu, user sau email"></div>
+          <div id="adminListings" class="stack"></div>
+        </div>
+
+        <div class="panel" data-panel="newsletter" hidden>
+          <div class="panel-head"><div><span class="eyebrow">EDITORIAL</span><h1>Newsletter / Blog</h1><p id="newsletterRoleText">Publică articole cu text și imagine pe pagina publică de noutăți.</p></div><a class="ghost link" href="/newsletter.html" target="_blank" rel="noopener">Vezi pagina publică ↗</a></div>
+          <div class="editor-grid">
+            <form class="section-card composer" id="postForm">
+              <input type="hidden" name="id">
+              <input type="hidden" name="image_path">
+              <h2 id="postFormTitle">Articol nou</h2>
+              <label>Titlu<input name="title" required minlength="3" maxlength="180" placeholder="Titlul articolului"></label>
+              <label>Rezumat<textarea name="excerpt" maxlength="350" rows="3" placeholder="Rezumat scurt pentru pagina de noutăți"></textarea></label>
+              <label>Text articol<textarea name="body" required minlength="10" rows="12" placeholder="Scrie articolul aici. Paragrafele se separă cu o linie liberă."></textarea></label>
+              <label>Imagine principală<input name="image" type="file" accept="image/jpeg,image/png,image/webp"><small>JPG, PNG sau WEBP · max. 6 MB</small></label>
+              <div id="postImagePreview" class="image-preview" hidden></div>
+              <label>Stare<select name="status"><option value="published">Publicat</option><option value="draft">Ciornă</option></select></label>
+              <div class="form-actions"><button type="button" class="ghost" id="cancelPostEdit" hidden>Renunță la editare</button><button class="primary" id="savePostBtn">Publică articolul</button></div>
+            </form>
+            <div class="section-card"><h2>Articole</h2><div id="postsList" class="post-list"></div></div>
+          </div>
+        </div>
+
+        <div class="panel" data-panel="editors" data-admin-only hidden>
+          <div class="panel-head"><div><span class="eyebrow">ACCES LIMITAT</span><h1>Editori newsletter</h1><p>Adresele aprobate pot intra în acest panou, dar văd exclusiv modulul Newsletter / Blog.</p></div></div>
+          <form class="section-card inline-form" id="editorForm"><label>Email autorizat<input name="email" type="email" required placeholder="editor@exemplu.ro"></label><button class="primary">Adaugă editor</button></form>
+          <div class="section-card"><div id="editorsList" class="stack"></div></div>
+        </div>
+      </section>
+    </div>
+  </main>
+  <div class="toast" id="toast"></div>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.112.4/dist/umd/supabase.min.js"></script>
+  <script src="/admin.js"></script>
+</body>
+</html>

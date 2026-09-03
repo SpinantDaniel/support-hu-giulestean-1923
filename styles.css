@@ -19,3 +19,7 @@ button:disabled{opacity:.6;cursor:not-allowed}.muted{color:var(--muted);font-siz
 /* Account recovery + account deletion */
 .danger-zone{margin-top:22px;padding:16px;border:1px solid rgba(154,27,55,.28);border-radius:16px;background:rgba(154,27,55,.045);display:flex;gap:16px;align-items:center;justify-content:space-between}.danger-zone>div{display:grid;gap:5px}.danger-zone b{color:#74182d}.danger-zone span{font-size:13px;color:var(--muted)}.danger-zone .danger{white-space:nowrap}.danger-notice{border-color:rgba(154,27,55,.28)!important;background:rgba(154,27,55,.06)!important;color:#6f1530!important}#passwordResetModal .muted{line-height:1.55}#recoveryEmailHint{font-weight:700;color:var(--wine)}
 @media(max-width:640px){.danger-zone{align-items:stretch;flex-direction:column}.danger-zone .danger{width:100%}}
+
+/* v5 admin/newsletter access */
+.admin-access-zone{margin-top:18px;border:1px solid #d8c6cc;background:#fbf6f8;border-radius:14px;padding:15px;display:flex;align-items:center;justify-content:space-between;gap:14px}.admin-access-zone[hidden]{display:none}.admin-access-zone b,.admin-access-zone span{display:block}.admin-access-zone b{color:var(--wine);font-size:13px}.admin-access-zone span{margin-top:4px;color:var(--muted);font-size:11px;line-height:1.4}.account-suspension{margin:8px 0 2px;padding:9px 11px;border-radius:9px;background:#fff0f0;color:#a52626;font-size:11px;font-weight:700;line-height:1.4}
+@media(max-width:650px){.admin-access-zone{align-items:stretch;flex-direction:column}.admin-access-zone .ghost{width:100%}}
