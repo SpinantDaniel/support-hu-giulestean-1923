@@ -1,6 +1,7 @@
 
 const SUPABASE_URL = 'https://bhqpixyiojthpfqnyhsh.supabase.co';
 const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_U2IRhs6K85S43ZRqKK5U8Q_HSknWMNY';
+const RECOVERY_LINK_PRESENT = new URLSearchParams(window.location.hash.slice(1)).get('type')==='recovery' || new URLSearchParams(window.location.search).get('type')==='recovery';
 const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
   auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true }
 });
@@ -35,7 +36,8 @@ async function init(){
   await Promise.all([loadCategories(), loadListings()]);
   if(state.user) await loadFavorites();
   renderAll();
-  db.auth.onAuthStateChange(async (_event, session)=>{await applySession(session);await loadListings();if(state.user)await loadFavorites();else state.favorites.clear();renderAll();});
+  if(RECOVERY_LINK_PRESENT&&state.user){closeDialog('authModal');$('#passwordResetModal').showModal();}
+  db.auth.onAuthStateChange(async (event, session)=>{await applySession(session);await loadListings();if(state.user)await loadFavorites();else state.favorites.clear();renderAll();if(event==='PASSWORD_RECOVERY'){closeDialog('authModal');$('#passwordResetModal').showModal();toast('Link verificat. Setează parola nouă.');}});
 }
 
 async function applySession(session){
@@ -165,7 +167,7 @@ async function reportListing(l){
 }
 
 function openAuth(mode='login'){state.authMode=mode;updateAuthMode();$('#authModal').showModal();}
-function updateAuthMode(){const signup=state.authMode==='signup';$('#authTitle').textContent=signup?'Creează cont':'Intră în cont';$('#authSubmit').textContent=signup?'Creează cont':'Intră în cont';$('#displayNameField').hidden=!signup;$('#authForm [name=password]').autocomplete=signup?'new-password':'current-password';$$('[data-auth-mode]').forEach(b=>b.classList.toggle('active',b.dataset.authMode===state.authMode));}
+function updateAuthMode(){const signup=state.authMode==='signup';$('#authTitle').textContent=signup?'Creează cont':'Intră în cont';$('#authSubmit').textContent=signup?'Creează cont':'Intră în cont';$('#displayNameField').hidden=!signup;$('#forgotPasswordRow').hidden=signup;$('#authNotice').textContent=signup?'Fiecare adresă de email poate avea un singur cont. Dacă emailul este deja înregistrat, crearea unui cont nou este blocată.':'Contul îți permite să publici, să salvezi favorite și să contactezi vânzătorii.';$('#authForm [name=password]').autocomplete=signup?'new-password':'current-password';$$('[data-auth-mode]').forEach(b=>b.classList.toggle('active',b.dataset.authMode===state.authMode));}
 async function submitAuth(e){
   e.preventDefault();const form=e.currentTarget,btn=$('#authSubmit'),fd=new FormData(form),email=String(fd.get('email')).trim(),password=String(fd.get('password'));setBusy(btn,true,state.authMode==='signup'?'Se creează…':'Se autentifică…');
   try{
@@ -178,6 +180,26 @@ async function submitAuth(e){
       closeDialog('authModal');toast('Cont creat. Bine ai venit!');
     } else {const {error}=await db.auth.signInWithPassword({email,password});if(error)throw error;closeDialog('authModal');toast('Ai intrat în cont.');}
   }catch(err){console.error(err);toast(err.message||'Autentificarea a eșuat.','error');}finally{setBusy(btn,false);}
+}
+
+async function requestPasswordReset(){
+  const input=$('#authForm [name=email]');const email=String(input?.value||'').trim().toLowerCase();
+  if(!email||!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){input?.focus();return toast('Introdu mai întâi adresa de email.','error');}
+  const btn=$('#forgotPasswordBtn');setBusy(btn,true,'Se trimite…');
+  try{
+    const redirectTo=`${window.location.origin}${window.location.pathname}`;
+    const {error}=await db.auth.resetPasswordForEmail(email,{redirectTo});
+    if(error)throw error;
+    toast('Dacă există un cont pentru acest email, vei primi un link de resetare.');
+  }catch(err){console.error(err);toast('Emailul de resetare nu a putut fi trimis. Verifică setările de redirect Supabase.','error');}finally{setBusy(btn,false);}
+}
+
+async function submitPasswordReset(e){
+  e.preventDefault();const form=e.currentTarget,btn=$('#passwordResetSubmit'),fd=new FormData(form),password=String(fd.get('new_password')||''),confirm=String(fd.get('confirm_password')||'');
+  if(password.length<8)return toast('Parola trebuie să aibă minimum 8 caractere.','error');
+  if(password!==confirm)return toast('Parolele nu coincid.','error');
+  setBusy(btn,true,'Se salvează…');
+  try{const {error}=await db.auth.updateUser({password});if(error)throw error;form.reset();closeDialog('passwordResetModal');toast('Parola a fost schimbată.');history.replaceState({},document.title,window.location.pathname);}catch(err){console.error(err);toast(err.message||'Parola nu a putut fi schimbată.','error');}finally{setBusy(btn,false);}
 }
 
 function openSell(){if(!requireAuth())return;$('#sellModal').showModal();}
@@ -288,7 +310,7 @@ function bindStaticEvents(){
   $$('[data-open-sell]').forEach(b=>b.onclick=openSell);
   $('#loginBtn').onclick=()=>state.user?openAccount():openAuth('login');$('#mobileAccount').onclick=$('#loginBtn').onclick;
   $$('[data-auth-mode]').forEach(b=>b.onclick=()=>{state.authMode=b.dataset.authMode;updateAuthMode();});
-  $('#authForm').addEventListener('submit',submitAuth);$('#sellForm').addEventListener('submit',publishListing);$('#messageForm').addEventListener('submit',sendMessage);
+  $('#authForm').addEventListener('submit',submitAuth);$('#forgotPasswordBtn').onclick=requestPasswordReset;$('#passwordResetForm').addEventListener('submit',submitPasswordReset);$('#sellForm').addEventListener('submit',publishListing);$('#messageForm').addEventListener('submit',sendMessage);
   $('#logoutBtn').onclick=async()=>{await db.auth.signOut();closeDialog('accountModal');toast('Ai ieșit din cont.');};$('#editProfileBtn').onclick=openProfileEditor;$('#profileForm').addEventListener('submit',saveProfile);$('#profileForm [name=avatar]').onchange=e=>{const f=e.target.files?.[0];if(f){const u=URL.createObjectURL(f);$('#profilePreview').innerHTML=`<span class="profile-preview-avatar has-image"><img src="${esc(u)}" alt="Preview avatar"></span>`;}};
   $$('[data-account-tab]').forEach(b=>b.onclick=async()=>{state.accountTab=b.dataset.accountTab;updateAccountTabButtons();await renderAccount();});
   $('#searchBtn').onclick=()=>{renderListings();$('#anunturi').scrollIntoView({behavior:'smooth'});};$('#searchInput').addEventListener('keydown',e=>{if(e.key==='Enter')$('#searchBtn').click();});
@@ -297,7 +319,7 @@ function bindStaticEvents(){
   $$('[data-focus-search]').forEach(b=>b.onclick=()=>{scrollTo({top:0,behavior:'smooth'});setTimeout(()=>$('#searchInput').focus(),300);});$$('[data-home]').forEach(b=>b.onclick=()=>scrollTo({top:0,behavior:'smooth'}));$$('[data-favorites]').forEach(b=>b.onclick=()=>openAccount('favorites'));
   $$('[data-legal]').forEach(a=>a.onclick=e=>{e.preventDefault();openLegal(a.dataset.legal);});
   $('#sellForm [name=images]').onchange=e=>{const n=e.target.files.length;$('#imageHelp').textContent=n?`${n} fotografie${n===1?'':'i'} selectată${n===1?'':'e'}.`:'JPG, PNG sau WEBP. Recomandat sub 5 MB / imagine.';};
-  ['authModal','sellModal','detailModal','messageModal','accountModal','profileModal','legalModal'].forEach(id=>{const d=document.getElementById(id);d.addEventListener('click',e=>{if(e.target===d)d.close();});});
+  ['authModal','passwordResetModal','sellModal','detailModal','messageModal','accountModal','profileModal','legalModal'].forEach(id=>{const d=document.getElementById(id);d.addEventListener('click',e=>{if(e.target===d)d.close();});});
 }
 
 function openLegal(type){const title=type==='privacy'?'Confidențialitate':'Termeni de utilizare';const body=type==='privacy'?`Support Hub Giuleștean 1923 folosește datele necesare pentru cont, publicarea anunțurilor, favorite, mesaje și contact între utilizatori. Datele de contact direct nu sunt afișate vizitatorilor neautentificați. Nu vindem date personale. Pentru lansarea publică, această pagină trebuie completată cu operatorul de date, baza legală, perioada de retenție și procedura de ștergere.`:`Support Hub Giuleștean 1923 este o platformă independentă de anunțuri și nu este parte în tranzacții. Utilizatorul este responsabil pentru legalitatea, autenticitatea și descrierea bunurilor sau serviciilor publicate. Sunt interzise produsele ilegale, fraudele, conținutul care încalcă drepturile altora și anunțurile înșelătoare. Pentru lansarea publică, termenii trebuie completați cu datele operatorului și politica de moderare.`;$('#legalContent').innerHTML=`<div class="modal-head"><div><span class="kicker">FSH • GIULEȘTI • 1923</span><h2>${title}</h2></div><button class="close" data-close="legalModal">×</button></div><p class="detail-desc">${body}</p>`;bindCloseButtons($('#legalContent'));$('#legalModal').showModal();}
