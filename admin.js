@@ -22,6 +22,7 @@ async function init(){
   const {data:profile}=await db.from('profiles').select('display_name').eq('id',state.user.id).maybeSingle();state.profile=profile||null;
   $('#gate').hidden=true;$('#adminApp').hidden=false;$('#roleBadge').textContent=state.role==='admin'?'Administrator full':'Editor newsletter';
   $$('[data-admin-only]').forEach(el=>el.hidden=state.role!=='admin');
+  document.body.classList.toggle('editor-only',state.role==='editor');
   bind();
   if(state.role==='admin'){state.activeTab='overview';await Promise.all([loadDashboard(),loadEditors(),loadPosts()]);}
   else{state.activeTab='newsletter';$('#newsletterRoleText').textContent='Ai acces editorial limitat: poți publica și edita propriile articole. Nu ai acces la utilizatori, raportări sau anunțuri.';await loadPosts();}

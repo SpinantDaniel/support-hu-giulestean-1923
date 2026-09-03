@@ -19,6 +19,6 @@ async function showArticle(slug){
   $('#newsHero').hidden=true;$('#newsList').hidden=true;$('#articleView').hidden=false;
   if(error||!data){$('#articleView').innerHTML='<a class="article-back" href="/newsletter.html">← Noutăți</a><div class="empty">Articolul nu există sau nu mai este public.</div>';return;}
   document.title=`${data.title} — Support Hub Giuleștean 1923`;
-  $('#articleView').innerHTML=`<a class="article-back" href="/newsletter.html">← Toate noutățile</a><span class="eyebrow">NOUTĂȚI • SUPPORT HUB</span><h1>${esc(data.title)}</h1><div class="article-meta">${esc(data.author_name||'Support Hub Giuleștean 1923')} · ${fmt(data.published_at)}</div>${data.image_path?`<img class="article-hero" src="${esc(imageUrl(data.image_path))}" alt="${esc(data.title)}">`:''}<div class="article-content">${paragraphs(data.body)}</div>`;
+  $('#articleView').innerHTML=`<a class="article-back" href="/newsletter.html">← Toate noutățile</a><h1>${esc(data.title)}</h1><div class="article-meta">${esc(data.author_name||'Support Hub Giuleștean 1923')} · ${fmt(data.published_at)}</div>${data.image_path?`<img class="article-hero" src="${esc(imageUrl(data.image_path))}" alt="${esc(data.title)}">`:''}<div class="article-content">${paragraphs(data.body)}</div>`;
 }
 init();
