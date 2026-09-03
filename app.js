@@ -1,7 +1,6 @@
 
 const SUPABASE_URL = 'https://bhqpixyiojthpfqnyhsh.supabase.co';
 const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_U2IRhs6K85S43ZRqKK5U8Q_HSknWMNY';
-const RECOVERY_LINK_PRESENT = new URLSearchParams(window.location.hash.slice(1)).get('type')==='recovery' || new URLSearchParams(window.location.search).get('type')==='recovery';
 const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
   auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true }
 });
@@ -36,8 +35,7 @@ async function init(){
   await Promise.all([loadCategories(), loadListings()]);
   if(state.user) await loadFavorites();
   renderAll();
-  if(RECOVERY_LINK_PRESENT&&state.user){closeDialog('authModal');$('#passwordResetModal').showModal();}
-  db.auth.onAuthStateChange(async (event, session)=>{await applySession(session);await loadListings();if(state.user)await loadFavorites();else state.favorites.clear();renderAll();if(event==='PASSWORD_RECOVERY'){closeDialog('authModal');$('#passwordResetModal').showModal();toast('Link verificat. Setează parola nouă.');}});
+  db.auth.onAuthStateChange(async (event, session)=>{await applySession(session);await loadListings();if(state.user)await loadFavorites();else state.favorites.clear();renderAll()});
 }
 
 async function applySession(session){
@@ -184,22 +182,29 @@ async function submitAuth(e){
 
 async function requestPasswordReset(){
   const input=$('#authForm [name=email]');const email=String(input?.value||'').trim().toLowerCase();
-  if(!email||!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){input?.focus();return toast('Introdu mai întâi adresa de email.','error');}
+  if(!email||!/^\S+@\S+\.\S+$/.test(email)){input?.focus();return toast('Introdu mai întâi adresa de email.','error');}
   const btn=$('#forgotPasswordBtn');setBusy(btn,true,'Se trimite…');
   try{
-    const redirectTo=`${window.location.origin}${window.location.pathname}`;
-    const {error}=await db.auth.resetPasswordForEmail(email,{redirectTo});
+    const {error}=await db.auth.resetPasswordForEmail(email);
     if(error)throw error;
-    toast('Dacă există un cont pentru acest email, vei primi un link de resetare.');
-  }catch(err){console.error(err);toast('Emailul de resetare nu a putut fi trimis. Verifică setările de redirect Supabase.','error');}finally{setBusy(btn,false);}
+    sessionStorage.setItem('fsh_recovery_email',email);
+    const form=$('#passwordResetForm');form.reset();form.elements.recovery_email.value=email;$('#recoveryEmailHint').textContent=`Cod trimis la ${email}.`;closeDialog('authModal');$('#passwordResetModal').showModal();
+    toast('Dacă există un cont pentru acest email, vei primi un cod temporar.');
+  }catch(err){console.error(err);toast('Codul de recuperare nu a putut fi trimis.','error');}finally{setBusy(btn,false);}
 }
 
 async function submitPasswordReset(e){
-  e.preventDefault();const form=e.currentTarget,btn=$('#passwordResetSubmit'),fd=new FormData(form),password=String(fd.get('new_password')||''),confirm=String(fd.get('confirm_password')||'');
+  e.preventDefault();const form=e.currentTarget,btn=$('#passwordResetSubmit'),fd=new FormData(form),email=String(fd.get('recovery_email')||sessionStorage.getItem('fsh_recovery_email')||'').trim().toLowerCase(),token=String(fd.get('temporary_code')||'').trim(),password=String(fd.get('new_password')||''),confirm=String(fd.get('confirm_password')||'');
+  if(!email)return toast('Adresa de email pentru recuperare lipsește. Cere un cod nou.','error');
+  if(token.length<6)return toast('Introdu codul temporar primit pe email.','error');
   if(password.length<8)return toast('Parola trebuie să aibă minimum 8 caractere.','error');
   if(password!==confirm)return toast('Parolele nu coincid.','error');
-  setBusy(btn,true,'Se salvează…');
-  try{const {error}=await db.auth.updateUser({password});if(error)throw error;form.reset();closeDialog('passwordResetModal');toast('Parola a fost schimbată.');history.replaceState({},document.title,window.location.pathname);}catch(err){console.error(err);toast(err.message||'Parola nu a putut fi schimbată.','error');}finally{setBusy(btn,false);}
+  setBusy(btn,true,'Se verifică…');
+  try{
+    const verified=await db.auth.verifyOtp({email,token,type:'recovery'});if(verified.error)throw verified.error;
+    const changed=await db.auth.updateUser({password});if(changed.error)throw changed.error;
+    sessionStorage.removeItem('fsh_recovery_email');form.reset();await db.auth.signOut({scope:'local'});closeDialog('passwordResetModal');openAuth('login');$('#authForm [name=email]').value=email;$('#authForm [name=password]').value='';toast('Parola a fost schimbată. Intră în cont cu parola nouă.');
+  }catch(err){console.error(err);toast('Codul este invalid sau expirat. Cere un cod nou și încearcă din nou.','error');}finally{setBusy(btn,false);}
 }
 
 function openSell(){if(!requireAuth())return;$('#sellModal').showModal();}
@@ -275,6 +280,23 @@ async function saveProfile(e){
 }
 
 
+function openDeleteAccount(){
+  if(!requireAuth())return;closeDialog('profileModal');const form=$('#deleteAccountForm');form.reset();$('#deleteAccountModal').showModal();
+}
+
+async function deleteAccount(e){
+  e.preventDefault();if(!requireAuth())return;const form=e.currentTarget,confirmation=String(new FormData(form).get('confirmation')||'').trim().toUpperCase();
+  if(confirmation!=='ȘTERGE'&&confirmation!=='STERGE')return toast('Scrie ȘTERGE pentru confirmare.','error');
+  const btn=$('#deleteAccountConfirmBtn');setBusy(btn,true,'Se șterge…');
+  try{
+    const session=(await db.auth.getSession()).data.session;if(!session?.access_token)throw new Error('Sesiunea a expirat. Intră din nou în cont.');
+    const response=await fetch(`${SUPABASE_URL}/functions/v1/delete-account`,{method:'POST',headers:{'Content-Type':'application/json','apikey':SUPABASE_PUBLISHABLE_KEY,'Authorization':`Bearer ${session.access_token}`}});
+    const result=await response.json().catch(()=>({}));if(!response.ok)throw new Error(result.error||'Contul nu a putut fi șters.');
+    await db.auth.signOut({scope:'local'});state.session=null;state.user=null;state.profile=null;state.favorites.clear();closeDialog('deleteAccountModal');closeDialog('accountModal');updateAccountButtons();await loadListings();renderListings();toast('Contul și datele asociate au fost șterse definitiv.');
+  }catch(err){console.error(err);toast(err.message||'Contul nu a putut fi șters.','error');}finally{setBusy(btn,false);}
+}
+
+
 async function renderMessages(root){
   const {data:convs,error}=await db.from('conversations').select('id,listing_id,buyer_id,seller_id,updated_at').order('updated_at',{ascending:false});if(error)throw error;
   if(!convs?.length){root.innerHTML='<div class="empty compact"><b>N-ai conversații.</b><span>Mesajele pornite din anunțuri vor apărea aici.</span></div>';return;}
@@ -311,7 +333,7 @@ function bindStaticEvents(){
   $('#loginBtn').onclick=()=>state.user?openAccount():openAuth('login');$('#mobileAccount').onclick=$('#loginBtn').onclick;
   $$('[data-auth-mode]').forEach(b=>b.onclick=()=>{state.authMode=b.dataset.authMode;updateAuthMode();});
   $('#authForm').addEventListener('submit',submitAuth);$('#forgotPasswordBtn').onclick=requestPasswordReset;$('#passwordResetForm').addEventListener('submit',submitPasswordReset);$('#sellForm').addEventListener('submit',publishListing);$('#messageForm').addEventListener('submit',sendMessage);
-  $('#logoutBtn').onclick=async()=>{await db.auth.signOut();closeDialog('accountModal');toast('Ai ieșit din cont.');};$('#editProfileBtn').onclick=openProfileEditor;$('#profileForm').addEventListener('submit',saveProfile);$('#profileForm [name=avatar]').onchange=e=>{const f=e.target.files?.[0];if(f){const u=URL.createObjectURL(f);$('#profilePreview').innerHTML=`<span class="profile-preview-avatar has-image"><img src="${esc(u)}" alt="Preview avatar"></span>`;}};
+  $('#logoutBtn').onclick=async()=>{await db.auth.signOut();closeDialog('accountModal');toast('Ai ieșit din cont.');};$('#editProfileBtn').onclick=openProfileEditor;$('#profileForm').addEventListener('submit',saveProfile);$('#deleteAccountBtn').onclick=openDeleteAccount;$('#deleteAccountForm').addEventListener('submit',deleteAccount);$('#profileForm [name=avatar]').onchange=e=>{const f=e.target.files?.[0];if(f){const u=URL.createObjectURL(f);$('#profilePreview').innerHTML=`<span class="profile-preview-avatar has-image"><img src="${esc(u)}" alt="Preview avatar"></span>`;}};
   $$('[data-account-tab]').forEach(b=>b.onclick=async()=>{state.accountTab=b.dataset.accountTab;updateAccountTabButtons();await renderAccount();});
   $('#searchBtn').onclick=()=>{renderListings();$('#anunturi').scrollIntoView({behavior:'smooth'});};$('#searchInput').addEventListener('keydown',e=>{if(e.key==='Enter')$('#searchBtn').click();});
   $$('[data-search]').forEach(b=>b.onclick=()=>{$('#searchInput').value=b.dataset.search;$('#searchBtn').click();});
@@ -319,7 +341,7 @@ function bindStaticEvents(){
   $$('[data-focus-search]').forEach(b=>b.onclick=()=>{scrollTo({top:0,behavior:'smooth'});setTimeout(()=>$('#searchInput').focus(),300);});$$('[data-home]').forEach(b=>b.onclick=()=>scrollTo({top:0,behavior:'smooth'}));$$('[data-favorites]').forEach(b=>b.onclick=()=>openAccount('favorites'));
   $$('[data-legal]').forEach(a=>a.onclick=e=>{e.preventDefault();openLegal(a.dataset.legal);});
   $('#sellForm [name=images]').onchange=e=>{const n=e.target.files.length;$('#imageHelp').textContent=n?`${n} fotografie${n===1?'':'i'} selectată${n===1?'':'e'}.`:'JPG, PNG sau WEBP. Recomandat sub 5 MB / imagine.';};
-  ['authModal','passwordResetModal','sellModal','detailModal','messageModal','accountModal','profileModal','legalModal'].forEach(id=>{const d=document.getElementById(id);d.addEventListener('click',e=>{if(e.target===d)d.close();});});
+  ['authModal','passwordResetModal','sellModal','detailModal','messageModal','accountModal','profileModal','deleteAccountModal','legalModal'].forEach(id=>{const d=document.getElementById(id);d.addEventListener('click',e=>{if(e.target===d)d.close();});});
 }
 
 function openLegal(type){const title=type==='privacy'?'Confidențialitate':'Termeni de utilizare';const body=type==='privacy'?`Support Hub Giuleștean 1923 folosește datele necesare pentru cont, publicarea anunțurilor, favorite, mesaje și contact între utilizatori. Datele de contact direct nu sunt afișate vizitatorilor neautentificați. Nu vindem date personale. Pentru lansarea publică, această pagină trebuie completată cu operatorul de date, baza legală, perioada de retenție și procedura de ștergere.`:`Support Hub Giuleștean 1923 este o platformă independentă de anunțuri și nu este parte în tranzacții. Utilizatorul este responsabil pentru legalitatea, autenticitatea și descrierea bunurilor sau serviciilor publicate. Sunt interzise produsele ilegale, fraudele, conținutul care încalcă drepturile altora și anunțurile înșelătoare. Pentru lansarea publică, termenii trebuie completați cu datele operatorului și politica de moderare.`;$('#legalContent').innerHTML=`<div class="modal-head"><div><span class="kicker">FSH • GIULEȘTI • 1923</span><h2>${title}</h2></div><button class="close" data-close="legalModal">×</button></div><p class="detail-desc">${body}</p>`;bindCloseButtons($('#legalContent'));$('#legalModal').showModal();}

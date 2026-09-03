@@ -14,3 +14,8 @@ button:disabled{opacity:.6;cursor:not-allowed}.muted{color:var(--muted);font-siz
 
 
 .auth-helper-row{display:flex;justify-content:flex-end;margin-top:8px}.forgot-password-link{border:0;background:transparent;color:var(--wine);font-size:11px;font-weight:850;padding:4px 0;cursor:pointer}.forgot-password-link:hover{text-decoration:underline}#passwordResetForm>label{display:block;font-size:11px;font-weight:800;margin-top:11px}#passwordResetForm input{display:block;width:100%;border:1px solid var(--line);border-radius:10px;padding:12px;margin-top:6px;outline:0}#passwordResetForm input:focus{border-color:var(--wine)}
+
+
+/* Account recovery + account deletion */
+.danger-zone{margin-top:22px;padding:16px;border:1px solid rgba(154,27,55,.28);border-radius:16px;background:rgba(154,27,55,.045);display:flex;gap:16px;align-items:center;justify-content:space-between}.danger-zone>div{display:grid;gap:5px}.danger-zone b{color:#74182d}.danger-zone span{font-size:13px;color:var(--muted)}.danger-zone .danger{white-space:nowrap}.danger-notice{border-color:rgba(154,27,55,.28)!important;background:rgba(154,27,55,.06)!important;color:#6f1530!important}#passwordResetModal .muted{line-height:1.55}#recoveryEmailHint{font-weight:700;color:var(--wine)}
+@media(max-width:640px){.danger-zone{align-items:stretch;flex-direction:column}.danger-zone .danger{width:100%}}
