@@ -74,8 +74,9 @@ Marketplace comunitar independent. Frontend static pe Vercel, backend Supabase.
 - Supabase profiles stochează timestamp + versiunea 1.0 a documentelor juridice
 
 
-## v5.25 — Hotfix listing_images sort_order
-- eliminat sort_order temporar 99 la upload-ul imaginilor noi
-- imaginile sunt inserate direct cu poziția validă 0..7
-- compatibil cu CHECK-ul Supabase listing_images_sort_order_check (0..20)
-- fără modificări SQL și fără modificări de UI
+## v5.25 — Admin PWA/session bootstrap fix
+- Admin opens in the same PWA/browser context, not a separate _blank window
+- current session is reused; refresh happens only once after an actual 401
+- profile/blog/editor loading failures cannot collapse the whole panel
+- admin DOM binding is null-safe
+- app.js and admin.js cache-busted to v5.25

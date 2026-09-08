@@ -978,8 +978,7 @@ async function publishListing(e){
     }
 
     const pathByKey=new Map();
-    for(let imageIndex=0;imageIndex<imageItems.length;imageIndex++){
-      const item=imageItems[imageIndex];
+    for(const item of imageItems){
       if(item.kind==='existing'){
         pathByKey.set(item.key,item.path);
         continue;
@@ -992,14 +991,7 @@ async function publishListing(e){
       const up=await db.storage.from('listing-images').upload(path,f,{cacheControl:'3600',upsert:false,contentType:f.type});
       if(up.error)throw up.error;
       newlyUploadedPaths.push(path);
-
-      // Insert immediately with a valid CHECK-compliant sort_order.
-      // listing_images_sort_order_check allows 0..20; listings are limited to max 8 images.
-      const ri=await db.from('listing_images').insert({
-        listing_id:listingId,
-        storage_path:path,
-        sort_order:imageIndex
-      });
+      const ri=await db.from('listing_images').insert({listing_id:listingId,storage_path:path,sort_order:99});
       if(ri.error)throw ri.error;
       pathByKey.set(item.key,path);
     }
@@ -1262,7 +1254,7 @@ function bindStaticEvents(){
   $('#authForm [name=legal_acceptance]').onchange=updateSignupConsentUI;
   $$('[data-signup-legal]').forEach(button=>button.onclick=e=>{e.preventDefault();e.stopPropagation();openLegal(button.dataset.signupLegal);});
   $('#forgotPasswordBtn').onclick=requestPasswordReset;$('#passwordResetForm').addEventListener('submit',submitPasswordReset);$('#sellForm').addEventListener('submit',publishListing);$('#messageForm').addEventListener('submit',sendMessage);
-  $('#logoutBtn').onclick=async()=>{await db.auth.signOut();closeDialog('accountModal');toast('Ai ieșit din cont.');};$('#editProfileBtn').onclick=openProfileEditor;$('#adminPanelBtn').onclick=()=>window.open('/admin.html','_blank','noopener');$('#profileForm').addEventListener('submit',saveProfile);$('#deleteAccountBtn').onclick=openDeleteAccount;$('#deleteAccountForm').addEventListener('submit',deleteAccount);$('#profileForm [name=avatar]').onchange=e=>{const f=e.target.files?.[0];if(f){const u=URL.createObjectURL(f);$('#profilePreview').innerHTML=`<span class="profile-preview-avatar has-image"><img src="${esc(u)}" alt="Preview avatar"></span>`;}};
+  $('#logoutBtn').onclick=async()=>{await db.auth.signOut();closeDialog('accountModal');toast('Ai ieșit din cont.');};$('#editProfileBtn').onclick=openProfileEditor;$('#adminPanelBtn').onclick=()=>{window.location.href='/admin.html';};$('#profileForm').addEventListener('submit',saveProfile);$('#deleteAccountBtn').onclick=openDeleteAccount;$('#deleteAccountForm').addEventListener('submit',deleteAccount);$('#profileForm [name=avatar]').onchange=e=>{const f=e.target.files?.[0];if(f){const u=URL.createObjectURL(f);$('#profilePreview').innerHTML=`<span class="profile-preview-avatar has-image"><img src="${esc(u)}" alt="Preview avatar"></span>`;}};
   $('#profileForm [name=contact_incognito]').onchange=updateContactIncognitoUI;
   $$('[data-account-tab]').forEach(b=>b.onclick=async()=>{state.accountTab=b.dataset.accountTab;updateAccountTabButtons();await renderAccount();});
   $('#listingLimitManage').onclick=async()=>{closeDialog('listingLimitModal');await openAccount('listings');};
