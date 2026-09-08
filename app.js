@@ -715,7 +715,7 @@ async function openDetail(id){
   const own=state.user?.id===l.seller_id;
 
   const [{data:profile},{data:flag},ratingData]=await Promise.all([
-    db.from('profiles').select('display_name,location,bio,avatar_path,created_at').eq('id',l.seller_id).maybeSingle(),
+    db.from('profiles').select('display_name,location,bio,avatar_path,created_at,contact_incognito').eq('id',l.seller_id).maybeSingle(),
     db.from('user_flags').select('verified').eq('user_id',l.seller_id).maybeSingle(),
     getSellerRatingData(l.seller_id,own)
   ]);
@@ -725,10 +725,13 @@ async function openDetail(id){
 
   const sellerName=profile?.display_name||'Membru';
   const ratingBlock=sellerRatingHtml(l.seller_id,ratingData.stats,ratingData.myRating,own);
+  const directContactControl=profile?.contact_incognito
+    ?'<div class="seller-incognito-note"><b>Incognito activ</b><span>Telefonul și WhatsApp-ul sunt ascunse. Folosește Mesaje.</span></div>'
+    :'<button class="ghost" id="detailContactBtn">Telefon / WhatsApp</button>';
 
   $('#detailContent').innerHTML=`<div class="modal-head"><div><span class="kicker">${esc(cat?.name||'ANUNȚ')}</span><h2>${esc(l.title)}</h2></div><button class="close" type="button" data-close="detailModal">×</button></div>
     ${photos}<div class="detail-layout"><div><p class="detail-price">${money(l.price,l.currency)} ${l.negotiable?'<small>negociabil</small>':''}</p><p class="detail-desc">${esc(l.description).replace(/\n/g,'<br>')}</p><p class="listing-meta"><span>${esc(l.location)} • ${esc(conditionLabels[l.condition]||l.condition)}</span><span>${since(l.created_at)}</span></p></div>
-    <aside class="seller-box"><div class="seller-profile">${avatarHtml(profile,'seller-avatar')}<div><span class="kicker">${own?'ANUNȚUL TĂU':'VÂNZĂTOR'}</span><h3>${esc(sellerName)}${flag?.verified?' <span class="verified">✓</span>':''}</h3></div></div><p>${profile?.location?`${esc(profile.location)} • `:''}${profile?.created_at?`Membru din ${new Intl.DateTimeFormat('ro-RO',{month:'long',year:'numeric'}).format(new Date(profile.created_at))}`:''}</p>${profile?.bio?`<p class="seller-bio">${esc(profile.bio)}</p>`:''}${ratingBlock}<button class="ghost seller-other-listings-btn" id="sellerOtherListingsBtn">Alte Anunțuri</button>${own?'<button class="ghost" id="detailEditBtn">Editează anunțul</button><button class="ghost detail-share" id="detailShareBtn">↗ Distribuie anunțul</button><button class="danger detail-delete" id="detailDeleteBtn">Șterge anunțul</button>':'<button class="primary" id="detailMessageBtn">Trimite mesaj</button><button class="ghost" id="detailContactBtn">Telefon / WhatsApp</button><button class="ghost detail-share" id="detailShareBtn">↗ Distribuie anunțul</button><button class="report-btn" id="detailReportBtn">Raportează anunțul</button>'}</aside></div>`;
+    <aside class="seller-box"><div class="seller-profile">${avatarHtml(profile,'seller-avatar')}<div><span class="kicker">${own?'ANUNȚUL TĂU':'VÂNZĂTOR'}</span><h3>${esc(sellerName)}${flag?.verified?' <span class="verified">✓</span>':''}</h3></div></div><p>${profile?.location?`${esc(profile.location)} • `:''}${profile?.created_at?`Membru din ${new Intl.DateTimeFormat('ro-RO',{month:'long',year:'numeric'}).format(new Date(profile.created_at))}`:''}</p>${profile?.bio?`<p class="seller-bio">${esc(profile.bio)}</p>`:''}${ratingBlock}<button class="ghost seller-other-listings-btn" id="sellerOtherListingsBtn">Alte Anunțuri</button>${own?'<button class="ghost" id="detailEditBtn">Editează anunțul</button><button class="ghost detail-share" id="detailShareBtn">↗ Distribuie anunțul</button><button class="danger detail-delete" id="detailDeleteBtn">Șterge anunțul</button>':`<button class="primary" id="detailMessageBtn">Trimite mesaj</button>${directContactControl}<button class="ghost detail-share" id="detailShareBtn">↗ Distribuie anunțul</button><button class="report-btn" id="detailReportBtn">Raportează anunțul</button>`}</aside></div>`;
 
   bindCloseButtons($('#detailContent'));
   bindSellerRatingControls(l.seller_id);
@@ -739,7 +742,8 @@ async function openDetail(id){
     $('#detailDeleteBtn').onclick=()=>deleteListing(l.id,true);
   }else{
     $('#detailMessageBtn').onclick=()=>openMessage(l);
-    $('#detailContactBtn').onclick=()=>showContact(l);
+    const contactBtn=$('#detailContactBtn');
+    if(contactBtn)contactBtn.onclick=()=>showContact(l);
     $('#detailReportBtn').onclick=()=>reportListing(l);
   }
 
@@ -750,11 +754,29 @@ async function openDetail(id){
 
 async function showContact(l){
   if(!requireActive())return;
-  const {data,error}=await db.from('listing_contacts').select('phone,whatsapp').eq('listing_id',l.id).maybeSingle();
-  if(error){console.error(error);return toast('Nu am putut încărca datele de contact.','error');}
-  if(!data)return toast('Vânzătorul nu a adăugat contact direct.');
-  const buttons=[];if(data.phone)buttons.push(`<a class="primary link-button" href="tel:${esc(cleanPhone(data.phone))}">Sună ${esc(data.phone)}</a>`);if(data.whatsapp)buttons.push(`<a class="whatsapp link-button" target="_blank" rel="noopener" href="https://wa.me/${esc(whatsappPhone(data.whatsapp))}">WhatsApp</a>`);
-  const box=$('.seller-box',$('#detailContent'));$('.contact-reveal',box)?.remove();box.insertAdjacentHTML('beforeend',`<div class="contact-reveal">${buttons.join('')}</div>`);
+
+  const [{data:privacy,error:privacyError},{data,error}]=await Promise.all([
+    db.from('profiles').select('contact_incognito').eq('id',l.seller_id).maybeSingle(),
+    db.from('listing_contacts').select('phone,whatsapp').eq('listing_id',l.id).maybeSingle()
+  ]);
+
+  if(privacyError)console.warn('contact privacy check',privacyError);
+  if(privacy?.contact_incognito){
+    return toast('Vânzătorul a activat modul Incognito. Contactează-l prin Mesaje.');
+  }
+  if(error){
+    console.error(error);
+    return toast('Nu am putut încărca datele de contact.','error');
+  }
+  if(!data)return toast('Datele de contact direct nu sunt disponibile.');
+
+  const buttons=[];
+  if(data.phone)buttons.push(`<a class="primary link-button" href="tel:${esc(cleanPhone(data.phone))}">Sună ${esc(data.phone)}</a>`);
+  if(data.whatsapp)buttons.push(`<a class="whatsapp link-button" target="_blank" rel="noopener" href="https://wa.me/${esc(whatsappPhone(data.whatsapp))}">WhatsApp</a>`);
+
+  const box=$('.seller-box',$('#detailContent'));
+  $('.contact-reveal',box)?.remove();
+  box.insertAdjacentHTML('beforeend',`<div class="contact-reveal">${buttons.join('')}</div>`);
 }
 
 function openMessage(l){
@@ -1018,8 +1040,27 @@ async function deleteListing(id,fromDetail=false){
   }catch(err){console.error(err);toast(err.message||'Anunțul nu a putut fi șters.','error');}
 }
 
+function updateContactIncognitoUI(){
+  const input=$('#profileForm [name=contact_incognito]');
+  const label=$('#contactIncognitoState');
+  if(!input||!label)return;
+  label.textContent=input.checked?'ON':'OFF';
+  label.classList.toggle('on',input.checked);
+}
+
 function openProfileEditor(){
-  if(!requireAuth())return;const f=$('#profileForm');f.elements.display_name.value=state.profile?.display_name||'';f.elements.location.value=state.profile?.location||'';f.elements.bio.value=state.profile?.bio||'';f.elements.avatar.value='';f.elements.remove_avatar.checked=false;$('#profilePreview').innerHTML=avatarHtml(state.profile,'profile-preview-avatar');updateAdminAccessUI();$('#profileModal').showModal();
+  if(!requireAuth())return;
+  const f=$('#profileForm');
+  f.elements.display_name.value=state.profile?.display_name||'';
+  f.elements.location.value=state.profile?.location||'';
+  f.elements.bio.value=state.profile?.bio||'';
+  f.elements.avatar.value='';
+  f.elements.remove_avatar.checked=false;
+  f.elements.contact_incognito.checked=!!state.profile?.contact_incognito;
+  $('#profilePreview').innerHTML=avatarHtml(state.profile,'profile-preview-avatar');
+  updateContactIncognitoUI();
+  updateAdminAccessUI();
+  $('#profileModal').showModal();
 }
 async function saveProfile(e){
   e.preventDefault();if(!requireAuth())return;const form=e.currentTarget,btn=$('#profileSaveBtn'),fd=new FormData(form),file=form.elements.avatar.files?.[0];setBusy(btn,true,'Se salvează…');
@@ -1028,7 +1069,7 @@ async function saveProfile(e){
     let nextAvatar=state.profile?.avatar_path||null;const oldAvatar=nextAvatar;
     if(fd.get('remove_avatar')==='on'){nextAvatar=null;}
     if(file){if(file.size>3*1024*1024)throw new Error('Avatarul poate avea maximum 3 MB.');if(!['image/jpeg','image/png','image/webp'].includes(file.type))throw new Error('Avatarul trebuie să fie JPG, PNG sau WEBP.');const ext=(file.name.split('.').pop()||'jpg').toLowerCase().replace(/[^a-z0-9]/g,'');const path=`${state.user.id}/avatar-${Date.now()}.${ext}`;const up=await db.storage.from('profile-avatars').upload(path,file,{upsert:false,contentType:file.type,cacheControl:'3600'});if(up.error)throw up.error;nextAvatar=path;}
-    const patch={display_name:display,location:String(fd.get('location')||'').trim()||null,bio:String(fd.get('bio')||'').trim()||null,avatar_path:nextAvatar};
+    const patch={display_name:display,location:String(fd.get('location')||'').trim()||null,bio:String(fd.get('bio')||'').trim()||null,avatar_path:nextAvatar,contact_incognito:fd.get('contact_incognito')==='on'};
     const {data,error}=await db.from('profiles').update(patch).eq('id',state.user.id).select('*').single();if(error)throw error;state.profile=data;
     if(oldAvatar&&oldAvatar!==nextAvatar){const rm=await db.storage.from('profile-avatars').remove([oldAvatar]);if(rm.error)console.warn('old avatar cleanup',rm.error);}
     closeDialog('profileModal');updateAccountButtons();$('#accountName').textContent=state.profile.display_name;$('#accountAvatar').innerHTML=avatarHtml(state.profile,'account-avatar-inner');toast('Profil actualizat.');
@@ -1053,20 +1094,103 @@ async function deleteAccount(e){
 }
 
 
+async function hideConversationForMe(conversationId){
+  if(!requireAuth())return;
+  if(!confirm('Ștergi această conversație din contul tău? Cealaltă persoană își păstrează mesajele. Dacă apare un mesaj nou, conversația va reapărea.'))return;
+
+  const {error}=await db.from('conversation_hidden').upsert({
+    conversation_id:conversationId,
+    user_id:state.user.id,
+    hidden_at:new Date().toISOString()
+  },{onConflict:'conversation_id,user_id'});
+
+  if(error){
+    console.error(error);
+    return toast('Conversația nu a putut fi ștearsă.','error');
+  }
+
+  await renderMessages($('#accountContent'));
+  toast('Conversația a fost ștearsă din lista ta.');
+}
+
 async function renderMessages(root){
-  const {data:convs,error}=await db.from('conversations').select('id,listing_id,buyer_id,seller_id,updated_at').order('updated_at',{ascending:false});if(error)throw error;
-  if(!convs?.length){root.innerHTML='<div class="empty compact"><b>N-ai conversații.</b><span>Mesajele pornite din anunțuri vor apărea aici.</span></div>';return;}
+  const ownFilter=`buyer_id.eq.${state.user.id},seller_id.eq.${state.user.id}`;
+  const [convRes,hiddenRes]=await Promise.all([
+    db.from('conversations')
+      .select('id,listing_id,buyer_id,seller_id,updated_at')
+      .or(ownFilter)
+      .order('updated_at',{ascending:false}),
+    db.from('conversation_hidden')
+      .select('conversation_id')
+      .eq('user_id',state.user.id)
+  ]);
+
+  if(convRes.error)throw convRes.error;
+  if(hiddenRes.error)throw hiddenRes.error;
+
+  const hidden=new Set((hiddenRes.data||[]).map(row=>row.conversation_id));
+  const convs=(convRes.data||[]).filter(c=>!hidden.has(c.id));
+
+  if(!convs.length){
+    root.innerHTML='<div class="empty compact"><b>N-ai conversații.</b><span>Mesajele pornite din anunțuri vor apărea aici.</span></div>';
+    return;
+  }
+
   const lmap=Object.fromEntries(state.listings.map(l=>[l.id,l]));
   const cards=[];
-  for(const c of convs){const {data:msgs}=await db.from('messages').select('id,sender_id,body,created_at').eq('conversation_id',c.id).order('created_at',{ascending:true}).limit(40);const last=msgs?.[msgs.length-1];cards.push(`<button class="conversation-card" data-conv="${c.id}" data-listing="${c.listing_id}" data-other="${c.buyer_id===state.user.id?c.seller_id:c.buyer_id}"><b>${esc(lmap[c.listing_id]?.title||'Anunț')}</b><span>${esc(last?.body||'Conversație nouă')}</span><small>${last?since(last.created_at):''}</small></button>`);}
+
+  for(const c of convs){
+    const {data:msgs}=await db.from('messages')
+      .select('id,sender_id,body,created_at')
+      .eq('conversation_id',c.id)
+      .order('created_at',{ascending:true})
+      .limit(40);
+
+    const last=msgs?.[msgs.length-1];
+    cards.push(`<div class="conversation-card-wrap">
+      <button class="conversation-card" data-conv="${c.id}" data-listing="${c.listing_id}" data-other="${c.buyer_id===state.user.id?c.seller_id:c.buyer_id}">
+        <b>${esc(lmap[c.listing_id]?.title||'Anunț')}</b>
+        <span>${esc(last?.body||'Conversație nouă')}</span>
+        <small>${last?since(last.created_at):''}</small>
+      </button>
+      <button type="button" class="conversation-delete" data-delete-conv="${c.id}" aria-label="Șterge conversația" title="Șterge conversația">×</button>
+    </div>`);
+  }
+
   root.innerHTML=`<div class="conversation-list">${cards.join('')}</div><div class="thread" id="threadPane"><div class="thread-placeholder">Alege o conversație.</div></div>`;
+
   $$('[data-conv]',root).forEach(b=>b.onclick=()=>openThread(b));
+  $$('[data-delete-conv]',root).forEach(b=>b.onclick=e=>{
+    e.preventDefault();
+    e.stopPropagation();
+    hideConversationForMe(b.dataset.deleteConv);
+  });
 }
 
 async function openThread(button){
-  const pane=$('#threadPane');const id=button.dataset.conv;const {data:msgs,error}=await db.from('messages').select('id,sender_id,body,created_at').eq('conversation_id',id).order('created_at');if(error)return toast(error.message,'error');
+  const pane=$('#threadPane');
+  const id=button.dataset.conv;
+  const {data:msgs,error}=await db.from('messages')
+    .select('id,sender_id,body,created_at')
+    .eq('conversation_id',id)
+    .order('created_at');
+
+  if(error)return toast(error.message,'error');
+
   pane.innerHTML=`<div class="thread-messages">${(msgs||[]).map(m=>`<div class="bubble ${m.sender_id===state.user.id?'mine':''}"><span>${esc(m.body)}</span><small>${since(m.created_at)}</small></div>`).join('')}</div><form class="thread-form" data-thread-form="${id}"><input name="body" maxlength="2000" required placeholder="Scrie un mesaj…"><button class="primary">Trimite</button></form>`;
-  $('[data-thread-form]',pane).onsubmit=async e=>{e.preventDefault();if(!requireActive())return;const input=e.currentTarget.body;const body=input.value.trim();if(!body)return;const {error}=await db.from('messages').insert({conversation_id:id,sender_id:state.user.id,body});if(error)return toast(error.message,'error');input.value='';await openThread(button);};
+
+  $('[data-thread-form]',pane).onsubmit=async e=>{
+    e.preventDefault();
+    if(!requireActive())return;
+    const input=e.currentTarget.body;
+    const body=input.value.trim();
+    if(!body)return;
+    const {error}=await db.from('messages').insert({conversation_id:id,sender_id:state.user.id,body});
+    if(error)return toast(error.message,'error');
+    input.value='';
+    await openThread(button);
+  };
+
   pane.scrollTop=pane.scrollHeight;
 }
 
@@ -1090,6 +1214,7 @@ function bindStaticEvents(){
   $$('[data-auth-mode]').forEach(b=>b.onclick=()=>{state.authMode=b.dataset.authMode;updateAuthMode();});
   $('#authForm').addEventListener('submit',submitAuth);$('#forgotPasswordBtn').onclick=requestPasswordReset;$('#passwordResetForm').addEventListener('submit',submitPasswordReset);$('#sellForm').addEventListener('submit',publishListing);$('#messageForm').addEventListener('submit',sendMessage);
   $('#logoutBtn').onclick=async()=>{await db.auth.signOut();closeDialog('accountModal');toast('Ai ieșit din cont.');};$('#editProfileBtn').onclick=openProfileEditor;$('#adminPanelBtn').onclick=()=>window.open('/admin.html','_blank','noopener');$('#profileForm').addEventListener('submit',saveProfile);$('#deleteAccountBtn').onclick=openDeleteAccount;$('#deleteAccountForm').addEventListener('submit',deleteAccount);$('#profileForm [name=avatar]').onchange=e=>{const f=e.target.files?.[0];if(f){const u=URL.createObjectURL(f);$('#profilePreview').innerHTML=`<span class="profile-preview-avatar has-image"><img src="${esc(u)}" alt="Preview avatar"></span>`;}};
+  $('#profileForm [name=contact_incognito]').onchange=updateContactIncognitoUI;
   $$('[data-account-tab]').forEach(b=>b.onclick=async()=>{state.accountTab=b.dataset.accountTab;updateAccountTabButtons();await renderAccount();});
   $('#listingLimitManage').onclick=async()=>{closeDialog('listingLimitModal');await openAccount('listings');};
   $('#searchBtn').onclick=()=>{resetMarketPage();renderListings();$('#anunturi').scrollIntoView({behavior:'smooth'});};$('#searchInput').addEventListener('keydown',e=>{if(e.key==='Enter')$('#searchBtn').click();});

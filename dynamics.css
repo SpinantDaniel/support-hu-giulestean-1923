@@ -1569,3 +1569,158 @@ footer.global-footer .global-footer-note{
     animation-duration:.01ms!important;
   }
 }
+
+
+/* v5.21 — message deletion + phone Incognito */
+
+.conversation-card-wrap{
+  position:relative;
+  margin-bottom:7px;
+}
+.conversation-card-wrap .conversation-card{
+  width:100%;
+  margin-bottom:0!important;
+  padding-right:44px!important;
+}
+.conversation-delete{
+  position:absolute!important;
+  z-index:4;
+  top:7px!important;
+  right:7px!important;
+  width:27px!important;
+  height:27px!important;
+  min-width:27px!important;
+  padding:0!important;
+  display:grid!important;
+  place-items:center;
+  border:1px solid rgba(255,255,255,.78)!important;
+  border-radius:50%!important;
+  background:rgba(111,21,48,.92)!important;
+  color:#fff!important;
+  font-size:19px!important;
+  line-height:1!important;
+  font-weight:500!important;
+  box-shadow:0 5px 13px rgba(35,15,22,.18)!important;
+  cursor:pointer;
+}
+@media(hover:hover){
+  .conversation-delete:hover{
+    transform:translateY(-1px) scale(1.09)!important;
+    background:var(--wine2)!important;
+    box-shadow:0 8px 17px rgba(35,15,22,.24)!important;
+  }
+}
+
+.contact-incognito-setting{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:18px;
+  padding:14px 15px;
+  border:1px solid rgba(111,21,48,.11);
+  border-radius:14px;
+  background:rgba(111,21,48,.035);
+}
+.contact-incognito-copy{
+  display:grid;
+  gap:4px;
+  min-width:0;
+}
+.contact-incognito-copy b{
+  color:var(--ink);
+  font-size:12px;
+}
+.contact-incognito-copy span{
+  color:var(--muted);
+  font-size:9px;
+  line-height:1.45;
+}
+.incognito-switch{
+  display:flex!important;
+  align-items:center;
+  gap:8px;
+  flex:0 0 auto;
+  cursor:pointer;
+  user-select:none;
+}
+.incognito-switch input{
+  position:absolute!important;
+  opacity:0!important;
+  pointer-events:none;
+}
+.incognito-track{
+  position:relative;
+  width:48px;
+  height:27px;
+  flex:0 0 48px;
+  border-radius:999px;
+  background:#d9d5d7;
+  box-shadow:inset 0 0 0 1px rgba(0,0,0,.05);
+  transition:background-color .18s ease,box-shadow .18s ease;
+}
+.incognito-track i{
+  position:absolute;
+  top:3px;
+  left:3px;
+  width:21px;
+  height:21px;
+  border-radius:50%;
+  background:#fff;
+  box-shadow:0 2px 7px rgba(0,0,0,.16);
+  transition:transform .2s cubic-bezier(.2,.75,.2,1);
+}
+.incognito-switch input:checked + .incognito-track{
+  background:var(--wine);
+  box-shadow:inset 0 0 0 1px rgba(111,21,48,.20),0 5px 14px rgba(111,21,48,.13);
+}
+.incognito-switch input:checked + .incognito-track i{
+  transform:translateX(21px);
+}
+.incognito-switch strong{
+  width:28px;
+  color:var(--muted);
+  font-size:9px;
+  font-weight:900;
+}
+.incognito-switch strong.on{
+  color:var(--wine);
+}
+.incognito-switch:focus-within .incognito-track{
+  outline:3px solid rgba(111,21,48,.11);
+  outline-offset:2px;
+}
+
+.seller-incognito-note{
+  display:grid;
+  gap:3px;
+  margin-top:8px;
+  padding:10px 11px;
+  border:1px solid rgba(111,21,48,.10);
+  border-radius:10px;
+  background:rgba(111,21,48,.045);
+  text-align:center;
+}
+.seller-incognito-note b{
+  color:var(--wine);
+  font-size:10px;
+}
+.seller-incognito-note span{
+  color:var(--muted);
+  font-size:9px;
+  line-height:1.4;
+}
+
+@media(max-width:650px){
+  .contact-incognito-setting{
+    align-items:flex-start;
+    gap:12px;
+    padding:12px;
+  }
+  .incognito-switch{
+    padding-top:2px;
+  }
+  .conversation-delete{
+    top:6px!important;
+    right:6px!important;
+  }
+}

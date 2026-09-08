@@ -19,7 +19,7 @@
   
   <link rel="stylesheet" href="/styles.css">
   <link rel="stylesheet" href="/brand.css?v=5.16">
-  <link rel="stylesheet" href="/dynamics.css?v=5.20">
+  <link rel="stylesheet" href="/dynamics.css?v=5.21">
 </head>
 <body>
   <div class="top-strip">Platformă independentă a comunității • fără afiliere oficială • tranzacțiile se stabilesc direct între utilizatori</div>
@@ -174,7 +174,19 @@
   </dialog>
   <dialog id="messageModal"><form class="modal" id="messageForm"><div class="modal-head"><div><span class="kicker">MESAJ DIRECT</span><h2>Scrie vânzătorului</h2></div><button class="close" type="button" data-close="messageModal">×</button></div><p class="muted" id="messageListingTitle"></p><label>Mesaj<textarea name="body" required minlength="1" maxlength="2000" rows="5" placeholder="Salut! Mai este disponibil?"></textarea></label><input type="hidden" name="listing_id"><input type="hidden" name="seller_id"><div class="modal-actions"><button type="button" class="ghost" data-close="messageModal">Renunță</button><button class="primary">Trimite mesaj</button></div></form></dialog>
   <dialog id="accountModal"><div class="modal account-modal"><div class="modal-head account-head"><div class="account-identity"><div id="accountAvatar" class="account-avatar-wrap"></div><div><span class="kicker">CONTUL MEU</span><h2 id="accountName">Support Hub Giuleștean 1923</h2><p class="muted" id="accountEmail"></p><div id="accountSuspension" class="account-suspension" hidden></div><button class="profile-edit-link" type="button" id="editProfileBtn">Editează profilul</button></div></div><button class="close" type="button" data-close="accountModal">×</button></div><div class="account-tabs"><button class="active" data-account-tab="listings">Anunțurile mele</button><button data-account-tab="favorites">Favorite</button><button data-account-tab="messages">Mesaje</button></div><div id="accountContent" class="account-content"></div><div class="account-footer"><button class="ghost" id="logoutBtn">Ieși din cont</button></div></div></dialog>
-  <dialog id="profileModal"><form class="modal profile-modal" id="profileForm"><div class="modal-head"><div><span class="kicker">PROFIL</span><h2>Editează profilul</h2></div><button class="close" type="button" data-close="profileModal">×</button></div><div class="profile-editor"><div class="profile-avatar-editor"><div id="profilePreview"></div><label class="avatar-upload">Schimbă fotografia<input name="avatar" type="file" accept="image/jpeg,image/png,image/webp"><small>JPG, PNG sau WEBP • max. 3 MB</small></label><label class="remove-avatar"><input type="checkbox" name="remove_avatar"> Elimină fotografia</label></div><div class="form-grid profile-fields"><label class="full">Nume afișat<input name="display_name" required minlength="2" maxlength="60" placeholder="Numele din comunitate"></label><label class="full">Locație<input name="location" maxlength="120" placeholder="ex. Giulești, București"></label><label class="full">Despre mine<textarea name="bio" maxlength="500" rows="4" placeholder="Câteva cuvinte despre tine (opțional)"></textarea></label></div></div><div class="admin-access-zone" id="adminAccessZone" hidden><div><b id="adminAccessTitle">Administrare</b><span id="adminAccessText">Panou separat pentru administrare și newsletter.</span></div><button type="button" class="ghost" id="adminPanelBtn">Deschide panoul</button></div><div class="danger-zone"><div><b>Ștergere cont</b><span>Șterge definitiv contul, anunțurile, favoritele, mesajele și profilul asociat.</span></div><button type="button" class="danger" id="deleteAccountBtn">Șterge contul</button></div><div class="modal-actions"><button type="button" class="ghost" data-close="profileModal">Renunță</button><button class="primary" id="profileSaveBtn">Salvează</button></div></form></dialog>
+  <dialog id="profileModal"><form class="modal profile-modal" id="profileForm"><div class="modal-head"><div><span class="kicker">PROFIL</span><h2>Editează profilul</h2></div><button class="close" type="button" data-close="profileModal">×</button></div><div class="profile-editor"><div class="profile-avatar-editor"><div id="profilePreview"></div><label class="avatar-upload">Schimbă fotografia<input name="avatar" type="file" accept="image/jpeg,image/png,image/webp"><small>JPG, PNG sau WEBP • max. 3 MB</small></label><label class="remove-avatar"><input type="checkbox" name="remove_avatar"> Elimină fotografia</label></div><div class="form-grid profile-fields"><label class="full">Nume afișat<input name="display_name" required minlength="2" maxlength="60" placeholder="Numele din comunitate"></label><label class="full">Locație<input name="location" maxlength="120" placeholder="ex. Giulești, București"></label><label class="full">Despre mine<textarea name="bio" maxlength="500" rows="4" placeholder="Câteva cuvinte despre tine (opțional)"></textarea></label>
+<div class="full contact-incognito-setting">
+  <div class="contact-incognito-copy">
+    <b>Incognito telefon</b>
+    <span>Ascunde telefonul și WhatsApp-ul din anunțuri. Mesajele interne rămân disponibile.</span>
+  </div>
+  <label class="incognito-switch" title="Ascunde sau afișează datele de contact direct">
+    <input type="checkbox" name="contact_incognito">
+    <span class="incognito-track" aria-hidden="true"><i></i></span>
+    <strong id="contactIncognitoState">OFF</strong>
+  </label>
+</div>
+</div></div><div class="admin-access-zone" id="adminAccessZone" hidden><div><b id="adminAccessTitle">Administrare</b><span id="adminAccessText">Panou separat pentru administrare și newsletter.</span></div><button type="button" class="ghost" id="adminPanelBtn">Deschide panoul</button></div><div class="danger-zone"><div><b>Ștergere cont</b><span>Șterge definitiv contul, anunțurile, favoritele, mesajele și profilul asociat.</span></div><button type="button" class="danger" id="deleteAccountBtn">Șterge contul</button></div><div class="modal-actions"><button type="button" class="ghost" data-close="profileModal">Renunță</button><button class="primary" id="profileSaveBtn">Salvează</button></div></form></dialog>
   <dialog id="deleteAccountModal"><form class="modal" id="deleteAccountForm"><div class="modal-head"><div><span class="kicker">ACȚIUNE IREVERSIBILĂ</span><h2>Șterge contul</h2></div><button class="close" type="button" data-close="deleteAccountModal">×</button></div><div class="notice danger-notice">Această operațiune este definitivă. Anunțurile, fotografiile, mesajele, favoritele și profilul tău vor fi eliminate.</div><label>Pentru confirmare, scrie ȘTERGE<input name="confirmation" required autocomplete="off" placeholder="ȘTERGE"></label><div class="modal-actions"><button type="button" class="ghost" data-close="deleteAccountModal">Renunță</button><button class="danger" id="deleteAccountConfirmBtn">Șterge definitiv</button></div></form></dialog>
   <dialog id="legalModal"><div class="modal detail" id="legalContent"></div></dialog>
   <div class="toast" id="toast" role="status"></div>
@@ -182,7 +194,7 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.112.4/dist/umd/supabase.min.js"></script>
   
 <script src="/parallax.js"></script>
-  <script src="/pwa-refresh.js?v=5.20"></script>
-<script src="/app.js?v=5.17"></script>
+  <script src="/pwa-refresh.js?v=5.21"></script>
+<script src="/app.js?v=5.21"></script>
 </body>
 </html>

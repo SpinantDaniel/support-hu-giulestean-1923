@@ -39,3 +39,11 @@ Marketplace comunitar independent. Frontend static pe Vercel, backend Supabase.
 - browser Safari/Chrome keep their native refresh behavior
 - burgundy refresh indicator with armed/reloading/offline states
 - horizontal carousels, image editor and open dialogs are excluded from the gesture
+
+
+## v5.21 — Mesaje + Incognito telefon
+- delete/hide conversation per user via X overlay; other participant keeps their copy
+- hidden conversations reappear automatically when a new message is sent
+- Incognito telefon toggle in profile settings hides both phone and WhatsApp
+- contact privacy is enforced by Supabase RLS, not only frontend UI
+- cumulative build includes v5.20 standalone pull-to-refresh
