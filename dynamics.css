@@ -1397,3 +1397,43 @@ footer.global-footer .global-footer-note{
     padding:9px 10px;
   }
 }
+
+
+/* v5.18 — fourth Safety card: "Fără Cookies" */
+@media(min-width:901px){
+  .trust{
+    grid-template-columns:repeat(4,minmax(0,1fr))!important;
+    gap:12px!important;
+  }
+  .trust-card{
+    padding:24px 22px!important;
+  }
+  .trust-card h3{
+    font-size:18px!important;
+  }
+  .trust-card p{
+    font-size:12px!important;
+  }
+}
+
+@media(min-width:651px) and (max-width:900px){
+  .trust{
+    grid-template-columns:repeat(2,minmax(0,1fr))!important;
+    gap:12px!important;
+  }
+}
+
+.trust-card-cookies code{
+  font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono",monospace;
+  font-size:.9em;
+  color:var(--wine);
+  background:rgba(111,21,48,.055);
+  border-radius:5px;
+  padding:1px 4px;
+}
+
+@media(max-width:650px){
+  .trust{
+    grid-template-columns:1fr!important;
+  }
+}
