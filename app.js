@@ -393,18 +393,168 @@ async function toggleFavorite(listingId){
   renderListings();if($('#accountModal').open&&state.accountTab==='favorites')renderAccount();
 }
 
+function ratingCountText(count){
+  const n=Number(count||0);
+  return `${n} ${n===1?'recenzie':'recenzii'}`;
+}
+
+function sellerRatingHtml(sellerId,stats=null,myRating=0,own=false){
+  const avg=Number(stats?.average_rating||0);
+  const count=Number(stats?.review_count||0);
+  const rounded=Math.max(0,Math.min(5,Math.round(avg)));
+  const averageLabel=count?new Intl.NumberFormat('ro-RO',{maximumFractionDigits:1}).format(avg):'0';
+  const stars=Array.from({length:5},(_,i)=>{
+    const value=i+1;
+    const filled=value<=rounded;
+    const selected=Number(myRating)===value;
+    const glyph=filled?'★':'☆';
+    if(own){
+      return `<span class="seller-rating-star ${filled?'filled':''}" aria-hidden="true">${glyph}</span>`;
+    }
+    return `<button type="button" class="seller-rating-star rating-action ${filled?'filled':''} ${selected?'selected':''}" data-rate-seller="${value}" aria-label="Acordă ${value} ${value===1?'stea':'stele'}" aria-pressed="${selected?'true':'false'}" title="Acordă ${value}/5">${glyph}</button>`;
+  }).join('');
+
+  return `<div class="seller-rating-block" id="sellerRatingBlock" data-seller-id="${esc(sellerId)}">
+    <div class="seller-rating-row" title="Media evaluărilor: ${esc(averageLabel)} din 5">
+      <div class="seller-rating-stars" aria-label="Evaluare medie ${esc(averageLabel)} din 5">${stars}</div>
+      <span class="seller-rating-count">— ${ratingCountText(count)}</span>
+    </div>
+    ${own?'':`<small class="seller-rating-hint">${state.user?(myRating?`Evaluarea ta: ${myRating}/5 · poți apăsa altă stea pentru a o modifica.`:'Apasă pe o stea pentru a evalua utilizatorul.'):'Intră în cont pentru a acorda o evaluare.'}</small>`}
+  </div>`;
+}
+
+async function getSellerRatingData(sellerId,own=false){
+  const statsPromise=db.from('seller_rating_stats')
+    .select('average_rating,review_count')
+    .eq('seller_id',sellerId)
+    .maybeSingle();
+
+  const minePromise=state.user&&!own
+    ?db.from('user_ratings').select('rating')
+      .eq('reviewer_id',state.user.id)
+      .eq('seller_id',sellerId)
+      .maybeSingle()
+    :Promise.resolve({data:null,error:null});
+
+  const [statsRes,mineRes]=await Promise.all([statsPromise,minePromise]);
+  if(statsRes.error)console.warn('seller rating stats',statsRes.error);
+  if(mineRes.error)console.warn('my seller rating',mineRes.error);
+
+  return {
+    stats:statsRes.data||{average_rating:0,review_count:0},
+    myRating:Number(mineRes.data?.rating||0)
+  };
+}
+
+function bindSellerRatingControls(sellerId){
+  const block=$('#sellerRatingBlock');
+  if(!block)return;
+  $$('[data-rate-seller]',block).forEach(button=>{
+    button.onclick=()=>submitSellerRating(sellerId,Number(button.dataset.rateSeller));
+  });
+}
+
+async function refreshSellerRatingBlock(sellerId){
+  const block=$('#sellerRatingBlock');
+  if(!block)return;
+  const own=state.user?.id===sellerId;
+  const {stats,myRating}=await getSellerRatingData(sellerId,own);
+  block.outerHTML=sellerRatingHtml(sellerId,stats,myRating,own);
+  bindSellerRatingControls(sellerId);
+}
+
+async function submitSellerRating(sellerId,rating){
+  if(!requireActive())return;
+  if(state.user.id===sellerId)return toast('Nu îți poți evalua propriul profil.','error');
+  const value=Math.max(1,Math.min(5,Number(rating)||0));
+  const {error}=await db.from('user_ratings').upsert({
+    reviewer_id:state.user.id,
+    seller_id:sellerId,
+    rating:value
+  },{onConflict:'reviewer_id,seller_id'});
+  if(error){
+    console.error(error);
+    return toast('Evaluarea nu a putut fi salvată. Încearcă din nou.','error');
+  }
+  await refreshSellerRatingBlock(sellerId);
+  toast(`Evaluarea ta de ${value}/5 a fost salvată.`);
+}
+
+function sellerOtherListingCardHtml(l){
+  const cat=state.categories.find(c=>c.id===l.category_id);
+  const image=l.images?.[0];
+  return `<button type="button" class="seller-other-card" data-other-listing="${l.id}">
+    <div class="seller-other-image ${image?'has-photo':''}">
+      <span class="badge">${esc(conditionLabels[l.condition]||l.condition)}</span>
+      ${image?`<img src="${esc(image)}" alt="${esc(l.title)}" loading="lazy">`:`<span class="placeholder-icon">${icons[cat?.slug]||'◈'}</span>`}
+    </div>
+    <div class="seller-other-body">
+      <h3>${esc(l.title)}</h3>
+      <strong>${money(l.price,l.currency)}</strong>
+      <span>${esc(l.location)} · ${since(l.created_at)}</span>
+    </div>
+  </button>`;
+}
+
+function openSellerListings(sellerId,sellerName,currentListingId){
+  const rows=state.listings
+    .filter(x=>x.seller_id===sellerId&&x.state==='active'&&x.id!==currentListingId)
+    .sort((a,b)=>new Date(b.created_at)-new Date(a.created_at));
+
+  $('#sellerListingsTitle').textContent=`Anunțurile lui ${sellerName||'acestui utilizator'}`;
+  $('#sellerListingsSubtitle').textContent=rows.length
+    ?`${rows.length} ${rows.length===1?'anunț activ':'anunțuri active'}`
+    :'Nu există alte anunțuri active momentan.';
+
+  const root=$('#sellerListingsScroller');
+  root.innerHTML=rows.length
+    ?rows.map(sellerOtherListingCardHtml).join('')
+    :'<div class="empty compact seller-listings-empty"><b>Niciun alt anunț activ.</b><span>Revino mai târziu pentru alte produse publicate de acest utilizator.</span></div>';
+
+  $$('[data-other-listing]',root).forEach(card=>card.onclick=()=>{
+    const nextId=card.dataset.otherListing;
+    closeDialog('sellerListingsModal');
+    closeDialog('detailModal');
+    setTimeout(()=>openDetail(nextId),50);
+  });
+
+  const dialog=$('#sellerListingsModal');
+  if(dialog&&!dialog.open)dialog.showModal();
+}
+
 async function openDetail(id){
   const l=state.listings.find(x=>x.id===id);if(!l)return;state.selectedListing=l;
-  const [{data:profile},{data:flag}]=await Promise.all([
+  const own=state.user?.id===l.seller_id;
+
+  const [{data:profile},{data:flag},ratingData]=await Promise.all([
     db.from('profiles').select('display_name,location,bio,avatar_path,created_at').eq('id',l.seller_id).maybeSingle(),
-    db.from('user_flags').select('verified').eq('user_id',l.seller_id).maybeSingle()
+    db.from('user_flags').select('verified').eq('user_id',l.seller_id).maybeSingle(),
+    getSellerRatingData(l.seller_id,own)
   ]);
-  const cat=state.categories.find(c=>c.id===l.category_id);const own=state.user?.id===l.seller_id;const photos=l.images?.length?`<div class="photo-grid">${l.images.map((u,i)=>`<button class="photo-thumb ${i===0?'main':''}" data-photo-index="${i}" aria-label="Deschide fotografia ${i+1}"><img src="${esc(u)}" alt="Fotografie ${i+1} — ${esc(l.title)}" loading="lazy"></button>`).join('')}</div>`:`<div class="detail-photo placeholder">${icons[cat?.slug]||'◈'}</div>`;
+
+  const cat=state.categories.find(c=>c.id===l.category_id);
+  const photos=l.images?.length?`<div class="photo-grid">${l.images.map((u,i)=>`<button class="photo-thumb ${i===0?'main':''}" data-photo-index="${i}" aria-label="Deschide fotografia ${i+1}"><img src="${esc(u)}" alt="Fotografie ${i+1} — ${esc(l.title)}" loading="lazy"></button>`).join('')}</div>`:`<div class="detail-photo placeholder">${icons[cat?.slug]||'◈'}</div>`;
+
+  const sellerName=profile?.display_name||'Membru';
+  const ratingBlock=sellerRatingHtml(l.seller_id,ratingData.stats,ratingData.myRating,own);
+
   $('#detailContent').innerHTML=`<div class="modal-head"><div><span class="kicker">${esc(cat?.name||'ANUNȚ')}</span><h2>${esc(l.title)}</h2></div><button class="close" type="button" data-close="detailModal">×</button></div>
     ${photos}<div class="detail-layout"><div><p class="detail-price">${money(l.price,l.currency)} ${l.negotiable?'<small>negociabil</small>':''}</p><p class="detail-desc">${esc(l.description).replace(/\n/g,'<br>')}</p><p class="listing-meta"><span>${esc(l.location)} • ${esc(conditionLabels[l.condition]||l.condition)}</span><span>${since(l.created_at)}</span></p></div>
-    <aside class="seller-box"><div class="seller-profile">${avatarHtml(profile,'seller-avatar')}<div><span class="kicker">${own?'ANUNȚUL TĂU':'VÂNZĂTOR'}</span><h3>${esc(profile?.display_name||'Membru')}${flag?.verified?' <span class="verified">✓</span>':''}</h3></div></div><p>${profile?.location?`${esc(profile.location)} • `:''}${profile?.created_at?`Membru din ${new Intl.DateTimeFormat('ro-RO',{month:'long',year:'numeric'}).format(new Date(profile.created_at))}`:''}</p>${profile?.bio?`<p class="seller-bio">${esc(profile.bio)}</p>`:''}${own?'<button class="ghost" id="detailEditBtn">Editează anunțul</button><button class="ghost detail-share" id="detailShareBtn">↗ Distribuie anunțul</button><button class="danger detail-delete" id="detailDeleteBtn">Șterge anunțul</button>':'<button class="primary" id="detailMessageBtn">Trimite mesaj</button><button class="ghost" id="detailContactBtn">Telefon / WhatsApp</button><button class="ghost detail-share" id="detailShareBtn">↗ Distribuie anunțul</button><button class="report-btn" id="detailReportBtn">Raportează anunțul</button>'}</aside></div>`;
+    <aside class="seller-box"><div class="seller-profile">${avatarHtml(profile,'seller-avatar')}<div><span class="kicker">${own?'ANUNȚUL TĂU':'VÂNZĂTOR'}</span><h3>${esc(sellerName)}${flag?.verified?' <span class="verified">✓</span>':''}</h3></div></div><p>${profile?.location?`${esc(profile.location)} • `:''}${profile?.created_at?`Membru din ${new Intl.DateTimeFormat('ro-RO',{month:'long',year:'numeric'}).format(new Date(profile.created_at))}`:''}</p>${profile?.bio?`<p class="seller-bio">${esc(profile.bio)}</p>`:''}${ratingBlock}<button class="ghost seller-other-listings-btn" id="sellerOtherListingsBtn">Alte Anunțuri</button>${own?'<button class="ghost" id="detailEditBtn">Editează anunțul</button><button class="ghost detail-share" id="detailShareBtn">↗ Distribuie anunțul</button><button class="danger detail-delete" id="detailDeleteBtn">Șterge anunțul</button>':'<button class="primary" id="detailMessageBtn">Trimite mesaj</button><button class="ghost" id="detailContactBtn">Telefon / WhatsApp</button><button class="ghost detail-share" id="detailShareBtn">↗ Distribuie anunțul</button><button class="report-btn" id="detailReportBtn">Raportează anunțul</button>'}</aside></div>`;
+
   bindCloseButtons($('#detailContent'));
-  if(own){$('#detailEditBtn').onclick=()=>{closeDialog('detailModal');openEditListing(l.id,false);};$('#detailDeleteBtn').onclick=()=>deleteListing(l.id,true);}else{$('#detailMessageBtn').onclick=()=>openMessage(l);$('#detailContactBtn').onclick=()=>showContact(l);$('#detailReportBtn').onclick=()=>reportListing(l);}
+  bindSellerRatingControls(l.seller_id);
+  $('#sellerOtherListingsBtn').onclick=()=>openSellerListings(l.seller_id,sellerName,l.id);
+
+  if(own){
+    $('#detailEditBtn').onclick=()=>{closeDialog('detailModal');openEditListing(l.id,false);};
+    $('#detailDeleteBtn').onclick=()=>deleteListing(l.id,true);
+  }else{
+    $('#detailMessageBtn').onclick=()=>openMessage(l);
+    $('#detailContactBtn').onclick=()=>showContact(l);
+    $('#detailReportBtn').onclick=()=>reportListing(l);
+  }
+
   $('#detailShareBtn').onclick=()=>shareListing(l.id);
   $$('.photo-thumb',$('#detailContent')).forEach(b=>b.onclick=()=>openPhotoGallery(l.images,Number(b.dataset.photoIndex)||0,l.title));
   $('#detailModal').showModal();
@@ -710,7 +860,7 @@ function bindStaticEvents(){
   $$('[data-focus-search]').forEach(b=>b.onclick=()=>{scrollTo({top:0,behavior:'smooth'});setTimeout(()=>$('#searchInput').focus(),300);});$$('[data-home]').forEach(b=>b.onclick=()=>scrollTo({top:0,behavior:'smooth'}));$$('[data-favorites]').forEach(b=>b.onclick=()=>openAccount('favorites'));
   $$('[data-legal]').forEach(a=>a.onclick=e=>{e.preventDefault();openLegal(a.dataset.legal);});
   $('#sellForm [name=images]').onchange=e=>{const n=e.target.files.length;$('#imageHelp').textContent=n?`${n} fotografie${n===1?'':'i'} selectată${n===1?'':'e'}.`:'JPG, PNG sau WEBP. Recomandat sub 5 MB / imagine.';};
-  ['authModal','passwordResetModal','sellModal','detailModal','messageModal','accountModal','profileModal','deleteAccountModal','legalModal'].forEach(id=>{const d=document.getElementById(id);d.addEventListener('click',e=>{if(e.target===d)d.close();});});
+  ['authModal','passwordResetModal','sellModal','detailModal','sellerListingsModal','messageModal','accountModal','profileModal','deleteAccountModal','legalModal'].forEach(id=>{const d=document.getElementById(id);d.addEventListener('click',e=>{if(e.target===d)d.close();});});
 }
 
 function openLegal(type){const title=type==='privacy'?'Confidențialitate':'Termeni de utilizare';const body=type==='privacy'?`Support Hub Giuleștean 1923 folosește datele necesare pentru cont, publicarea anunțurilor, favorite, mesaje și contact între utilizatori. Datele de contact direct nu sunt afișate vizitatorilor neautentificați. Nu vindem date personale. Pentru lansarea publică, această pagină trebuie completată cu operatorul de date, baza legală, perioada de retenție și procedura de ștergere.`:`Support Hub Giuleștean 1923 este o platformă independentă de anunțuri și nu este parte în tranzacții. Utilizatorul este responsabil pentru legalitatea, autenticitatea și descrierea bunurilor sau serviciilor publicate. Sunt interzise produsele ilegale, fraudele, conținutul care încalcă drepturile altora și anunțurile înșelătoare. Pentru lansarea publică, termenii trebuie completați cu datele operatorului și politica de moderare.`;$('#legalContent').innerHTML=`<div class="modal-head"><div><span class="kicker">FSH • GIULEȘTI • 1923</span><h2>${title}</h2></div><button class="close" data-close="legalModal">×</button></div><p class="detail-desc">${body}</p>`;bindCloseButtons($('#legalContent'));$('#legalModal').showModal();}
