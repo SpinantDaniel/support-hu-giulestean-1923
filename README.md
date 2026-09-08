@@ -47,3 +47,11 @@ Marketplace comunitar independent. Frontend static pe Vercel, backend Supabase.
 - Incognito telefon toggle in profile settings hides both phone and WhatsApp
 - contact privacy is enforced by Supabase RLS, not only frontend UI
 - cumulative build includes v5.20 standalone pull-to-refresh
+
+
+## v5.22 — Filtru autori în Noutăți
+- dropdown multi-select cu checkbox pentru toți autorii cu articole publicate
+- Selectează tot / Deselectează tot în partea de sus
+- filtrarea se combină cu căutarea și sortarea existente
+- contor de articole per autor și etichetă dinamică Autori: X/Y
+- layout responsive, full-width pe mobil

@@ -14,7 +14,7 @@
 
   <meta name="description" content="Noutăți, povești și anunțuri editoriale din comunitatea Support Hub Giuleștean 1923.">
   <title>Noutăți — Support Hub Giuleștean 1923</title>
-  <link rel="stylesheet" href="/newsletter.css">
+  <link rel="stylesheet" href="/newsletter.css?v=5.22">
   <link rel="stylesheet" href="/brand.css?v=5.16">
   <link rel="stylesheet" href="/dynamics.css?v=5.21">
 </head>
@@ -44,6 +44,19 @@
         <option value="az">Titlu: A–Z</option>
         <option value="za">Titlu: Z–A</option>
       </select>
+      <div class="author-filter" id="authorFilter">
+        <button type="button" class="author-filter-toggle" id="authorFilterToggle" aria-haspopup="true" aria-expanded="false">
+          <span id="authorFilterLabel">Autori: Toți</span>
+          <span class="author-filter-chevron" aria-hidden="true">⌄</span>
+        </button>
+        <div class="author-filter-menu" id="authorFilterMenu" hidden>
+          <div class="author-filter-actions">
+            <button type="button" id="authorSelectAll">Selectează tot</button>
+            <button type="button" id="authorDeselectAll">Deselectează tot</button>
+          </div>
+          <div class="author-filter-options" id="authorFilterOptions"></div>
+        </div>
+      </div>
     </section>
     <section class="news-wrap" id="newsList"><div class="loading">Se încarcă articolele…</div></section>
     <article class="article-wrap" id="articleView" hidden></article>
@@ -59,6 +72,6 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.112.4/dist/umd/supabase.min.js"></script>
   <script src="/parallax.js"></script>
   <script src="/pwa-refresh.js?v=5.21"></script>
-  <script src="/newsletter.js"></script>
+  <script src="/newsletter.js?v=5.22"></script>
 </body>
 </html>

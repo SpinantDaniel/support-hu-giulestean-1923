@@ -6,13 +6,71 @@ const $$=s=>[...document.querySelectorAll(s)];
 const esc=(v='')=>String(v).replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#039;','"':'&quot;'}[c]));
 const imageUrl=path=>path?`${SUPABASE_URL}/storage/v1/object/public/blog-images/${String(path).split('/').map(encodeURIComponent).join('/')}`:'';
 const fmt=d=>new Intl.DateTimeFormat('ro-RO',{day:'2-digit',month:'long',year:'numeric'}).format(new Date(d));
-const state={session:null,posts:[],likes:new Map(),comments:new Map(),liked:new Set(),search:'',sort:'none',article:null,articleComments:[]};
+const state={session:null,posts:[],likes:new Map(),comments:new Map(),liked:new Set(),search:'',sort:'none',authors:[],selectedAuthors:new Set(),article:null,articleComments:[]};
 
 function paragraphs(text=''){return String(text).split(/\n\s*\n/).filter(Boolean).map(p=>`<p>${esc(p).replace(/\n/g,'<br>')}</p>`).join('');}
 function initials(name='Membru'){return String(name).trim().split(/\s+/).slice(0,2).map(x=>x[0]||'').join('').toUpperCase()||'M';}
 function avatarUrl(path){return path?`${SUPABASE_URL}/storage/v1/object/public/profile-avatars/${String(path).split('/').map(encodeURIComponent).join('/')}`:'';}
 function count(map,id){return Number(map.get(id)||0);}
 function likeIcon(){return '<svg class="thumb-icon" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 10v12"/><path d="M15 5.88 14 10h5.83a2 2 0 0 1 1.92 2.56l-2.33 8A2 2 0 0 1 17.5 22H4a2 2 0 0 1-2-2v-8a2 2 0 0 1 2-2h2.76a2 2 0 0 0 1.79-1.11L12 2a3.13 3.13 0 0 1 3 3.88Z"/></svg>';}
+
+function authorKey(post){
+  if(post?.author_id)return `id:${post.author_id}`;
+  return `name:${String(post?.author_name||'Support Hub').trim().toLocaleLowerCase('ro')}`;
+}
+
+function buildAuthorOptions(){
+  const map=new Map();
+  for(const post of state.posts){
+    const key=authorKey(post);
+    const name=String(post.author_name||'Support Hub').trim()||'Support Hub';
+    if(!map.has(key))map.set(key,{key,name,count:0});
+    map.get(key).count++;
+  }
+  state.authors=[...map.values()].sort((a,b)=>a.name.localeCompare(b.name,'ro',{sensitivity:'base'}));
+  state.selectedAuthors=new Set(state.authors.map(a=>a.key));
+}
+
+function authorFilterLabel(){
+  const total=state.authors.length;
+  const selected=state.selectedAuthors.size;
+  if(!total||selected===total)return 'Autori: Toți';
+  if(selected===0)return 'Autori: Niciunul';
+  if(selected===1){
+    const author=state.authors.find(a=>state.selectedAuthors.has(a.key));
+    return `Autor: ${author?.name||'1 selectat'}`;
+  }
+  return `Autori: ${selected}/${total}`;
+}
+
+function renderAuthorFilter(){
+  const root=$('#authorFilterOptions');
+  if(!root)return;
+  root.innerHTML=state.authors.map(author=>`<label class="author-filter-option">
+    <input type="checkbox" value="${esc(author.key)}" ${state.selectedAuthors.has(author.key)?'checked':''}>
+    <span class="author-filter-check" aria-hidden="true">✓</span>
+    <span class="author-filter-name">${esc(author.name)}</span>
+    <small>${author.count}</small>
+  </label>`).join('');
+
+  $('#authorFilterLabel').textContent=authorFilterLabel();
+
+  $$('input[type="checkbox"]',root).forEach(input=>input.onchange=()=>{
+    if(input.checked)state.selectedAuthors.add(input.value);
+    else state.selectedAuthors.delete(input.value);
+    $('#authorFilterLabel').textContent=authorFilterLabel();
+    renderList();
+  });
+}
+
+function setAuthorFilterMenu(open){
+  const menu=$('#authorFilterMenu');
+  const toggle=$('#authorFilterToggle');
+  if(!menu||!toggle)return;
+  menu.hidden=!open;
+  toggle.setAttribute('aria-expanded',open?'true':'false');
+  $('#authorFilter')?.classList.toggle('open',open);
+}
 
 async function currentSession(){const {data}=await db.auth.getSession();state.session=data.session||null;return state.session;}
 function needAccount(action='interacționa'){alert(`Trebuie să fii autentificat pentru a ${action}. Intră în cont din Marketplace.`);}
@@ -35,12 +93,38 @@ async function init(){
 function bindControls(){
   $('#newsSearch').addEventListener('input',e=>{state.search=e.target.value.trim().toLocaleLowerCase('ro');renderList();});
   $('#newsSort').addEventListener('change',e=>{state.sort=e.target.value;renderList();});
+
+  $('#authorFilterToggle').addEventListener('click',e=>{
+    e.stopPropagation();
+    setAuthorFilterMenu($('#authorFilterMenu').hidden);
+  });
+  $('#authorFilterMenu').addEventListener('click',e=>e.stopPropagation());
+
+  $('#authorSelectAll').onclick=()=>{
+    state.selectedAuthors=new Set(state.authors.map(a=>a.key));
+    renderAuthorFilter();
+    renderList();
+  };
+  $('#authorDeselectAll').onclick=()=>{
+    state.selectedAuthors.clear();
+    renderAuthorFilter();
+    renderList();
+  };
+
+  document.addEventListener('click',e=>{
+    if(!e.target.closest('#authorFilter'))setAuthorFilterMenu(false);
+  });
+  document.addEventListener('keydown',e=>{
+    if(e.key==='Escape')setAuthorFilterMenu(false);
+  });
 }
 
 async function loadPosts(){
-  const {data,error}=await db.from('blog_posts').select('id,title,slug,excerpt,body,image_path,author_name,published_at').eq('status','published').order('published_at',{ascending:false});
+  const {data,error}=await db.from('blog_posts').select('id,title,slug,excerpt,body,image_path,author_id,author_name,published_at').eq('status','published').order('published_at',{ascending:false});
   if(error){console.error(error);$('#newsList').innerHTML='<div class="empty">Noutățile nu sunt disponibile momentan.</div>';return;}
   state.posts=data||[];
+  buildAuthorOptions();
+  renderAuthorFilter();
   await loadEngagement(state.posts.map(p=>p.id));
   renderList();
 }
@@ -60,7 +144,10 @@ async function loadEngagement(ids){
 }
 
 function filteredPosts(){
-  let rows=state.posts.filter(p=>!state.search||`${p.title} ${p.excerpt||''} ${p.body||''} ${p.author_name||''}`.toLocaleLowerCase('ro').includes(state.search));
+  let rows=state.posts.filter(p=>
+    state.selectedAuthors.has(authorKey(p)) &&
+    (!state.search||`${p.title} ${p.excerpt||''} ${p.body||''} ${p.author_name||''}`.toLocaleLowerCase('ro').includes(state.search))
+  );
   rows=[...rows];
   if(state.sort==='date-asc')rows.sort((a,b)=>new Date(a.published_at)-new Date(b.published_at));
   else if(state.sort==='date-desc')rows.sort((a,b)=>new Date(b.published_at)-new Date(a.published_at));
@@ -72,7 +159,13 @@ function filteredPosts(){
 function renderList(){
   const rows=filteredPosts();
   if(!state.posts.length){$('#newsList').innerHTML='<div class="empty">Nu există încă articole publicate.</div>';return;}
-  if(!rows.length){$('#newsList').innerHTML='<div class="empty">Nu am găsit articole pentru căutarea selectată.</div>';return;}
+  if(!rows.length){
+    const message=state.selectedAuthors.size===0
+      ?'Nu ai selectat niciun autor.'
+      :'Nu am găsit articole pentru filtrele selectate.';
+    $('#newsList').innerHTML=`<div class="empty">${message}</div>`;
+    return;
+  }
   $('#newsList').innerHTML=rows.map(p=>`<article class="news-card" data-post="${p.id}">
     <a class="news-card-main" href="/newsletter.html?post=${encodeURIComponent(p.slug)}">
       ${p.image_path?`<div class="news-image"><img src="${esc(imageUrl(p.image_path))}" alt="${esc(p.title)}" loading="lazy"></div>`:'<div class="news-image"></div>'}
@@ -106,7 +199,7 @@ async function toggleLike(postId){
 }
 
 async function showArticle(slug){
-  const {data,error}=await db.from('blog_posts').select('id,title,slug,excerpt,body,image_path,author_name,published_at').eq('status','published').eq('slug',slug).maybeSingle();
+  const {data,error}=await db.from('blog_posts').select('id,title,slug,excerpt,body,image_path,author_id,author_name,published_at').eq('status','published').eq('slug',slug).maybeSingle();
   $('#newsHero').hidden=true;$('#newsControls').hidden=true;$('#newsList').hidden=true;$('#articleView').hidden=false;
   if(error||!data){$('#articleView').innerHTML='<a class="article-back" href="/newsletter.html">← Toate noutățile</a><div class="empty">Articolul nu există sau nu mai este public.</div>';return;}
   state.article=data;
