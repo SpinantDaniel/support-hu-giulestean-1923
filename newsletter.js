@@ -2,21 +2,26 @@ const SUPABASE_URL='https://bhqpixyiojthpfqnyhsh.supabase.co';
 const SUPABASE_PUBLISHABLE_KEY='sb_publishable_U2IRhs6K85S43ZRqKK5U8Q_HSknWMNY';
 const db=window.supabase.createClient(SUPABASE_URL,SUPABASE_PUBLISHABLE_KEY,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:false}});
 const $=s=>document.querySelector(s);
-const $$=s=>[...document.querySelectorAll(s)];
+const $$=(s,root=document)=>[...root.querySelectorAll(s)];
 const esc=(v='')=>String(v).replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#039;','"':'&quot;'}[c]));
-const imageUrl=path=>path?imageService.getPublicUrl(db,'blog-images',path):'';
+const imageUrl=path=>path?`${SUPABASE_URL}/storage/v1/object/public/blog-images/${String(path).split('/').map(encodeURIComponent).join('/')}`:'';
 const fmt=d=>new Intl.DateTimeFormat('ro-RO',{day:'2-digit',month:'long',year:'numeric'}).format(new Date(d));
 const state={session:null,posts:[],likes:new Map(),comments:new Map(),liked:new Set(),search:'',sort:'none',authors:[],selectedAuthors:new Set(),article:null,articleComments:[]};
 
+window.addEventListener('unhandledrejection',event=>{
+  console.error('newsletter unhandled rejection',event.reason);
+});
+
 function paragraphs(text=''){return String(text).split(/\n\s*\n/).filter(Boolean).map(p=>`<p>${esc(p).replace(/\n/g,'<br>')}</p>`).join('');}
 function initials(name='Membru'){return String(name).trim().split(/\s+/).slice(0,2).map(x=>x[0]||'').join('').toUpperCase()||'M';}
-function avatarUrl(path){return path?imageService.getPublicUrl(db,'profile-avatars',path):'';}
+function avatarUrl(path){return path?`${SUPABASE_URL}/storage/v1/object/public/profile-avatars/${String(path).split('/').map(encodeURIComponent).join('/')}`:'';}
 function count(map,id){return Number(map.get(id)||0);}
 function likeIcon(){return '<svg class="thumb-icon" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 10v12"/><path d="M15 5.88 14 10h5.83a2 2 0 0 1 1.92 2.56l-2.33 8A2 2 0 0 1 17.5 22H4a2 2 0 0 1-2-2v-8a2 2 0 0 1 2-2h2.76a2 2 0 0 0 1.79-1.11L12 2a3.13 3.13 0 0 1 3 3.88Z"/></svg>';}
 
 function authorKey(post){
-  if(post?.author_id)return `id:${post.author_id}`;
-  return `name:${String(post?.author_name||'Support Hub').trim().toLocaleLowerCase('ro')}`;
+  if(post&&post.author_id)return `id:${post.author_id}`;
+  const name=String((post&&post.author_name)||'Support Hub').trim().toLowerCase();
+  return `name:${name||'support hub'}`;
 }
 
 function buildAuthorOptions(){
@@ -83,29 +88,64 @@ async function shareContent(title,text,url){
 }
 
 async function init(){
-  await currentSession();
+  try{
+    await currentSession();
+  }catch(error){
+    console.warn('newsletter session',error);
+    state.session=null;
+  }
+
   const slug=new URLSearchParams(location.search).get('post');
-  if(slug)return showArticle(slug);
-  bindControls();
-  await loadPosts();
+  if(slug){
+    try{
+      await showArticle(slug);
+    }catch(error){
+      console.error('newsletter article fatal',error);
+      $('#newsHero').hidden=true;
+      $('#newsControls').hidden=true;
+      $('#newsList').hidden=true;
+      $('#articleView').hidden=false;
+      $('#articleView').innerHTML='<a class="article-back" href="/newsletter.html">← Toate noutățile</a><div class="empty">Articolul nu a putut fi încărcat. Reîncarcă pagina.</div>';
+    }
+    return;
+  }
+
+  try{
+    bindControls();
+    await loadPosts();
+  }catch(error){
+    console.error('newsletter list fatal',error);
+    const root=$('#newsList');
+    if(root)root.innerHTML='<div class="empty">Noutățile nu au putut fi încărcate. Reîncarcă pagina.</div>';
+  }
 }
 
 function bindControls(){
-  $('#newsSearch').addEventListener('input',e=>{state.search=e.target.value.trim().toLocaleLowerCase('ro');renderList();});
-  $('#newsSort').addEventListener('change',e=>{state.sort=e.target.value;renderList();});
+  const search=$('#newsSearch');
+  const sort=$('#newsSort');
+  if(search)search.addEventListener('input',e=>{state.search=e.target.value.trim().toLowerCase();renderList();});
+  if(sort)sort.addEventListener('change',e=>{state.sort=e.target.value;renderList();});
 
-  $('#authorFilterToggle').addEventListener('click',e=>{
-    e.stopPropagation();
-    setAuthorFilterMenu($('#authorFilterMenu').hidden);
-  });
-  $('#authorFilterMenu').addEventListener('click',e=>e.stopPropagation());
+  const toggle=$('#authorFilterToggle');
+  const menu=$('#authorFilterMenu');
+  const all=$('#authorSelectAll');
+  const none=$('#authorDeselectAll');
 
-  $('#authorSelectAll').onclick=()=>{
+  if(toggle&&menu){
+    toggle.addEventListener('click',e=>{
+      e.stopPropagation();
+      setAuthorFilterMenu(menu.hidden);
+    });
+    menu.addEventListener('click',e=>e.stopPropagation());
+  }
+
+  if(all)all.onclick=()=>{
     state.selectedAuthors=new Set(state.authors.map(a=>a.key));
     renderAuthorFilter();
     renderList();
   };
-  $('#authorDeselectAll').onclick=()=>{
+
+  if(none)none.onclick=()=>{
     state.selectedAuthors.clear();
     renderAuthorFilter();
     renderList();
@@ -118,35 +158,71 @@ function bindControls(){
     if(e.key==='Escape')setAuthorFilterMenu(false);
   });
 }
-
 async function loadPosts(){
-  const {data,error}=await db.from('blog_posts').select('id,title,slug,excerpt,body,image_path,author_id,author_name,published_at').eq('status','published').order('published_at',{ascending:false});
-  if(error){console.error(error);$('#newsList').innerHTML='<div class="empty">Noutățile nu sunt disponibile momentan.</div>';return;}
-  state.posts=data||[];
+  const {data,error}=await db.from('blog_posts')
+    .select('id,title,slug,excerpt,body,image_path,author_id,author_name,published_at')
+    .eq('status','published')
+    .order('published_at',{ascending:false});
+
+  if(error){
+    console.error('blog posts',error);
+    $('#newsList').innerHTML='<div class="empty">Noutățile nu sunt disponibile momentan.</div>';
+    return;
+  }
+
+  state.posts=Array.isArray(data)?data:[];
   buildAuthorOptions();
   renderAuthorFilter();
-  await loadEngagement(state.posts.map(p=>p.id));
-  renderList();
-}
 
+  // Critical: content is rendered before optional engagement requests.
+  renderList();
+
+  try{
+    await loadEngagement(state.posts.map(p=>p.id));
+    renderList();
+  }catch(error){
+    console.warn('newsletter engagement unavailable',error);
+    // Keep the posts already rendered with zero/default counters.
+  }
+}
 async function loadEngagement(ids){
-  state.likes=new Map();state.comments=new Map();state.liked=new Set();
+  state.likes=new Map();
+  state.comments=new Map();
+  state.liked=new Set();
   if(!ids.length)return;
-  const calls=[
+
+  const requests=[
     db.from('blog_post_like_counts').select('post_id,likes_count').in('post_id',ids),
     db.from('blog_post_comment_counts').select('post_id,comments_count').in('post_id',ids)
   ];
-  if(state.session?.user)calls.push(db.from('blog_post_likes').select('post_id').eq('user_id',state.session.user.id).in('post_id',ids));
-  const results=await Promise.all(calls);
-  (results[0].data||[]).forEach(r=>state.likes.set(r.post_id,Number(r.likes_count||0)));
-  (results[1].data||[]).forEach(r=>state.comments.set(r.post_id,Number(r.comments_count||0)));
-  (results[2]?.data||[]).forEach(r=>state.liked.add(r.post_id));
-}
 
+  if(state.session&&state.session.user){
+    requests.push(
+      db.from('blog_post_likes')
+        .select('post_id')
+        .eq('user_id',state.session.user.id)
+        .in('post_id',ids)
+    );
+  }
+
+  const results=await Promise.allSettled(requests);
+
+  const likeResult=results[0]?.status==='fulfilled'?results[0].value:null;
+  const commentResult=results[1]?.status==='fulfilled'?results[1].value:null;
+  const mineResult=results[2]?.status==='fulfilled'?results[2].value:null;
+
+  if(likeResult?.error)console.warn('like counts',likeResult.error);
+  if(commentResult?.error)console.warn('comment counts',commentResult.error);
+  if(mineResult?.error)console.warn('own likes',mineResult.error);
+
+  (likeResult?.data||[]).forEach(r=>state.likes.set(r.post_id,Number(r.likes_count||0)));
+  (commentResult?.data||[]).forEach(r=>state.comments.set(r.post_id,Number(r.comments_count||0)));
+  (mineResult?.data||[]).forEach(r=>state.liked.add(r.post_id));
+}
 function filteredPosts(){
   let rows=state.posts.filter(p=>
     state.selectedAuthors.has(authorKey(p)) &&
-    (!state.search||`${p.title} ${p.excerpt||''} ${p.body||''} ${p.author_name||''}`.toLocaleLowerCase('ro').includes(state.search))
+    (!state.search||`${p.title} ${p.excerpt||''} ${p.body||''} ${p.author_name||''}`.toLowerCase().includes(state.search))
   );
   rows=[...rows];
   if(state.sort==='date-asc')rows.sort((a,b)=>new Date(a.published_at)-new Date(b.published_at));
@@ -199,29 +275,63 @@ async function toggleLike(postId){
 }
 
 async function showArticle(slug){
-  const {data,error}=await db.from('blog_posts').select('id,title,slug,excerpt,body,image_path,author_id,author_name,published_at').eq('status','published').eq('slug',slug).maybeSingle();
-  $('#newsHero').hidden=true;$('#newsControls').hidden=true;$('#newsList').hidden=true;$('#articleView').hidden=false;
-  if(error||!data){$('#articleView').innerHTML='<a class="article-back" href="/newsletter.html">← Toate noutățile</a><div class="empty">Articolul nu există sau nu mai este public.</div>';return;}
+  const {data,error}=await db.from('blog_posts')
+    .select('id,title,slug,excerpt,body,image_path,author_name,published_at')
+    .eq('status','published')
+    .eq('slug',slug)
+    .maybeSingle();
+
+  $('#newsHero').hidden=true;
+  $('#newsControls').hidden=true;
+  $('#newsList').hidden=true;
+  $('#articleView').hidden=false;
+
+  if(error||!data){
+    console.error('blog article',error);
+    $('#articleView').innerHTML='<a class="article-back" href="/newsletter.html">← Toate noutățile</a><div class="empty">Articolul nu există sau nu mai este public.</div>';
+    return;
+  }
+
   state.article=data;
-  await loadEngagement([data.id]);
   document.title=`${data.title} — Support Hub Giuleștean 1923`;
+
+  // Render article immediately; engagement/comments may arrive afterwards.
   $('#articleView').innerHTML=`<a class="article-back" href="/newsletter.html">← Toate noutățile</a>
     <h1>${esc(data.title)}</h1>
     <div class="article-meta">${esc(data.author_name||'Support Hub Giuleștean 1923')} · ${fmt(data.published_at)}</div>
     <div id="articleActions"></div>
-    ${data.image_path?`<img class="article-hero" src="${esc(imageUrl(data.image_path))}" alt="${esc(data.title)}" loading="eager" decoding="async" fetchpriority="high">`:''}
+    ${data.image_path?`<img class="article-hero" src="${esc(imageUrl(data.image_path))}" alt="${esc(data.title)}">`:''}
     <div class="article-content">${paragraphs(data.body)}</div>
     <section class="comments-section" id="comentarii">
-      <div class="comments-head"><h2>Comentarii</h2><span id="commentsTotal">${count(state.comments,data.id)}</span></div>
+      <div class="comments-head"><h2>Comentarii</h2><span id="commentsTotal">0</span></div>
       <div id="commentComposer"></div>
       <div id="commentsList"><div class="loading comments-loading">Se încarcă discuția…</div></div>
     </section>`;
+
   renderArticleActions();
   renderCommentComposer();
-  await loadComments(data.id);
-  if(location.hash==='#comentarii')setTimeout(()=>$('#comentarii')?.scrollIntoView({behavior:'smooth',block:'start'}),150);
-}
 
+  try{
+    await loadEngagement([data.id]);
+    renderArticleActions();
+    const total=$('#commentsTotal');
+    if(total)total.textContent=count(state.comments,data.id);
+  }catch(error){
+    console.warn('article engagement unavailable',error);
+  }
+
+  try{
+    await loadComments(data.id);
+  }catch(error){
+    console.warn('article comments unavailable',error);
+    const comments=$('#commentsList');
+    if(comments)comments.innerHTML='<div class="empty">Comentariile nu sunt disponibile momentan.</div>';
+  }
+
+  if(location.hash==='#comentarii'){
+    setTimeout(()=>$('#comentarii')?.scrollIntoView({behavior:'smooth',block:'start'}),150);
+  }
+}
 function renderArticleActions(){
   if(!state.article)return;
   const p=state.article;
@@ -396,7 +506,7 @@ function renderComments(profiles){
 
     return `<div class="comment-thread depth-${Math.min(depth,4)}">
       <article class="comment-item ${depth?'is-reply':''}">
-        <div class="comment-avatar">${avatar?`<img src="${esc(avatar)}" alt="" loading="lazy" decoding="async">`:esc(initials(p.display_name))}</div>
+        <div class="comment-avatar">${avatar?`<img src="${esc(avatar)}" alt="">`:esc(initials(p.display_name))}</div>
         <div class="comment-main">
           <div class="comment-meta"><b>${esc(p.display_name||'Membru')}</b><span>${fmt(c.created_at)}</span></div>
           <p>${esc(c.body).replace(/\n/g,'<br>')}</p>

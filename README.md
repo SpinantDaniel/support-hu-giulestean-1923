@@ -74,9 +74,9 @@ Marketplace comunitar independent. Frontend static pe Vercel, backend Supabase.
 - Supabase profiles stochează timestamp + versiunea 1.0 a documentelor juridice
 
 
-## v5.25 — Admin PWA/session bootstrap fix
-- Admin opens in the same PWA/browser context, not a separate _blank window
-- current session is reused; refresh happens only once after an actual 401
-- profile/blog/editor loading failures cannot collapse the whole panel
-- admin DOM binding is null-safe
-- app.js and admin.js cache-busted to v5.25
+## v5.25 — Newsletter recovery
+- list and article render before likes/comment counters are fetched
+- engagement uses Promise.allSettled and cannot blank the page
+- article deep-links are fail-safe and show content immediately
+- author multi-filter kept, with defensive DOM bindings
+- newsletter.js/newsletter.css cache-busted to v5.25

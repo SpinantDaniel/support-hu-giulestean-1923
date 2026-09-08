@@ -202,3 +202,13 @@
     max-height:260px;
   }
 }
+
+
+/* v5.25 — newsletter recovery/fail-safe */
+.news-wrap .empty,
+.article-wrap .empty{
+  min-height:120px;
+  display:grid;
+  place-items:center;
+  text-align:center;
+}
