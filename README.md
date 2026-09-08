@@ -74,9 +74,8 @@ Marketplace comunitar independent. Frontend static pe Vercel, backend Supabase.
 - Supabase profiles stochează timestamp + versiunea 1.0 a documentelor juridice
 
 
-## v5.25 — Fix publicare fotografii iPhone/PWA
-- fotografiile sunt materializate imediat după selecție, evitând reoptimizarea iOS la Publish
-- fotografiile mari sunt redimensionate la max. 1920 px și comprimate JPEG client-side
-- upload-ul folosește fișierele pregătite din memorie
-- progres și erori afișate direct în sellModal, vizibile peste dialog
-- mesaj de progres per fotografie la upload
+## v5.25 — Hotfix listing_images sort_order
+- eliminat sort_order temporar 99 la upload-ul imaginilor noi
+- imaginile sunt inserate direct cu poziția validă 0..7
+- compatibil cu CHECK-ul Supabase listing_images_sort_order_check (0..20)
+- fără modificări SQL și fără modificări de UI

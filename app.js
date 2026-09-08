@@ -11,15 +11,12 @@ const state = { session:null, user:null, profile:null, userFlag:null, adminRole:
 const icons = { 'rapid-colectii':'⚑','auto-moto':'◉','electronice':'▣','telefoane':'▯','haine-incaltaminte':'♢','casa-gradina':'⌂','servicii':'✦','bilete':'▥','imobiliare':'▤','joburi':'▰','donez-caut':'♡','diverse':'•••' };
 const conditionLabels = {new:'Nou',like_new:'Ca nou',used:'Utilizat',damaged:'Cu defecte',service:'Serviciu',not_applicable:'N/A'};
 
-const listingImageEditor={items:[],originalPaths:[],dragKey:null,dragPointerId:null,dragBound:false,processing:false,processingCurrent:0,processingTotal:0};
+const listingImageEditor={items:[],originalPaths:[],dragKey:null,dragPointerId:null,dragBound:false};
 
 function resetListingImageEditor(){
   listingImageEditor.items.forEach(item=>{if(item.kind==='new'&&item.url)URL.revokeObjectURL(item.url);});
   listingImageEditor.items=[];
   listingImageEditor.originalPaths=[];
-  listingImageEditor.processing=false;
-  listingImageEditor.processingCurrent=0;
-  listingImageEditor.processingTotal=0;
   listingImageEditor.dragKey=null;
   listingImageEditor.dragPointerId=null;
   const root=$('#listingImageEditor');
@@ -30,157 +27,20 @@ function resetListingImageEditor(){
   if(input)input.value='';
 }
 
-function setSellPublishStatus(message='',type=''){
-  const box=$('#sellPublishStatus');
-  if(!box)return;
-  if(!message){
-    box.hidden=true;
-    box.textContent='';
-    box.removeAttribute('data-type');
-    return;
-  }
-  box.hidden=false;
-  box.textContent=message;
-  if(type)box.dataset.type=type;
-  else box.removeAttribute('data-type');
-}
-
 function listingImageEditorHelp(){
   const n=listingImageEditor.items.length;
   const editing=!!state.editingListingId;
   const help=$('#imageHelp');
-
   if(help){
-    if(listingImageEditor.processing){
-      help.textContent=`Se pregătesc fotografiile… ${listingImageEditor.processingCurrent}/${listingImageEditor.processingTotal}`;
-    }else{
-      help.textContent=editing
-        ?`${n} din 8 fotografii în anunț. Poți adăuga încă maximum ${Math.max(0,8-n)}.`
-        :(n?`${n} din 8 fotografii selectate.`:'JPG, PNG sau WEBP. Recomandat sub 5 MB / imagine.');
-    }
+    help.textContent=editing
+      ?`${n} din 8 fotografii în anunț. Poți adăuga încă maximum ${Math.max(0,8-n)}.`
+      :(n?`${n} din 8 fotografii selectate.`:'JPG, PNG sau WEBP. Recomandat sub 5 MB / imagine.');
   }
-
   const count=$('#listingImageEditorCount');
   if(count)count.textContent=n?` · ${n}/8`:'';
-
   const add=$('#addMoreImagesBtn');
-  if(add)add.hidden=n>=8||listingImageEditor.processing;
-
-  const publish=$('#publishBtn');
-  if(publish&&listingImageEditor.processing)publish.disabled=true;
+  if(add)add.hidden=n>=8;
 }
-
-function listingImageMime(file){
-  const type=String(file?.type||'').toLowerCase();
-  if(type)return type;
-  const ext=String(file?.name||'').split('.').pop()?.toLowerCase();
-  if(ext==='jpg'||ext==='jpeg')return 'image/jpeg';
-  if(ext==='png')return 'image/png';
-  if(ext==='webp')return 'image/webp';
-  if(ext==='heic')return 'image/heic';
-  if(ext==='heif')return 'image/heif';
-  return '';
-}
-
-function listingImageAllowed(file){
-  return /^image\/(jpeg|png|webp|heic|heif)$/i.test(listingImageMime(file));
-}
-
-function loadImageForOptimization(blob){
-  return new Promise((resolve,reject)=>{
-    const url=URL.createObjectURL(blob);
-    const img=new Image();
-    img.decoding='async';
-    img.onload=()=>resolve({img,url});
-    img.onerror=()=>{
-      URL.revokeObjectURL(url);
-      reject(new Error('Imaginea nu a putut fi decodată.'));
-    };
-    img.src=url;
-  });
-}
-
-function canvasToJpegBlob(canvas,quality){
-  return new Promise((resolve,reject)=>{
-    canvas.toBlob(blob=>blob?resolve(blob):reject(new Error('Imaginea nu a putut fi comprimată.')),'image/jpeg',quality);
-  });
-}
-
-async function optimizeListingImage(file){
-  if(!listingImageAllowed(file))throw new Error(`Formatul imaginii ${file.name||''} nu este acceptat.`);
-  if(file.size>40*1024*1024)throw new Error(`Imaginea ${file.name||''} este prea mare. Limita sursei este 40 MB.`);
-
-  // Force iOS/iCloud assets to be materialized while they are freshly selected.
-  // Publication then uses this in-memory copy instead of asking Photos again.
-  const bytes=await file.arrayBuffer();
-  const mime=listingImageMime(file)||'image/jpeg';
-  const materialized=new File([bytes],file.name||`foto-${Date.now()}.jpg`,{
-    type:mime,
-    lastModified:file.lastModified||Date.now()
-  });
-
-  let loaded;
-  try{
-    loaded=await loadImageForOptimization(materialized);
-  }catch(err){
-    if(/^image\/(jpeg|png|webp)$/i.test(mime)&&materialized.size<=5.5*1024*1024){
-      return materialized;
-    }
-    throw new Error(`Fotografia ${file.name||''} nu poate fi pregătită pentru upload.`);
-  }
-
-  try{
-    const {img}=loaded;
-    const width=img.naturalWidth||img.width;
-    const height=img.naturalHeight||img.height;
-    if(!width||!height)throw new Error('Dimensiuni invalide.');
-
-    const maxEdge=1920;
-    const scale=Math.min(1,maxEdge/Math.max(width,height));
-    const targetW=Math.max(1,Math.round(width*scale));
-    const targetH=Math.max(1,Math.round(height*scale));
-
-    // Small JPEG/WEBP files still get materialized, but avoid unnecessary recompression.
-    if(scale===1 && materialized.size<=2.4*1024*1024 && /^image\/(jpeg|webp)$/i.test(mime)){
-      return materialized;
-    }
-
-    const canvas=document.createElement('canvas');
-    canvas.width=targetW;
-    canvas.height=targetH;
-    const ctx=canvas.getContext('2d',{alpha:false});
-    if(!ctx)throw new Error('Canvas indisponibil.');
-
-    ctx.fillStyle='#fff';
-    ctx.fillRect(0,0,targetW,targetH);
-    ctx.imageSmoothingEnabled=true;
-    ctx.imageSmoothingQuality='high';
-    ctx.drawImage(img,0,0,targetW,targetH);
-
-    let quality=.84;
-    let blob=await canvasToJpegBlob(canvas,quality);
-    while(blob.size>2.5*1024*1024 && quality>.58){
-      quality-=.08;
-      blob=await canvasToJpegBlob(canvas,quality);
-    }
-
-    if(blob.size>5.5*1024*1024){
-      throw new Error('Fotografia rămâne prea mare după optimizare.');
-    }
-
-    const base=(String(file.name||'fotografie').replace(/\.[^.]+$/,'')||'fotografie')
-      .replace(/[^\p{L}\p{N}_-]+/gu,'-')
-      .slice(0,70);
-
-    return new File([blob],`${base}.jpg`,{
-      type:'image/jpeg',
-      lastModified:Date.now()
-    });
-  }finally{
-    if(loaded?.url)URL.revokeObjectURL(loaded.url);
-  }
-}
-
 
 async function initializeExistingListingImages(listing){
   resetListingImageEditor();
@@ -209,73 +69,24 @@ async function initializeExistingListingImages(listing){
 
   renderListingImageEditor();
 }
-async function addListingImageFiles(files){
+function addListingImageFiles(files){
   const incoming=(files||[]).filter(Boolean);
   if(!incoming.length)return;
-
   const room=8-listingImageEditor.items.length;
-  if(room<=0){
-    toast('Poți avea maximum 8 fotografii.','error');
-    return;
-  }
-
+  if(room<=0){toast('Poți avea maximum 8 fotografii.','error');return;}
   const accepted=incoming.slice(0,room);
-  listingImageEditor.processing=true;
-  listingImageEditor.processingCurrent=0;
-  listingImageEditor.processingTotal=accepted.length;
-  setSellPublishStatus(`Pregătim ${accepted.length===1?'fotografia':'fotografiile'} pentru publicare…`);
-  listingImageEditorHelp();
-
-  let added=0;
-  try{
-    for(let i=0;i<accepted.length;i++){
-      const source=accepted[i];
-      listingImageEditor.processingCurrent=i+1;
-      listingImageEditorHelp();
-      setSellPublishStatus(`Pregătim fotografia ${i+1} din ${accepted.length}…`);
-
-      try{
-        const prepared=await optimizeListingImage(source);
-        listingImageEditor.items.push({
-          kind:'new',
-          key:`new:${crypto.randomUUID()}`,
-          file:prepared,
-          originalName:source.name,
-          url:URL.createObjectURL(prepared)
-        });
-        added++;
-      }catch(err){
-        console.error('photo prepare',err);
-        const message=err?.message||`Fotografia ${source.name||''} nu a putut fi pregătită.`;
-        setSellPublishStatus(message,'error');
-        toast(message,'error');
-      }
-    }
-
-    if(incoming.length>room){
-      toast(`Au fost luate în calcul doar ${room} fotografii. Limita este 8.`,'error');
-    }
-
-    renderListingImageEditor();
-
-    if(added){
-      setSellPublishStatus(
-        `${added} ${added===1?'fotografie pregătită':'fotografii pregătite'} pentru publicare.`,
-        'success'
-      );
-      setTimeout(()=>{
-        const box=$('#sellPublishStatus');
-        if(box&&!box.hidden&&box.dataset.type==='success')setSellPublishStatus();
-      },1400);
-    }
-  }finally{
-    listingImageEditor.processing=false;
-    listingImageEditor.processingCurrent=0;
-    listingImageEditor.processingTotal=0;
-    const publish=$('#publishBtn');
-    if(publish)publish.disabled=false;
-    listingImageEditorHelp();
+  for(const file of accepted){
+    if(file.size>6*1024*1024){toast(`Imaginea ${file.name} depășește 6 MB.`,'error');continue;}
+    if(!/^image\/(jpeg|png|webp)$/i.test(file.type)){toast(`Formatul imaginii ${file.name} nu este acceptat.`,'error');continue;}
+    listingImageEditor.items.push({
+      kind:'new',
+      key:`new:${crypto.randomUUID()}`,
+      file,
+      url:URL.createObjectURL(file)
+    });
   }
+  if(incoming.length>room)toast(`Au fost adăugate doar ${room} fotografii. Limita este 8.`,'error');
+  renderListingImageEditor();
 }
 
 function removeListingImageEditorItem(key){
@@ -1077,7 +888,6 @@ async function submitPasswordReset(e){
 function prepareSellForm(mode='new'){
   const form=$('#sellForm');
   resetListingImageEditor();
-  setSellPublishStatus();
   form.reset();
   form.elements.location.value='București';
   $('#sellModal .kicker').textContent=mode==='edit'?'EDITARE ANUNȚ':'ANUNȚ NOU';
@@ -1145,17 +955,12 @@ async function openEditListing(id,returnToAccount=true){
 
 async function publishListing(e){
   e.preventDefault();if(!requireActive())return;
-  if(listingImageEditor.processing){
-    setSellPublishStatus('Așteaptă finalizarea pregătirii fotografiilor.','error');
-    return;
-  }
   const form=e.currentTarget,btn=$('#publishBtn'),fd=new FormData(form),editing=!!state.editingListingId;
   const current=editing?state.listings.find(x=>x.id===state.editingListingId):null;
   const imageItems=[...listingImageEditor.items];
   if(imageItems.length>8)return toast('Poți avea maximum 8 fotografii.','error');
   if(!fd.get('phone')&&!fd.get('whatsapp'))return toast('Adaugă telefon sau WhatsApp pentru contact direct.','error');
 
-  setSellPublishStatus(editing?'Se salvează modificările…':'Se publică anunțul…');
   setBusy(btn,true,editing?'Se salvează…':'Se publică…');
   let listingId=state.editingListingId;
   const newlyUploadedPaths=[];
@@ -1173,34 +978,33 @@ async function publishListing(e){
     }
 
     const pathByKey=new Map();
-    const newImageCount=imageItems.filter(item=>item.kind==='new').length;
-    let uploadedImageCount=0;
-    for(const item of imageItems){
+    for(let imageIndex=0;imageIndex<imageItems.length;imageIndex++){
+      const item=imageItems[imageIndex];
       if(item.kind==='existing'){
         pathByKey.set(item.key,item.path);
         continue;
       }
       const f=item.file;
       if(!f)continue;
-      if(f.size>5.8*1024*1024)throw new Error(`Fotografia ${f.name} este prea mare după pregătire.`);
-
-      uploadedImageCount++;
-      const progressText=`Se încarcă fotografia ${uploadedImageCount} din ${newImageCount}…`;
-      btn.textContent=progressText;
-      setSellPublishStatus(progressText);
-
+      if(f.size>6*1024*1024)throw new Error(`Imaginea ${f.name} depășește 6 MB.`);
       const ext=(f.name.split('.').pop()||'jpg').toLowerCase().replace(/[^a-z0-9]/g,'');
       const path=`${state.user.id}/${listingId}/${crypto.randomUUID()}.${ext}`;
-      const up=await db.storage.from('listing-images').upload(path,f,{cacheControl:'3600',upsert:false,contentType:f.type||'image/jpeg'});
-      if(up.error)throw new Error(`Upload fotografie ${uploadedImageCount}/${newImageCount}: ${up.error.message||'eroare necunoscută'}`);
+      const up=await db.storage.from('listing-images').upload(path,f,{cacheControl:'3600',upsert:false,contentType:f.type});
+      if(up.error)throw up.error;
       newlyUploadedPaths.push(path);
-      const ri=await db.from('listing_images').insert({listing_id:listingId,storage_path:path,sort_order:99});
+
+      // Insert immediately with a valid CHECK-compliant sort_order.
+      // listing_images_sort_order_check allows 0..20; listings are limited to max 8 images.
+      const ri=await db.from('listing_images').insert({
+        listing_id:listingId,
+        storage_path:path,
+        sort_order:imageIndex
+      });
       if(ri.error)throw ri.error;
       pathByKey.set(item.key,path);
     }
 
     const finalPaths=imageItems.map(item=>pathByKey.get(item.key)).filter(Boolean);
-    setSellPublishStatus(editing?'Finalizăm modificările…':'Finalizăm publicarea…');
 
     if(editing){
       const originalPaths=[...listingImageEditor.originalPaths];
@@ -1221,7 +1025,6 @@ async function publishListing(e){
 
     const returnToAccount=state.editReturnToAccount;
     state.editingListingId=null;state.editReturnToAccount=false;
-    setSellPublishStatus();
     prepareSellForm('new');
     closeDialog('sellModal');
     await loadListings();renderListings();
@@ -1243,9 +1046,7 @@ async function publishListing(e){
       if(listingId)await db.from('listings').delete().eq('id',listingId);
       openListingLimitModal();
     }else{
-      const message=err?.message||(editing?'Anunțul nu a putut fi actualizat.':'Anunțul nu a putut fi publicat.');
-      setSellPublishStatus(message,'error');
-      toast(message,'error');
+      toast(err.message||(editing?'Anunțul nu a putut fi actualizat.':'Anunțul nu a putut fi publicat.'),'error');
       if(!editing&&listingId)await db.from('listings').delete().eq('id',listingId);
     }
   }finally{setBusy(btn,false);}
@@ -1470,12 +1271,7 @@ function bindStaticEvents(){
   $('#categoryFilter').onchange=()=>{resetMarketPage();syncCategorySelection();renderListings();};$('#sortSelect').onchange=()=>{resetMarketPage();renderListings();};$('#allCategories').onclick=()=>{$('#categoryFilter').value='all';resetMarketPage();syncCategorySelection();renderListings();};
   $$('[data-focus-search]').forEach(b=>b.onclick=()=>{scrollTo({top:0,behavior:'smooth'});setTimeout(()=>$('#searchInput').focus(),300);});$$('[data-home]').forEach(b=>b.onclick=()=>scrollTo({top:0,behavior:'smooth'}));$$('[data-favorites]').forEach(b=>b.onclick=()=>openAccount('favorites'));
   $$('[data-legal]').forEach(a=>a.onclick=e=>{e.preventDefault();openLegal(a.dataset.legal);});
-  $('#sellForm [name=images]').onchange=async e=>{
-    const input=e.target;
-    const files=[...input.files];
-    await addListingImageFiles(files);
-    input.value='';
-  };
+  $('#sellForm [name=images]').onchange=e=>{addListingImageFiles([...e.target.files]);e.target.value='';};
   $('#addMoreImagesBtn').onclick=()=>$('#sellForm [name=images]').click();
   ['authModal','passwordResetModal','sellModal','detailModal','sellerListingsModal','messageModal','accountModal','profileModal','deleteAccountModal','legalModal'].forEach(id=>{const d=document.getElementById(id);d.addEventListener('click',e=>{if(e.target===d)d.close();});});
 }
