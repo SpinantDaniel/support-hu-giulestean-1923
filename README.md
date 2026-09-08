@@ -55,3 +55,11 @@ Marketplace comunitar independent. Frontend static pe Vercel, backend Supabase.
 - filtrarea se combină cu căutarea și sortarea existente
 - contor de articole per autor și etichetă dinamică Autori: X/Y
 - layout responsive, full-width pe mobil
+
+
+## v5.23 — Admin: ștergere utilizator
+- buton `Șterge user` în tabul Utilizatori pentru conturile non-admin
+- confirmare explicită prin tastarea `ȘTERGE`
+- Edge Function dedicată `admin-delete-user`, JWT protected și admin-only
+- propriul cont admin și celelalte conturi admin nu pot fi șterse din panou
+- cleanup listing images + avatar + autorizare newsletter editor înainte de ștergerea Auth

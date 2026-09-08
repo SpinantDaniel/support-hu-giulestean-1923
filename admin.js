@@ -44,12 +44,40 @@ async function loadDashboard(){
   try{state.dashboard=await adminAction('dashboard');renderOverview();renderUsers();renderReports();renderListings();}catch(e){console.error(e);toast(e.message,'error');}finally{setBusy(btn,false);}
 }
 function renderOverview(){const d=state.dashboard;if(!d)return;const suspended=d.users.filter(u=>u.suspended).length,openReports=d.reports.filter(r=>r.status!=='resolved').length;$('#stats').innerHTML=`<div class="stat"><b>${d.users.length}</b><span>Utilizatori</span></div><div class="stat"><b>${d.listings.length}</b><span>Anunțuri</span></div><div class="stat"><b>${openReports}</b><span>Raportări deschise</span></div><div class="stat"><b>${suspended}</b><span>Suspendați</span></div>`;const rows=d.reported_users.slice(0,6);$('#reportedPreview').innerHTML=rows.length?rows.map(userRowHtml).join(''):'<div class="empty">Nu există utilizatori raportați.</div>';bindUserActions($('#reportedPreview'));}
-function userRowHtml(u){const until=u.suspended?`Suspendat până la ${fmt(u.suspended_until)}`:'Activ';return `<div class="admin-row" data-user-row="${u.id}"><div class="main"><b>${esc(u.display_name)} ${u.verified?'<span class="tag green">Verificat</span>':''}</b><span>${esc(u.email||'fără email')} · ${u.listings_count} anunțuri · ${u.reports_count} raportări</span><small>${u.suspended?`<span class="tag red">${esc(until)}</span> ${esc(u.suspension_reason||'')}`:`<span class="tag green">${until}</span>`}</small></div><div class="actions">${u.role==='admin'?'<span class="tag wine">Admin</span>':u.suspended?`<button class="success" data-unsuspend="${u.id}">Deblochează</button>`:`<select class="duration" data-duration="${u.id}"><option value="24">1 zi</option><option value="72">3 zile</option><option value="168" selected>7 zile</option><option value="720">30 zile</option></select><button class="danger" data-suspend="${u.id}">Suspendă</button>`}${u.role!=='admin'?`<button class="ghost" data-verify="${u.id}" data-value="${u.verified?'0':'1'}">${u.verified?'Retrage verificarea':'Marchează verificat'}</button>`:''}</div></div>`;}
+function userRowHtml(u){const until=u.suspended?`Suspendat până la ${fmt(u.suspended_until)}`:'Activ';return `<div class="admin-row" data-user-row="${u.id}"><div class="main"><b>${esc(u.display_name)} ${u.verified?'<span class="tag green">Verificat</span>':''}</b><span>${esc(u.email||'fără email')} · ${u.listings_count} anunțuri · ${u.reports_count} raportări</span><small>${u.suspended?`<span class="tag red">${esc(until)}</span> ${esc(u.suspension_reason||'')}`:`<span class="tag green">${until}</span>`}</small></div><div class="actions">${u.role==='admin'?'<span class="tag wine">Admin</span>':u.suspended?`<button class="success" data-unsuspend="${u.id}">Deblochează</button>`:`<select class="duration" data-duration="${u.id}"><option value="24">1 zi</option><option value="72">3 zile</option><option value="168" selected>7 zile</option><option value="720">30 zile</option></select><button class="danger" data-suspend="${u.id}">Suspendă</button>`}${u.role!=='admin'?`<button class="ghost" data-verify="${u.id}" data-value="${u.verified?'0':'1'}">${u.verified?'Retrage verificarea':'Marchează verificat'}</button><button class="danger admin-delete-user" data-delete-user="${u.id}" data-delete-user-name="${esc(u.display_name)}" data-delete-user-email="${esc(u.email||'')}">Șterge user</button>`:''}</div></div>`;}
 function renderUsers(){const d=state.dashboard;if(!d)return;const q=($('#userSearch')?.value||'').trim().toLowerCase();const rows=d.users.filter(u=>!q||`${u.display_name} ${u.email}`.toLowerCase().includes(q));$('#usersList').innerHTML=rows.length?rows.map(userRowHtml).join(''):'<div class="empty">Niciun utilizator găsit.</div>';bindUserActions($('#usersList'));}
-function bindUserActions(root){$$('[data-suspend]',root).forEach(b=>b.onclick=()=>suspendUser(b.dataset.suspend,root));$$('[data-unsuspend]',root).forEach(b=>b.onclick=()=>unsuspendUser(b.dataset.unsuspend));$$('[data-verify]',root).forEach(b=>b.onclick=()=>verifyUser(b.dataset.verify,b.dataset.value==='1'));}
+function bindUserActions(root){$$('[data-suspend]',root).forEach(b=>b.onclick=()=>suspendUser(b.dataset.suspend,root));$$('[data-unsuspend]',root).forEach(b=>b.onclick=()=>unsuspendUser(b.dataset.unsuspend));$$('[data-verify]',root).forEach(b=>b.onclick=()=>verifyUser(b.dataset.verify,b.dataset.value==='1'));$$('[data-delete-user]',root).forEach(b=>b.onclick=()=>deleteUserFromAdmin(b));}
 async function suspendUser(id,root){const hours=Number($(`[data-duration="${id}"]`,root)?.value||168);const reason=prompt('Motivul suspendării temporare:','Încălcare reguli marketplace');if(!reason)return;try{await adminAction('suspend_user',{user_id:id,hours,reason});toast('Utilizator suspendat.','success');await loadDashboard();}catch(e){toast(e.message,'error');}}
 async function unsuspendUser(id){if(!confirm('Reactivezi accesul acestui utilizator?'))return;try{await adminAction('unsuspend_user',{user_id:id});toast('Acces reactivat.','success');await loadDashboard();}catch(e){toast(e.message,'error');}}
 async function verifyUser(id,value){try{await adminAction('set_verified',{user_id:id,verified:value});toast(value?'Utilizator verificat.':'Verificare retrasă.','success');await loadDashboard();}catch(e){toast(e.message,'error');}}
+async function deleteUserFromAdmin(button){
+  const id=button.dataset.deleteUser;
+  const name=button.dataset.deleteUserName||'utilizator';
+  const email=button.dataset.deleteUserEmail||'';
+  if(!id)return;
+  const confirmation=prompt(`Ștergere definitivă utilizator:
+${name}${email?` · ${email}`:''}
+
+Vor fi eliminate contul, anunțurile, mesajele și datele asociate. Articolele publicate rămân în arhiva Noutăți.
+
+Scrie ȘTERGE pentru confirmare:`,'');
+  if(confirmation!=='ȘTERGE'){
+    if(confirmation!==null)toast('Ștergerea a fost anulată.');
+    return;
+  }
+  setBusy(button,true,'Se șterge…');
+  try{
+    await edge('admin-delete-user',{user_id:id});
+    toast('Utilizator șters definitiv.','success');
+    await loadDashboard();
+    await Promise.all([loadEditors(),loadPosts()]);
+  }catch(e){
+    toast(e.message||'Utilizatorul nu a putut fi șters.','error');
+  }finally{
+    setBusy(button,false);
+  }
+}
+
 
 function renderReports(){const d=state.dashboard;if(!d)return;const rows=d.reports.filter(r=>r.status!=='resolved');$('#reportsList').innerHTML=rows.length?rows.map(r=>`<div class="admin-row"><div class="main"><b>${esc(r.listing_title)}</b><span>${esc(r.seller_name)} · ${esc(r.seller_email||'')} · motiv: ${esc(r.reason)}</span><small>${fmt(r.created_at)}${r.details?` · ${esc(r.details)}`:''}</small></div><div class="actions"><button class="ghost" data-resolve="${r.id}">Rezolvă</button>${r.listing_id?`<button class="danger" data-admin-delete="${r.listing_id}">Șterge anunțul</button>`:''}${r.seller_id?`<select class="duration" data-duration="${r.seller_id}"><option value="24">1 zi</option><option value="72">3 zile</option><option value="168" selected>7 zile</option><option value="720">30 zile</option></select><button class="danger" data-suspend="${r.seller_id}">Suspendă user</button>`:''}</div></div>`).join(''):'<div class="empty">Nu există raportări deschise.</div>';$$('[data-resolve]',$('#reportsList')).forEach(b=>b.onclick=()=>resolveReport(b.dataset.resolve));$$('[data-admin-delete]',$('#reportsList')).forEach(b=>b.onclick=()=>adminDeleteListing(b.dataset.adminDelete));$$('[data-suspend]',$('#reportsList')).forEach(b=>b.onclick=()=>suspendUser(b.dataset.suspend,$('#reportsList')));}
 async function resolveReport(id){try{await adminAction('resolve_report',{report_id:id});toast('Raportare închisă.','success');await loadDashboard();}catch(e){toast(e.message,'error');}}
