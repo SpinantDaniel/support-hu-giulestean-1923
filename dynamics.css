@@ -1724,3 +1724,107 @@ footer.global-footer .global-footer-note{
     right:6px!important;
   }
 }
+
+
+/* v5.24 — mandatory Terms + Privacy acknowledgement on signup */
+.signup-legal-consent{
+  display:grid;
+  grid-template-columns:26px minmax(0,1fr);
+  align-items:start;
+  gap:10px;
+  margin-top:13px;
+  padding:11px 12px;
+  border:1px solid rgba(111,21,48,.13);
+  border-radius:11px;
+  background:rgba(111,21,48,.035);
+  transition:border-color .18s ease,background-color .18s ease,box-shadow .18s ease;
+}
+.signup-legal-consent[hidden]{
+  display:none!important;
+}
+.signup-legal-consent.accepted{
+  border-color:rgba(111,21,48,.25);
+  background:rgba(111,21,48,.055);
+}
+.signup-consent-check{
+  position:relative;
+  display:grid!important;
+  place-items:center;
+  width:25px;
+  height:25px;
+  margin:0!important;
+  padding:0!important;
+  cursor:pointer;
+}
+.signup-consent-check input{
+  position:absolute!important;
+  width:1px!important;
+  height:1px!important;
+  opacity:0!important;
+  margin:0!important;
+  pointer-events:none;
+}
+.signup-consent-box{
+  width:23px;
+  height:23px;
+  display:grid;
+  place-items:center;
+  border:1px solid #cec4c8;
+  border-radius:6px;
+  background:#fff;
+  color:transparent;
+  font-size:14px;
+  font-weight:950;
+  box-shadow:0 2px 6px rgba(30,10,16,.04);
+  transition:background-color .16s ease,border-color .16s ease,color .16s ease,transform .16s ease;
+}
+.signup-consent-check input:checked + .signup-consent-box{
+  background:var(--wine);
+  border-color:var(--wine);
+  color:#fff;
+  transform:scale(1.04);
+}
+.signup-consent-check input:focus-visible + .signup-consent-box{
+  outline:3px solid rgba(111,21,48,.12);
+  outline-offset:2px;
+}
+.signup-legal-consent p{
+  margin:1px 0 0;
+  color:#6f686c;
+  font-size:10px;
+  line-height:1.55;
+}
+.signup-legal-link{
+  display:inline;
+  padding:0!important;
+  border:0!important;
+  background:transparent!important;
+  color:var(--wine)!important;
+  font:inherit;
+  font-weight:850!important;
+  text-decoration:underline;
+  text-decoration-thickness:1px;
+  text-underline-offset:2px;
+  cursor:pointer;
+  box-shadow:none!important;
+}
+.signup-legal-link:hover{
+  color:var(--wine2)!important;
+  transform:none!important;
+}
+#authSubmit:disabled{
+  opacity:.46!important;
+  cursor:not-allowed!important;
+  transform:none!important;
+  box-shadow:none!important;
+}
+@media(max-width:650px){
+  .signup-legal-consent{
+    grid-template-columns:25px minmax(0,1fr);
+    gap:9px;
+    padding:10px 11px;
+  }
+  .signup-legal-consent p{
+    font-size:9.5px;
+  }
+}

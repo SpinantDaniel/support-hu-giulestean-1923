@@ -804,14 +804,52 @@ async function reportListing(l){
   if(error){if(error.code==='23505')return toast('Ai raportat deja acest anunț.');console.error(error);return toast('Raportarea nu a putut fi trimisă.','error');}toast('Raport trimis către moderare.');
 }
 
-function openAuth(mode='login'){state.authMode=mode;updateAuthMode();$('#authModal').showModal();}
-function updateAuthMode(){const signup=state.authMode==='signup';$('#authTitle').textContent=signup?'Creează cont':'Intră în cont';$('#authSubmit').textContent=signup?'Creează cont':'Intră în cont';$('#displayNameField').hidden=!signup;$('#forgotPasswordRow').hidden=signup;$('#authNotice').textContent=signup?'Fiecare adresă de email poate avea un singur cont. Dacă emailul este deja înregistrat, crearea unui cont nou este blocată.':'Contul îți permite să publici, să salvezi favorite și să contactezi vânzătorii.';$('#authForm [name=password]').autocomplete=signup?'new-password':'current-password';$$('[data-auth-mode]').forEach(b=>b.classList.toggle('active',b.dataset.authMode===state.authMode));}
+function updateSignupConsentUI(){
+  const signup=state.authMode==='signup';
+  const box=$('#signupLegalConsent');
+  const input=$('#authForm [name=legal_acceptance]');
+  const btn=$('#authSubmit');
+  if(!box||!input||!btn)return;
+  box.hidden=!signup;
+  input.disabled=!signup;
+  input.required=signup;
+  btn.disabled=signup&&!input.checked;
+  box.classList.toggle('accepted',signup&&input.checked);
+}
+
+function openAuth(mode='login'){
+  state.authMode=mode;
+  if(mode==='signup'){
+    const legal=$('#authForm [name=legal_acceptance]');
+    if(legal)legal.checked=false;
+  }
+  updateAuthMode();
+  $('#authModal').showModal();
+}
+
+function updateAuthMode(){
+  const signup=state.authMode==='signup';
+  $('#authTitle').textContent=signup?'Creează cont':'Intră în cont';
+  $('#authSubmit').textContent=signup?'Creează cont':'Intră în cont';
+  $('#displayNameField').hidden=!signup;
+  $('#forgotPasswordRow').hidden=signup;
+  $('#authNotice').textContent=signup?'Fiecare adresă de email poate avea un singur cont. Dacă emailul este deja înregistrat, crearea unui cont nou este blocată.':'Contul îți permite să publici, să salvezi favorite și să contactezi vânzătorii.';
+  $('#authForm [name=password]').autocomplete=signup?'new-password':'current-password';
+  $$('[data-auth-mode]').forEach(b=>b.classList.toggle('active',b.dataset.authMode===state.authMode));
+  updateSignupConsentUI();
+}
 async function submitAuth(e){
-  e.preventDefault();const form=e.currentTarget,btn=$('#authSubmit'),fd=new FormData(form),email=String(fd.get('email')).trim(),password=String(fd.get('password'));setBusy(btn,true,state.authMode==='signup'?'Se creează…':'Se autentifică…');
+  e.preventDefault();
+  const form=e.currentTarget,btn=$('#authSubmit'),fd=new FormData(form),email=String(fd.get('email')).trim(),password=String(fd.get('password'));
+  if(state.authMode==='signup'&&!form.elements.legal_acceptance.checked){
+    form.elements.legal_acceptance.focus();
+    return toast('Pentru a crea contul trebuie să accepți Termenii de utilizare și să confirmi că ai citit Politica de confidențialitate.','error');
+  }
+  setBusy(btn,true,state.authMode==='signup'?'Se creează…':'Se autentifică…');
   try{
     if(state.authMode==='signup'){
       const display=String(fd.get('display_name')||'').trim();if(display.length<2)throw new Error('Completează numele afișat.');
-      const response=await fetch(`${SUPABASE_URL}/functions/v1/register-user`,{method:'POST',headers:{'Content-Type':'application/json','apikey':SUPABASE_PUBLISHABLE_KEY},body:JSON.stringify({email,password,display_name:display})});
+      const response=await fetch(`${SUPABASE_URL}/functions/v1/register-user`,{method:'POST',headers:{'Content-Type':'application/json','apikey':SUPABASE_PUBLISHABLE_KEY},body:JSON.stringify({email,password,display_name:display,accept_terms:true,acknowledge_privacy:true})});
       const result=await response.json().catch(()=>({}));
       if(!response.ok)throw new Error(result.error||'Contul nu a putut fi creat.');
       const login=await db.auth.signInWithPassword({email,password});if(login.error)throw login.error;
@@ -1212,7 +1250,10 @@ function bindStaticEvents(){
   $$('[data-open-sell]').forEach(b=>b.onclick=openSell);
   $('#loginBtn').onclick=()=>state.user?openAccount():openAuth('login');$('#mobileAccount').onclick=$('#loginBtn').onclick;
   $$('[data-auth-mode]').forEach(b=>b.onclick=()=>{state.authMode=b.dataset.authMode;updateAuthMode();});
-  $('#authForm').addEventListener('submit',submitAuth);$('#forgotPasswordBtn').onclick=requestPasswordReset;$('#passwordResetForm').addEventListener('submit',submitPasswordReset);$('#sellForm').addEventListener('submit',publishListing);$('#messageForm').addEventListener('submit',sendMessage);
+  $('#authForm').addEventListener('submit',submitAuth);
+  $('#authForm [name=legal_acceptance]').onchange=updateSignupConsentUI;
+  $$('[data-signup-legal]').forEach(button=>button.onclick=e=>{e.preventDefault();e.stopPropagation();openLegal(button.dataset.signupLegal);});
+  $('#forgotPasswordBtn').onclick=requestPasswordReset;$('#passwordResetForm').addEventListener('submit',submitPasswordReset);$('#sellForm').addEventListener('submit',publishListing);$('#messageForm').addEventListener('submit',sendMessage);
   $('#logoutBtn').onclick=async()=>{await db.auth.signOut();closeDialog('accountModal');toast('Ai ieșit din cont.');};$('#editProfileBtn').onclick=openProfileEditor;$('#adminPanelBtn').onclick=()=>window.open('/admin.html','_blank','noopener');$('#profileForm').addEventListener('submit',saveProfile);$('#deleteAccountBtn').onclick=openDeleteAccount;$('#deleteAccountForm').addEventListener('submit',deleteAccount);$('#profileForm [name=avatar]').onchange=e=>{const f=e.target.files?.[0];if(f){const u=URL.createObjectURL(f);$('#profilePreview').innerHTML=`<span class="profile-preview-avatar has-image"><img src="${esc(u)}" alt="Preview avatar"></span>`;}};
   $('#profileForm [name=contact_incognito]').onchange=updateContactIncognitoUI;
   $$('[data-account-tab]').forEach(b=>b.onclick=async()=>{state.accountTab=b.dataset.accountTab;updateAccountTabButtons();await renderAccount();});

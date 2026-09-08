@@ -63,3 +63,12 @@ Marketplace comunitar independent. Frontend static pe Vercel, backend Supabase.
 - Edge Function dedicată `admin-delete-user`, JWT protected și admin-only
 - propriul cont admin și celelalte conturi admin nu pot fi șterse din panou
 - cleanup listing images + avatar + autorizare newsletter editor înainte de ștergerea Auth
+
+
+## v5.24 — Acceptare juridică obligatorie la creare cont
+- checkbox obligatoriu în modul Cont nou
+- linkuri directe către Termenii de utilizare și Politica de confidențialitate
+- butonul Creează cont rămâne disabled până la bifare
+- frontend revalidează acceptarea la submit
+- register-user v3 verifică acceptarea server-side
+- Supabase profiles stochează timestamp + versiunea 1.0 a documentelor juridice
