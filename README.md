@@ -74,9 +74,8 @@ Marketplace comunitar independent. Frontend static pe Vercel, backend Supabase.
 - Supabase profiles stochează timestamp + versiunea 1.0 a documentelor juridice
 
 
-## v5.25 — Newsletter recovery
-- list and article render before likes/comment counters are fetched
-- engagement uses Promise.allSettled and cannot blank the page
-- article deep-links are fail-safe and show content immediately
-- author multi-filter kept, with defensive DOM bindings
-- newsletter.js/newsletter.css cache-busted to v5.25
+## v5.25 — Fix publicare anunțuri / sort_order imagini
+- eliminat sort_order temporar 99, care încălca CHECK-ul DB 0..20
+- imaginile noi sunt inserate direct cu poziția reală 0..7
+- reordonarea finală existentă rămâne neschimbată
+- fără modificări SQL sau de design
