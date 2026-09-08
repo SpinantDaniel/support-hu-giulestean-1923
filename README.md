@@ -73,20 +73,10 @@ Marketplace comunitar independent. Frontend static pe Vercel, backend Supabase.
 - register-user v3 verifică acceptarea server-side
 - Supabase profiles stochează timestamp + versiunea 1.0 a documentelor juridice
 
-## v5.25 — Browser-side image optimization
-- new centralized `image-service.js` abstraction for optimize/upload/delete/public URL
-- new uploads only: existing Supabase image paths remain fully compatible
-- listing: max 1600×1600, target ~240 KB, hard 500 KB
-- blog: max 1920×1920, target ~340 KB, hard 750 KB
-- avatar: max 512×512, target ~110 KB, hard 250 KB
-- WebP preferred; adaptive quality 0.82 → 0.75 → 0.68; JPEG fallback; PNG fallback only for alpha when WebP encoding is unavailable
-- EXIF-oriented decode via `createImageBitmap(..., {imageOrientation:'from-image'})` with browser image-decoder fallback
-- listing batch optimization concurrency limited to max 2 (1 on lower-core devices)
-- immutable-style unique filenames + one-year Supabase Storage cache max-age
-- pending Storage cleanup queue in localStorage retries failed orphan-file deletions
-- avatar replacement uploads/updates DB before deleting the previous avatar
-- blog replacement uploads/updates DB before deleting the old image
-- listing deletion deletes DB first, then Storage, avoiding active listings with missing photos
-- lazy loading retained/expanded; visible primary images use eager/high priority
-- no SQL migration required for image optimization
-- Supabase remains current provider; provider layer is structured so Cloudflare R2 can be added later
+
+## v5.25 — Fix publicare fotografii iPhone/PWA
+- fotografiile sunt materializate imediat după selecție, evitând reoptimizarea iOS la Publish
+- fotografiile mari sunt redimensionate la max. 1920 px și comprimate JPEG client-side
+- upload-ul folosește fișierele pregătite din memorie
+- progres și erori afișate direct în sellModal, vizibile peste dialog
+- mesaj de progres per fotografie la upload

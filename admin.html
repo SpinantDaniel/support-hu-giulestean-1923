@@ -72,7 +72,7 @@
               <label>Titlu<input name="title" required minlength="3" maxlength="180" placeholder="Titlul articolului"></label>
               <label>Rezumat<textarea name="excerpt" maxlength="350" rows="3" placeholder="Rezumat scurt pentru pagina de noutăți"></textarea></label>
               <label>Text articol<textarea name="body" required minlength="10" rows="12" placeholder="Scrie articolul aici. Paragrafele se separă cu o linie liberă."></textarea></label>
-              <label>Imagine principală<input name="image" type="file" accept="image/jpeg,image/png,image/webp,image/heic,image/heif,.heic,.heif"><small>Imaginea este optimizată automat înainte de upload.</small></label>
+              <label>Imagine principală<input name="image" type="file" accept="image/jpeg,image/png,image/webp"><small>JPG, PNG sau WEBP · max. 6 MB</small></label>
               <div id="postImagePreview" class="image-preview" hidden></div>
               <label>Stare<select name="status"><option value="published">Publicat</option><option value="draft">Ciornă</option></select></label>
               <div class="form-actions"><button type="button" class="ghost" id="cancelPostEdit" hidden>Renunță la editare</button><button class="primary" id="savePostBtn">Publică articolul</button></div>
@@ -100,9 +100,8 @@
   </footer>
   <div class="toast" id="toast"></div>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.112.4/dist/umd/supabase.min.js"></script>
-  <script src="/image-service.js?v=5.25"></script>
   <script src="/parallax.js"></script>
   <script src="/pwa-refresh.js?v=5.25"></script>
-  <script src="/admin.js?v=5.25"></script>
+  <script src="/admin.js?v=5.23"></script>
 </body>
 </html>
