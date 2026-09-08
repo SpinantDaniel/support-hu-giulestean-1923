@@ -11,11 +11,12 @@ const state = { session:null, user:null, profile:null, userFlag:null, adminRole:
 const icons = { 'rapid-colectii':'⚑','auto-moto':'◉','electronice':'▣','telefoane':'▯','haine-incaltaminte':'♢','casa-gradina':'⌂','servicii':'✦','bilete':'▥','imobiliare':'▤','joburi':'▰','donez-caut':'♡','diverse':'•••' };
 const conditionLabels = {new:'Nou',like_new:'Ca nou',used:'Utilizat',damaged:'Cu defecte',service:'Serviciu',not_applicable:'N/A'};
 
-const listingImageEditor={items:[],dragKey:null,dragPointerId:null};
+const listingImageEditor={items:[],originalPaths:[],dragKey:null,dragPointerId:null,dragBound:false};
 
 function resetListingImageEditor(){
   listingImageEditor.items.forEach(item=>{if(item.kind==='new'&&item.url)URL.revokeObjectURL(item.url);});
   listingImageEditor.items=[];
+  listingImageEditor.originalPaths=[];
   listingImageEditor.dragKey=null;
   listingImageEditor.dragPointerId=null;
   const root=$('#listingImageEditor');
@@ -41,19 +42,33 @@ function listingImageEditorHelp(){
   if(add)add.hidden=n>=8;
 }
 
-function initializeExistingListingImages(listing){
+async function initializeExistingListingImages(listing){
   resetListingImageEditor();
-  const paths=listing?.image_paths||[];
-  const urls=listing?.images||[];
-  listingImageEditor.items=paths.map((path,i)=>({
+
+  let rows=[];
+  const {data,error}=await db.from('listing_images')
+    .select('storage_path,sort_order')
+    .eq('listing_id',listing.id)
+    .order('sort_order',{ascending:true});
+
+  if(error){
+    console.warn('listing image editor load',error);
+    const paths=listing?.image_paths||[];
+    rows=paths.map((storage_path,sort_order)=>({storage_path,sort_order}));
+  }else{
+    rows=data||[];
+  }
+
+  listingImageEditor.originalPaths=rows.map(row=>row.storage_path);
+  listingImageEditor.items=rows.map(row=>({
     kind:'existing',
-    key:`existing:${path}`,
-    path,
-    url:urls[i]||publicStorageUrl('listing-images',path)
+    key:`existing:${row.storage_path}`,
+    path:row.storage_path,
+    url:publicStorageUrl('listing-images',row.storage_path)
   }));
+
   renderListingImageEditor();
 }
-
 function addListingImageFiles(files){
   const incoming=(files||[]).filter(Boolean);
   if(!incoming.length)return;
@@ -90,45 +105,81 @@ function syncListingImageEditorOrderFromDom(){
   listingImageEditor.items=order.map(key=>byKey.get(key)).filter(Boolean);
 }
 
-function endListingImageDrag(card){
-  if(!card)return;
-  try{
-    if(listingImageEditor.dragPointerId!=null&&card.hasPointerCapture?.(listingImageEditor.dragPointerId)){
-      card.releasePointerCapture(listingImageEditor.dragPointerId);
-    }
-  }catch(_){}
-  card.classList.remove('dragging');
+function draggedListingImageCard(){
+  const grid=$('#listingImageEditorGrid');
+  if(!grid||!listingImageEditor.dragKey)return null;
+  return $$('.listing-image-edit-card',grid).find(card=>card.dataset.imageEditorKey===listingImageEditor.dragKey)||null;
+}
+
+function endListingImageDrag(){
+  const card=draggedListingImageCard();
+  if(card)card.classList.remove('dragging');
+  const grid=$('#listingImageEditorGrid');
+  if(grid)grid.classList.remove('is-dragging');
   listingImageEditor.dragKey=null;
   listingImageEditor.dragPointerId=null;
   syncListingImageEditorOrderFromDom();
   renderListingImageEditor();
 }
 
-function bindListingImageEditorDrag(){
+function moveListingImageCardAtPointer(clientX){
   const grid=$('#listingImageEditorGrid');
-  if(!grid)return;
-  $$('.listing-image-edit-card',grid).forEach(card=>{
-    card.addEventListener('pointerdown',e=>{
-      if(e.button!==undefined&&e.button!==0)return;
-      if(e.target.closest('.listing-image-remove'))return;
-      listingImageEditor.dragKey=card.dataset.imageEditorKey;
-      listingImageEditor.dragPointerId=e.pointerId;
-      card.classList.add('dragging');
-      card.setPointerCapture?.(e.pointerId);
-    });
-    card.addEventListener('pointermove',e=>{
-      if(listingImageEditor.dragKey!==card.dataset.imageEditorKey)return;
-      const under=document.elementFromPoint(e.clientX,e.clientY)?.closest('.listing-image-edit-card');
-      if(!under||under===card||under.parentElement!==grid)return;
-      const rect=under.getBoundingClientRect();
-      const before=e.clientX<(rect.left+rect.width/2);
-      grid.insertBefore(card,before?under:under.nextSibling);
-    });
-    card.addEventListener('pointerup',()=>endListingImageDrag(card));
-    card.addEventListener('pointercancel',()=>endListingImageDrag(card));
-  });
+  const dragged=draggedListingImageCard();
+  if(!grid||!dragged)return;
+
+  const gridRect=grid.getBoundingClientRect();
+
+  // Auto-scroll while dragging near either horizontal edge.
+  const edge=48;
+  if(clientX<gridRect.left+edge)grid.scrollLeft-=16;
+  else if(clientX>gridRect.right-edge)grid.scrollLeft+=16;
+
+  const others=$$('.listing-image-edit-card',grid).filter(card=>card!==dragged);
+  let before=null;
+  for(const card of others){
+    const rect=card.getBoundingClientRect();
+    if(clientX<rect.left+rect.width/2){
+      before=card;
+      break;
+    }
+  }
+  if(before)grid.insertBefore(dragged,before);
+  else grid.appendChild(dragged);
 }
 
+function bindListingImageEditorDrag(){
+  const grid=$('#listingImageEditorGrid');
+  if(!grid||listingImageEditor.dragBound)return;
+  listingImageEditor.dragBound=true;
+
+  grid.addEventListener('pointerdown',e=>{
+    const card=e.target.closest('.listing-image-edit-card');
+    if(!card||e.target.closest('.listing-image-remove'))return;
+    if(e.pointerType==='mouse'&&e.button!==0)return;
+
+    listingImageEditor.dragKey=card.dataset.imageEditorKey;
+    listingImageEditor.dragPointerId=e.pointerId;
+    card.classList.add('dragging');
+    grid.classList.add('is-dragging');
+    e.preventDefault();
+  });
+
+  document.addEventListener('pointermove',e=>{
+    if(listingImageEditor.dragPointerId==null||e.pointerId!==listingImageEditor.dragPointerId)return;
+    e.preventDefault();
+    moveListingImageCardAtPointer(e.clientX);
+  },{passive:false});
+
+  document.addEventListener('pointerup',e=>{
+    if(listingImageEditor.dragPointerId==null||e.pointerId!==listingImageEditor.dragPointerId)return;
+    endListingImageDrag();
+  });
+
+  document.addEventListener('pointercancel',e=>{
+    if(listingImageEditor.dragPointerId==null||e.pointerId!==listingImageEditor.dragPointerId)return;
+    endListingImageDrag();
+  });
+}
 function renderListingImageEditor(){
   const root=$('#listingImageEditor'),grid=$('#listingImageEditorGrid');
   if(!root||!grid)return;
@@ -837,7 +888,7 @@ async function openEditListing(id,returnToAccount=true){
   if(error)console.warn('contact edit load',error);
   form.elements.phone.value=contact?.phone||'';
   form.elements.whatsapp.value=contact?.whatsapp||'';
-  initializeExistingListingImages(l);
+  await initializeExistingListingImages(l);
   closeDialog('accountModal');
   $('#sellModal').showModal();
 }
@@ -888,7 +939,7 @@ async function publishListing(e){
     const finalPaths=imageItems.map(item=>pathByKey.get(item.key)).filter(Boolean);
 
     if(editing){
-      const originalPaths=current?.image_paths||[];
+      const originalPaths=[...listingImageEditor.originalPaths];
       const keep=new Set(finalPaths);
       const removed=originalPaths.filter(path=>!keep.has(path));
       if(removed.length){

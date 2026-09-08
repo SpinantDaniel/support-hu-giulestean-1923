@@ -1267,3 +1267,71 @@ footer.global-footer .global-footer-note{
     font-size:8.5px;
   }
 }
+
+
+/* v5.13 — cross-browser image editor fixes */
+
+/* Center the safety note only inside the publish/edit listing window. */
+#sellModal .notice{
+  width:100%;
+  text-align:center!important;
+  display:block!important;
+  margin-left:auto!important;
+  margin-right:auto!important;
+}
+#sellModal .notice{
+  text-wrap:balance;
+}
+
+/* Dragging on iOS/desktop: disable snap only while sorting and give clear feedback. */
+.listing-image-editor-grid.is-dragging{
+  scroll-snap-type:none!important;
+  cursor:grabbing;
+}
+.listing-image-editor-grid.is-dragging .listing-image-edit-card:not(.dragging){
+  transition:transform .14s ease,box-shadow .14s ease;
+}
+.listing-image-edit-card{
+  -webkit-touch-callout:none;
+}
+.listing-image-edit-card.dragging{
+  pointer-events:none;
+}
+
+/* Existing images must always render even when browser has stale frame/image CSS. */
+#listingImageEditorGrid .listing-image-edit-card img{
+  display:block!important;
+  visibility:visible!important;
+  opacity:1!important;
+  width:100%!important;
+  height:100%!important;
+  max-width:none!important;
+  object-fit:cover!important;
+  object-position:center center!important;
+}
+
+/* Keep the editor visible and usable on wide desktop layouts. */
+@media(min-width:651px){
+  #listingImageEditor{
+    width:100%;
+    max-width:100%;
+  }
+  #listingImageEditorGrid{
+    min-height:133px;
+  }
+}
+
+/* Mobile sorter: horizontal drag is handled by JS; vertical page behavior remains stable outside cards. */
+@media(max-width:650px){
+  #listingImageEditorGrid{
+    touch-action:pan-y;
+  }
+  .listing-image-edit-card{
+    touch-action:none!important;
+  }
+  #sellModal .notice{
+    padding-left:14px!important;
+    padding-right:14px!important;
+    line-height:1.5;
+  }
+}
