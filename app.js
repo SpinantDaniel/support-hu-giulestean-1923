@@ -1104,11 +1104,408 @@ function bindStaticEvents(){
 
 const TERMS_OF_USE_HTML=`<article class="legal-doc"><h3 class="legal-doc-title">TERMENI DE UTILIZARE ȘI POLITICA DE MODERARE</h3><p class="legal-doc-subtitle"><strong>HUB Giuleștean — Support Hub Giuleștean 1923</strong></p><p class="legal-doc-meta">Versiunea 1.0</p><p class="legal-doc-meta">Data intrării în vigoare: [se completează la publicare]</p><h4>1. Identitatea operatorului și contact</h4><p>Platforma HUB Giuleștean, denumită și „Support Hub Giuleștean 1923”, este administrată de <strong>CASA DEL DANIEL DIGITAL CONSULTING S.R.L.</strong>, denumită în continuare „Operatorul”, având următoarele date de identificare:</p><ul><li><strong>Sediul social:</strong> Strada Valea Gârboului nr. 5, Florești, județul Cluj, România;</li><li><strong>Cod unic de înregistrare:</strong> 511***88;</li><li><strong>Număr de ordine în Registrul Comerțului:</strong> J2025<strong>*</strong>*001;</li><li><strong>Identificator unic european — EUID:</strong> ROONRC.J2025<strong>*</strong>*001;</li><li><strong>Telefon:</strong> 0753.670.173;</li><li><strong>E-mail:</strong> <a href="mailto:office.casadeldaniel@aol.com">office.casadeldaniel@aol.com</a>.</li></ul><p>Adresa de e-mail reprezintă punctul de contact pentru asistență, reclamații, raportarea conținutului, contestarea măsurilor de moderare și comunicarea cu autoritățile. Comunicarea se desfășoară în limba română și permite contactul cu o persoană din partea Operatorului.</p><h4>2. Scopul și caracterul independent al Platformei</h4><p>HUB Giuleștean este o platformă independentă de anunțuri, destinată facilitării contactului dintre persoanele care oferă sau caută bunuri și servicii.</p><p>Caracterul comunitar al Platformei nu reprezintă o verificare sau o garanție a identității, seriozității ori capacității utilizatorilor de a-și îndeplini obligațiile.</p><p>Referirile la comunitatea giuleșteană și utilizarea denumirii Platformei nu trebuie interpretate, prin ele însele, ca dovadă a unei afilieri oficiale cu un club sportiv sau cu o altă organizație. Orice parteneriat oficial va fi prezentat explicit.</p><h4>3. Domeniul de aplicare și acceptarea termenilor</h4><p>Acești termeni reglementează utilizarea Platformei, crearea conturilor, publicarea anunțurilor și interacțiunile realizate prin funcțiile disponibile.</p><p>Crearea unui cont presupune acceptarea expresă a termenilor prin mecanismul pus la dispoziție în Platformă. Termenii trebuie să poată fi consultați și salvați înainte de acceptare.</p><p>Acceptarea lor reglementează relația dintre utilizator și Operator. Condițiile tranzacțiilor dintre utilizatori se stabilesc separat între persoanele implicate, cu respectarea legii.</p><h4>4. Eligibilitatea și gestionarea contului</h4><p>Crearea conturilor și publicarea anunțurilor sunt permise persoanelor care au împlinit 18 ani. Persoana care acționează pentru o societate sau organizație trebuie să aibă dreptul de a o reprezenta.</p><p>Utilizatorul se obligă:</p><ul><li>să furnizeze informații corecte și actualizate;</li><li>să utilizeze date de contact asupra cărora are control;</li><li>să protejeze parola și codurile de autentificare;</li><li>să nu folosească fără drept identitatea altei persoane;</li><li>să anunțe Operatorul când suspectează compromiterea contului;</li><li>să nu creeze conturi pentru a evita restricțiile aplicate justificat.</li></ul><p>Utilizatorul răspunde pentru propriile acțiuni și pentru activitățile autorizate de acesta. Folosirea neautorizată a contului nu stabilește automat culpa titularului.</p><p>Operatorul nu solicită parole, coduri PIN sau coduri de autentificare pentru verificarea unui anunț ori pentru confirmarea unei tranzacții.</p><h4>5. Rolul Platformei în tranzacții</h4><p>Platforma oferă infrastructura necesară publicării anunțurilor și facilitării contactului dintre utilizatori.</p><p><strong>Operatorul nu este parte în tranzacțiile dintre utilizatori</strong> și nu acționează ca vânzător, cumpărător, mandatar sau garant al acestora.</p><p>Părțile stabilesc direct:</p><ul><li>prețul și modalitatea de plată;</li><li>condițiile de predare sau livrare;</li><li>verificarea bunului;</li><li>condițiile prestării serviciului;</li><li>eventualele garanții contractuale și condiții de restituire, cu respectarea drepturilor legale aplicabile.</li></ul><p>În modelul de anunțuri reglementat de acești termeni, Operatorul nu încasează și nu păstrează contravaloarea bunurilor ori serviciilor tranzacționate între utilizatori.</p><p>Aceste precizări nu înlătură obligațiile legale și răspunderea proprie a Operatorului.</p><h4>6. Responsabilitatea pentru ofertele publicate</h4><p>Autorul răspunde pentru legalitatea ofertei, autenticitatea bunului, exactitatea descrierii și dreptul de a utiliza fotografiile, textele și celelalte materiale publicate.</p><p>Utilizatorul trebuie să dețină bunul sau să fie autorizat să îl ofere și să aibă calificările ori autorizațiile necesare pentru serviciile prestate, atunci când legea le impune.</p><p>Anunțul trebuie să prezinte clar:</p><ul><li>bunul sau serviciul oferit;</li><li>caracteristicile esențiale;</li><li>starea reală și defectele cunoscute;</li><li>prețul sau modul de calcul;</li><li>costurile suplimentare cunoscute;</li><li>condițiile și limitările relevante ale ofertei.</li></ul><p>Fotografiile trebuie să reflecte corect oferta. Imaginile ilustrative trebuie identificate ca atare.</p><p>Sunt interzise ascunderea defectelor, prezentarea produselor contrafăcute drept originale, ofertele inexistente și prețurile fictive folosite pentru atragerea accesărilor.</p><p>Anunțurile trebuie actualizate sau retrase când oferta nu mai este disponibilă.</p><h4>7. Utilizatori particulari și profesioniști</h4><p>Utilizatorii trebuie să declare corect dacă acționează ca particulari sau în cadrul unei activități profesionale.</p><p>Profesioniștii răspund pentru furnizarea informațiilor comerciale obligatorii, respectarea cerințelor de autorizare, emiterea documentelor fiscale și respectarea drepturilor consumatorilor.</p><p>Dreptul de retragere, obligațiile privind conformitatea și celelalte drepturi specifice consumatorilor se aplică în condițiile prevăzute de lege. Acestea nu se aplică automat tranzacțiilor între particulari, pentru care rămân valabile regulile dreptului civil.</p><p>Selectarea unui cont de particular nu înlătură obligațiile aferente unei activități care este, în realitate, profesională.</p><h4>8. Bunuri, servicii și conținut interzis</h4><p>Sunt interzise:</p><ul><li>bunurile furate, contrafăcute sau comercializate fără drept;</li><li>produsele și serviciile interzise de lege;</li><li>fraudele, schemele piramidale și ofertele cu promisiuni înșelătoare de câștig;</li><li>documentele false, datele bancare, parolele și conturile compromise;</li><li>comercializarea sau divulgarea fără drept a datelor personale;</li><li>materialele care încalcă drepturi de autor, mărci sau dreptul la imagine;</li><li>conținutul care exploatează minori;</li><li>amenințările, hărțuirea și incitarea la ură sau violență;</li><li>linkurile de phishing, programele malițioase și tentativele de furt de date;</li><li>anunțurile care folosesc fără drept identitatea unei persoane ori organizații.</li></ul><p>Prin politica Platformei sunt interzise și ofertele de arme, muniții, explozibili, articole pirotehnice, droguri, medicamente, tutun, produse cu nicotină și servicii sexuale, chiar dacă anumite categorii pot fi comercializate legal în alte condiții.</p><p>Biletele și abonamentele la evenimente pot fi oferite numai dacă transferul este permis de lege și de condițiile emitentului. Nu sunt acceptate bilete false, duplicate sau prezentate înșelător.</p><h4>9. Reguli de conduită</h4><p>Comunicarea trebuie să fie relevantă și să respecte drepturile celorlalte persoane.</p><p>Nu sunt permise:</p><ul><li>intimidarea și insultele repetate adresate altor utilizatori;</li><li>mesajele comerciale nesolicitate trimise în masă;</li><li>anunțurile duplicate excesiv;</li><li>recenziile fictive și manipularea reputației;</li><li>raportările abuzive;</li><li>colectarea masivă a datelor cu încălcarea legii;</li><li>accesarea neautorizată și perturbarea Platformei.</li></ul><p>Datele de contact publicate pentru o ofertă trebuie folosite în legătură cu aceasta. Publicarea lor nu reprezintă acord pentru includerea în baze de date de marketing.</p><p>Criticile formulate cu bună-credință, inclusiv cele privind Platforma, nu constituie prin ele însele un motiv de sancționare.</p><h4>10. Siguranța tranzacțiilor</h4><p>Utilizatorilor li se recomandă să verifice bunul, condițiile ofertei și dreptul vânzătorului de a-l comercializa înainte de efectuarea plății.</p><p>Apartenența la aceeași comunitate nu înlocuiește aceste verificări.</p><p>Publicarea sau menținerea unui anunț după moderare nu reprezintă certificarea autenticității produsului, a calității serviciului sau a executării tranzacției.</p><p>În cazul unei suspiciuni de fraudă, utilizatorul poate informa Operatorul și autoritățile competente, păstrând dovezile relevante.</p><h4>11. Raportarea conținutului</h4><p>Orice persoană poate semnala conținut presupus ilegal sau contrar regulilor la <strong><a href="mailto:office.casadeldaniel@aol.com">office.casadeldaniel@aol.com</a></strong>, fără a avea nevoie de cont. Poate fi utilizată și funcția de raportare, dacă este disponibilă.</p><p>Sesizarea trebuie să includă:</p><ul><li>localizarea exactă a conținutului, prin link sau identificator;</li><li>explicația motivelor raportării;</li><li>dovezile disponibile;</li><li>numele și adresa de e-mail, cu excepțiile legale;</li><li>confirmarea că informațiile sunt transmise cu bună-credință și sunt considerate exacte și complete.</li></ul><p>Operatorul confirmă primirea când dispune de date electronice de contact și comunică decizia și căile de contestare fără întârzieri nejustificate. Sesizările sunt tratate diligent, obiectiv și proporțional cu gravitatea situației.</p><h4>12. Politica de moderare</h4><p>Moderarea se realizează manual, de persoane desemnate de Operator, pe baza sesizărilor și a verificărilor proprii. Nu se promite verificarea prealabilă a fiecărui anunț.</p><p>Operatorul poate solicita corectarea unei oferte, limita vizibilitatea, elimina conținutul sau suspenda temporar contul. Închiderea definitivă poate interveni pentru fraude, abateri grave ori repetate.</p><p>Măsura ține cont de gravitate, impact și istoricul abaterilor. Pentru riscuri urgente se poate interveni imediat.</p><p>Persoanei afectate i se comunică motivul concret, temeiul, întinderea și durata restricției, precum și căile de contestare, cu excepțiile legale. Eventuala introducere a moderării automate va fi explicată prin actualizarea acestei politici.</p><h4>13. Contestarea măsurilor</h4><p>Utilizatorul poate solicita gratuit reanalizarea unei măsuri prin e-mail la <strong><a href="mailto:office.casadeldaniel@aol.com">office.casadeldaniel@aol.com</a></strong>, indicând contul sau anunțul, decizia și motivele contestației.</p><p>Cererea este examinată de o persoană desemnată. Dacă măsura este nejustificată, Operatorul o corectează și comunică rezultatul.</p><p>Procedura nu limitează drepturile legale de contestare, sesizarea autorităților sau accesul la instanță.</p><h4>14. Drepturile asupra materialelor</h4><p>Utilizatorul păstrează drepturile asupra conținutului propriu.</p><p>Prin publicare, acordă Operatorului o permisiune neexclusivă și gratuită de a stoca, reproduce, adapta tehnic și afișa materialele pentru funcționarea Platformei și prezentarea anunțului.</p><p>Permisiunea nu transferă proprietatea asupra materialelor și nu autorizează folosirea acestora în campanii publicitare externe fără un acord separat.</p><p>După retragerea conținutului, păstrarea unor copii este limitată la situații justificate privind copiile de siguranță, obligațiile legale sau apărarea unor drepturi.</p><h4>15. Gratuitate și servicii opționale</h4><p>Publicarea standard a anunțurilor este gratuită.</p><p>Eventualele servicii opționale contra cost vor avea prețul total, durata, caracteristicile și condițiile comunicate înainte de comandă. Nu vor fi activate fără acceptare expresă.</p><p>Anunțurile promovate vor fi identificate vizibil. Plata promovării nu garantează vânzarea și nu exonerează autorul de respectarea regulilor.</p><p>Criteriile principale care influențează ordinea ofertelor și efectul eventualelor promovări vor fi explicate în interfața de afișare a anunțurilor, potrivit funcționării reale.</p><h4>16. Date personale</h4><p>Modul de prelucrare a datelor personale este descris separat în Politica de Confidențialitate a Platformei. Utilizarea cookie-urilor și a tehnologiilor similare este explicată în informarea dedicată.</p><p>Acceptarea termenilor nu reprezintă consimțământ general pentru marketing sau pentru orice utilizare a datelor. Atunci când este necesar, consimțământul se solicită separat.</p><p>Utilizatorii nu trebuie să publice CNP-uri, copii ale actelor de identitate, date complete de card sau alte informații care nu sunt necesare prezentării ofertei.</p><p>Solicitările privind datele personale pot fi transmise la <strong><a href="mailto:office.casadeldaniel@aol.com">office.casadeldaniel@aol.com</a></strong>.</p><h4>17. Disponibilitate și răspundere</h4><p>Operatorul depune eforturi rezonabile pentru funcționarea și securitatea Platformei. Pot exista întreruperi pentru mentenanță, incidente tehnice sau cauze externe.</p><p>Nu se garantează disponibilitatea neîntreruptă, vânzarea bunurilor, un anumit număr de vizualizări ori comportamentul altor utilizatori.</p><p>Autorul răspunde pentru propriul anunț și pentru obligațiile asumate în tranzacție. Operatorul răspunde pentru propriile fapte și obligații potrivit legii.</p><p>Nicio clauză nu exclude răspunderea care nu poate fi limitată legal și nu restrânge drepturile obligatorii ale consumatorilor.</p><h4>18. Închiderea contului</h4><p>Utilizatorul poate solicita închiderea contului prin funcția disponibilă sau prin e-mail la <strong><a href="mailto:office.casadeldaniel@aol.com">office.casadeldaniel@aol.com</a></strong>. Pentru prevenirea solicitărilor neautorizate, Operatorul poate verifica în mod proporțional identitatea solicitantului.</p><p>Anunțurile active vor fi retrase la închiderea contului. Datele vor fi șterse sau păstrate limitat, în condițiile Politicii de confidențialitate și ale legii.</p><p>Închiderea contului nu anulează obligațiile din tranzacțiile deja încheiate și nu presupune ștergerea imediată a tuturor evidențelor necesare legal.</p><h4>19. Modificarea termenilor</h4><p>Termenii pot fi actualizați pentru modificări legislative, de securitate sau de funcționalitate.</p><p>Modificările relevante vor fi comunicate înainte de aplicare, cu un preaviz rezonabil, exceptând situațiile care impun intervenția imediată. Comunicarea va indica data aplicării.</p><p>Modificările nu produc efecte retroactive. Acceptarea expresă va fi solicitată când este necesară. Utilizatorul care nu acceptă noile condiții poate înceta utilizarea și solicita închiderea contului.</p><h4>20. Reclamații, lege aplicabilă și litigii</h4><p>Reclamațiile privind Platforma pot fi transmise la <strong><a href="mailto:office.casadeldaniel@aol.com">office.casadeldaniel@aol.com</a></strong>, cu descrierea situației și dovezile relevante.</p><p>Neînțelegerile dintre cumpărător și vânzător se soluționează între aceștia și, după caz, prin autorități sau instanțele abilitate. Operatorul poate analiza conduita utilizatorilor pentru aplicarea regulilor Platformei, fără a decide obligatoriu asupra litigiului.</p><p>Termenii sunt guvernați de legea română, fără înlăturarea protecției obligatorii de care consumatorul beneficiază potrivit legii aplicabile.</p><p>În funcție de obiectul sesizării, utilizatorul se poate adresa ANPC, ANSPDCP, ANCOM sau altor autorități competente. ANCOM supraveghează respectarea obligațiilor privind serviciile digitale, fără a înlocui instanțele în soluționarea litigiilor dintre utilizatori.</p><p>Accesul la autorități sau instanțele competente nu este condiționat de parcurgerea prealabilă a unei proceduri amiabile.</p></article>`;
 
+const PRIVACY_POLICY_HTML=`<article class="legal-doc legal-privacy-doc"><h3 class="legal-doc-title">POLITICA DE CONFIDENȚIALITATE</h3><p class="legal-doc-subtitle"><strong>HUB Giuleștean — Support Hub Giuleștean 1923</strong></p>
+<p class="legal-doc-meta">Versiunea 1.0</p><p class="legal-doc-meta">Data intrării în vigoare: [se completează la publicare]</p>
+<h4>1. Cine răspunde pentru datele tale</h4>
+<p>Operatorul datelor personale prelucrate prin HUB Giuleștean este
+<strong>CASA DEL DANIEL DIGITAL CONSULTING S.R.L.</strong>, cu
+următoarele date de identificare:</p>
+<ul>
+<li><strong>Sediul social:</strong> Strada Valea Gârboului nr. 5,
+Florești, județul Cluj, România;</li>
+<li><strong>Cod unic de înregistrare:</strong> 511***88;</li>
+<li><strong>Număr de ordine în Registrul Comerțului:</strong>
+J2025******001;</li>
+<li><strong>Identificator unic european — EUID:</strong>
+ROONRC.J2025******001;</li>
+<li><strong>Telefon:</strong> 0753.670.173;</li>
+<li><strong>E-mail:</strong> <a
+href="mailto:office.casadeldaniel@aol.com">office.casadeldaniel@aol.com</a>.</li>
+</ul>
+<p>În această politică, „Platforma” înseamnă HUB Giuleștean, denumită și
+„Support Hub Giuleștean 1923”.</p>
+<p>Politica explică ce date folosim, de ce le folosim, cui le putem
+comunica, cât timp le păstrăm și cum îți poți exercita drepturile.</p>
+<h4>2. Principiile pe care le respectăm</h4>
+<p>Prelucrăm datele pentru scopuri determinate și folosim numai
+informațiile necesare îndeplinirii acestora.</p>
+<p><strong>Nu vindem date personale.</strong></p>
+<p>Nu folosim acceptarea Termenilor de utilizare drept acord general
+pentru marketing sau pentru orice prelucrare a datelor.</p>
+<p>Accesul la date este limitat în funcție de atribuții și de
+necesitatea utilizării lor. Datele nu sunt păstrate nelimitat doar
+pentru că ar putea deveni utile.</p>
+<h4>3. Ce date putem prelucra</h4>
+<p>În funcție de funcțiile utilizate, prelucrăm următoarele
+categorii:</p>
+<div class="legal-table-wrap"><table>
+<colgroup>
+<col style="width: 14%" />
+<col style="width: 85%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th>Categoria</th>
+<th>Date vizate</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Cont și autentificare</td>
+<td>Adresa de e-mail, identificatorul contului, numele de utilizator și
+datele tehnice necesare autentificării și recuperării accesului.</td>
+</tr>
+<tr class="even">
+<td>Profil și contact</td>
+<td>Numele afișat, fotografia de profil, telefonul și localitatea, dacă
+le furnizezi.</td>
+</tr>
+<tr class="odd">
+<td>Anunțuri</td>
+<td>Titlul, descrierea, fotografiile, categoria, prețul, localizarea
+indicată și istoricul administrării anunțului.</td>
+</tr>
+<tr class="even">
+<td>Favorite</td>
+<td>Anunțurile salvate și asocierea acestora cu propriul cont.</td>
+</tr>
+<tr class="odd">
+<td>Mesaje</td>
+<td>Conținutul conversațiilor, participanții, data și ora transmiterii
+și atașamentele, dacă funcția le permite.</td>
+</tr>
+<tr class="even">
+<td>Asistență și moderare</td>
+<td>Solicitările, raportările, dovezile transmise, răspunsurile și
+măsurile luate.</td>
+</tr>
+<tr class="odd">
+<td>Date tehnice și de securitate</td>
+<td>Adresa IP, informații despre browser și dispozitiv, evenimente de
+autentificare, erori și jurnale tehnice, în măsura în care sunt
+colectate de infrastructura utilizată.</td>
+</tr>
+<tr class="even">
+<td>Preferințe și acorduri</td>
+<td>Versiunea termenilor acceptați și, unde este cazul, opțiunile
+privind cookie-urile și comunicările comerciale.</td>
+</tr>
+</tbody>
+</table></div>
+<p>Nu solicităm în mod obișnuit CNP, copii ale actelor de identitate,
+date complete de card sau informații medicale.</p>
+<p>Nu publica asemenea date în anunțuri și nu transmite informații
+despre alte persoane fără un temei justificat.</p>
+<h4>4. De unde obținem datele</h4>
+<p>Datele provin:</p>
+<ul>
+<li>direct de la tine, când creezi contul, publici, salvezi favorite,
+trimiți mesaje sau ne contactezi;</li>
+<li>din utilizarea Platformei, pentru operațiuni tehnice și
+securitate;</li>
+<li>de la alți utilizatori, dacă îți trimit mesaje sau depun o sesizare
+care te privește;</li>
+<li>de la autorități, atunci când există o comunicare legală
+relevantă.</li>
+</ul>
+<p>Dacă primim informații despre tine de la alte persoane, le folosim
+numai pentru scopul justificat și îndeplinim obligațiile de informare
+aplicabile.</p>
+<h4>5. Scopurile și temeiurile juridice</h4>
+<div class="legal-table-wrap"><table>
+<colgroup>
+<col style="width: 45%" />
+<col style="width: 54%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th>Scop</th>
+<th>Temei juridic</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Crearea contului, autentificarea și recuperarea accesului</td>
+<td>Executarea contractului privind utilizarea Platformei — art. 6 alin.
+(1) lit. b) GDPR.</td>
+</tr>
+<tr class="even">
+<td>Publicarea și administrarea anunțurilor</td>
+<td>Executarea contractului — art. 6 alin. (1) lit. b).</td>
+</tr>
+<tr class="odd">
+<td>Favorite, mesagerie și contactul solicitat între utilizatori</td>
+<td>Executarea contractului — art. 6 alin. (1) lit. b).</td>
+</tr>
+<tr class="even">
+<td>Răspunsuri la solicitări privind propriul cont sau serviciul
+utilizat</td>
+<td>Executarea contractului — art. 6 alin. (1) lit. b).</td>
+</tr>
+<tr class="odd">
+<td>Protejarea conturilor, prevenirea fraudei, securitate și
+investigarea abuzurilor</td>
+<td>Interes legitim — art. 6 alin. (1) lit. f), după evaluarea
+necesității și a impactului asupra persoanelor.</td>
+</tr>
+<tr class="even">
+<td>Aplicarea regulilor comunității, în afara obligațiilor legale
+specifice</td>
+<td>Interes legitim de administrare a unui serviciu sigur — art. 6 alin.
+(1) lit. f).</td>
+</tr>
+<tr class="odd">
+<td>Soluționarea cererilor GDPR și respectarea obligațiilor legale de
+raportare ori comunicare</td>
+<td>Obligație legală — art. 6 alin. (1) lit. c).</td>
+</tr>
+<tr class="even">
+<td>Constatarea, exercitarea sau apărarea unor drepturi</td>
+<td>Interes legitim — art. 6 alin. (1) lit. f).</td>
+</tr>
+<tr class="odd">
+<td>Marketing opțional și tehnologii neesențiale care necesită
+acord</td>
+<td>Consimțământ — art. 6 alin. (1) lit. a), împreună cu regulile
+speciale aplicabile.</td>
+</tr>
+</tbody>
+</table></div>
+<p>Nu considerăm orice activitate utilă Platformei ca fiind automat
+necesară executării contractului.</p>
+<p>Pentru prelucrările bazate pe interes legitim, evaluăm dacă scopul
+poate fi atins prin mijloace mai puțin intruzive și dacă drepturile tale
+prevalează.</p>
+<p>Datele marcate ca obligatorii sunt necesare funcției solicitate. Dacă
+nu le furnizezi, este posibil să nu putem crea contul sau presta funcția
+respectivă. Refuzul marketingului opțional nu împiedică folosirea
+funcțiilor de bază.</p>
+<h4>6. Cine poate vedea datele tale</h4>
+<p class="legal-doc-emphasis"><strong>Vizitatorii neautentificați</strong></p>
+<p>Pot vedea conținutul public al anunțurilor și informațiile de profil
+desemnate publice în interfață.</p>
+<p><strong>Datele de contact direct din câmpurile dedicate nu sunt
+afișate vizitatorilor neautentificați.</strong></p>
+<p>Această protecție nu acoperă telefonul, e-mailul sau alte date pe
+care le introduci chiar tu în descriere, în fotografii ori în alte zone
+publice. Evită publicarea lor în aceste locuri.</p>
+<p class="legal-doc-emphasis"><strong>Utilizatorii autentificați</strong></p>
+<p>Pot accesa datele de contact destinate contactării autorului, conform
+opțiunilor și funcțiilor Platformei. Autentificarea nu garantează că
+destinatarul nu va copia informațiile.</p>
+<p class="legal-doc-emphasis"><strong>Mesajele și favoritele</strong></p>
+<p>Favoritele sunt asociate contului tău și nu sunt afișate public.</p>
+<p>Mesajele sunt destinate participanților la conversație. Personalul
+autorizat poate accesa punctual conținutul dacă este necesar pentru o
+sesizare, un incident de securitate, asistență sau o obligație legală.
+Accesul trebuie limitat la informațiile relevante.</p>
+<p>Nu prezentăm mesageria ca fiind criptată integral între participanți
+în lipsa unei asemenea implementări tehnice.</p>
+<h4>7. Cui putem comunica datele</h4>
+<p>În limita necesară, datele pot fi accesate de:</p>
+<ul>
+<li>ceilalți utilizatori, conform funcțiilor descrise mai sus;</li>
+<li>personalul autorizat al Operatorului;</li>
+<li>furnizori de găzduire, baze de date, autentificare, stocare și
+livrare a e-mailurilor;</li>
+<li>furnizori de securitate și suport tehnic;</li>
+<li>consultanți profesionali, când este necesar pentru o problemă
+concretă;</li>
+<li>autorități și instanțe, în condițiile legii.</li>
+</ul>
+<p>Furnizorii care prelucrează date în numele nostru trebuie să aibă
+obligații contractuale adecvate privind confidențialitatea, securitatea
+și utilizarea datelor.</p>
+<p><strong>[De completat înainte de publicare: furnizorii efectiv
+utilizați, rolul fiecăruia, categoriile de date accesate și țările
+relevante pentru prelucrare.]</strong></p>
+<p>Faptul că nu vindem date nu exclude comunicarea lor către furnizorii
+necesari funcționării serviciului.</p>
+<h4>8. Prelucrarea în afara Spațiului Economic
+European</h4>
+<p>Unii furnizori pot implica stocarea datelor sau accesul la acestea
+din afara Spațiului Economic European.</p>
+<p>În asemenea situații, transferurile trebuie să se bazeze pe
+mecanismele prevăzute de GDPR, precum o decizie de adecvare aplicabilă
+sau clauze contractuale standard, împreună cu evaluările și măsurile
+suplimentare necesare.</p>
+<p><strong>[De completat înainte de publicare: transferurile efective,
+țările, furnizorii și mecanismul aplicabil fiecărui
+transfer.]</strong></p>
+<p>Poți solicita informații despre garanțiile aplicabile și o copie a
+acestora, cu protejarea informațiilor confidențiale justificate, la <a
+href="mailto:office.casadeldaniel@aol.com">office.casadeldaniel@aol.com</a>.</p>
+<h4>9. Cât timp păstrăm datele</h4>
+<p><strong>Calendar propus — trebuie validat și implementat înainte de
+publicare. Duratele de mai jos sunt alegeri de administrare, nu termene
+generale impuse de GDPR.</strong></p>
+<div class="legal-table-wrap"><table>
+<colgroup>
+<col style="width: 16%" />
+<col style="width: 83%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th>Categoria</th>
+<th>Perioada propusă</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Cont și profil</td>
+<td>Cât timp contul este activ. După închidere, eliminare din sistemele
+active în cel mult 30 de zile, exceptând datele păstrate
+justificat.</td>
+</tr>
+<tr class="even">
+<td>Conturi neconfirmate</td>
+<td>30 de zile de la înregistrare, apoi ștergere dacă înregistrarea nu a
+fost finalizată.</td>
+</tr>
+<tr class="odd">
+<td>Anunțuri și fotografii</td>
+<td>Cât timp anunțul este activ; după retragere, eliminare din sistemele
+active în cel mult 30 de zile, cu excepțiile justificate.</td>
+</tr>
+<tr class="even">
+<td>Favorite</td>
+<td>Până la eliminarea lor de către utilizator, eliminarea definitivă a
+anunțului sau închiderea contului.</td>
+</tr>
+<tr class="odd">
+<td>Mesaje</td>
+<td>Maximum 12 luni de la ultima activitate în conversație, cu analiza
+separată a cererilor de ștergere și a eventualelor litigii.</td>
+</tr>
+<tr class="even">
+<td>Jurnale tehnice și de securitate</td>
+<td>Maximum 90 de zile; extrasele relevante pentru un incident pot fi
+păstrate separat pe durata investigării justificate.</td>
+</tr>
+<tr class="odd">
+<td>Solicitări obișnuite de asistență</td>
+<td>Maximum 12 luni de la soluționare.</td>
+</tr>
+<tr class="even">
+<td>Dosare de moderare și cereri GDPR</td>
+<td>Maximum 3 ani de la soluționare, numai pentru informațiile necesare
+demonstrării modului de tratare și apărării drepturilor; cu verificarea
+periodică a necesității.</td>
+</tr>
+<tr class="odd">
+<td>Copii de siguranță</td>
+<td>Eliminare prin rotația copiilor în maximum 90 de zile de la
+ștergerea din sistemele active, după confirmarea compatibilității cu
+furnizorii.</td>
+</tr>
+</tbody>
+</table></div>
+<p>Dacă anumite date sunt necesare pentru un litigiu sau trebuie
+păstrate potrivit unei obligații legale, se reține numai partea
+relevantă, cu acces restricționat, pentru perioada justificată.</p>
+<p>Retragerea acordului pentru marketing oprește utilizarea în acest
+scop. O evidență minimă a retragerii poate fi păstrată pentru
+respectarea opțiunii tale.</p>
+<h4>10. Cum soliciți ștergerea contului și a datelor</h4>
+<p>Poți utiliza funcția de ștergere, dacă este disponibilă, sau poți
+trimite o cerere la <strong><a
+href="mailto:office.casadeldaniel@aol.com">office.casadeldaniel@aol.com</a></strong>.</p>
+<p>Pentru identificarea solicitării, indică adresa de e-mail asociată
+contului și dacă dorești închiderea contului, ștergerea unor date sau
+ambele. Nu trebuie să folosești un formular sau un subiect
+obligatoriu.</p>
+<p>Procedura presupune:</p>
+<ol type="1">
+<li>Identificarea contului și, dacă există îndoieli rezonabile,
+verificarea proporțională a identității.</li>
+<li>Retragerea anunțurilor și dezactivarea accesului, dacă ai solicitat
+închiderea contului.</li>
+<li>Ștergerea sau anonimizarea ireversibilă a datelor eligibile.</li>
+<li>Informarea ta despre rezultat și despre eventualele date păstrate,
+motivele și durata păstrării.</li>
+</ol>
+<p>Nu solicităm în mod automat copia actului de identitate.</p>
+<p>Închiderea contului nu înseamnă că toate mesajele dispar automat din
+conversațiile celorlalți participanți. Evaluăm separat datele care pot
+fi șterse, drepturile celorlalți și necesitatea păstrării unor dovezi.
+Această situație nu justifică păstrarea nelimitată a conversațiilor.</p>
+<p>Nu putem șterge direct capturile sau copiile realizate independent de
+alte persoane. Acest lucru nu înlătură obligațiile noastre legale de
+notificare a destinatarilor, atunci când sunt aplicabile.</p>
+<p>Datele rămase temporar în copiile de siguranță nu sunt utilizate în
+activitatea obișnuită. Dacă o copie este restaurată, măsurile de
+ștergere trebuie reaplicate.</p>
+<h4>11. Drepturile tale</h4>
+<p>În condițiile GDPR, poți solicita:</p>
+<ul>
+<li>acces la date și o copie a acestora;</li>
+<li>corectarea informațiilor inexacte;</li>
+<li>ștergerea datelor;</li>
+<li>restricționarea prelucrării;</li>
+<li>portabilitatea datelor, pentru prelucrările automate bazate pe
+contract sau consimțământ;</li>
+<li>opoziție la prelucrările bazate pe interes legitim, pentru motive
+legate de situația ta;</li>
+<li>oprirea marketingului direct;</li>
+<li>retragerea consimțământului, fără afectarea legalității prelucrării
+anterioare.</li>
+</ul>
+<p>Răspundem fără întârzieri nejustificate și, în principiu, în cel mult
+o lună de la primirea cererii. Pentru cereri complexe sau numeroase,
+termenul poate fi prelungit cu încă două luni, cu informarea ta în prima
+lună și explicarea motivelor.</p>
+<p>Exercitarea drepturilor este, de regulă, gratuită. Dacă nu putem da
+curs unei cereri, comunicăm motivele și opțiunile de contestare.</p>
+<h4>12. Cookie-uri și comunicări</h4>
+<p>Tehnologiile strict necesare autentificării, securității și
+funcțiilor solicitate sunt descrise în informarea privind
+cookie-urile.</p>
+<p>Tehnologiile de analiză sau publicitate care necesită consimțământ
+vor fi activate numai după exprimarea acestuia. Refuzul și retragerea
+trebuie să fie accesibile.</p>
+<p><strong>[De completat în politica de cookie-uri: inventarul real,
+furnizorii, scopurile și duratele.]</strong></p>
+<p>E-mailurile de confirmare a contului, recuperare a accesului și
+notificările necesare serviciului sunt distincte de comunicările de
+marketing.</p>
+<h4>13. Securitatea datelor</h4>
+<p>Aplicăm măsuri tehnice și organizatorice proporționale cu riscurile,
+inclusiv limitarea accesului și gestionarea incidentelor.</p>
+<p>Niciun serviciu online nu poate garanta eliminarea tuturor
+riscurilor. Dacă un incident impune informarea autorității sau a
+persoanelor afectate, vom proceda conform obligațiilor legale.</p>
+<p>Pentru siguranța contului, folosește o parolă unică și nu comunica
+altor persoane codurile de autentificare.</p>
+<h4>14. Minori și decizii automate</h4>
+<p>Crearea contului este destinată persoanelor de minimum 18 ani,
+conform Termenilor de utilizare. Dacă aflăm că un cont nu respectă
+această condiție, verificăm situația și luăm măsuri proporționale
+privind contul și datele sale.</p>
+<p><strong>[De confirmat înainte de publicare: Platforma nu adoptă
+decizii exclusiv automate care produc efecte juridice sau afectează
+similar, în mod semnificativ, utilizatorii.]</strong></p>
+<p>Dacă sunt introduse asemenea prelucrări, informarea va explica logica
+relevantă, consecințele și garanțiile aplicabile.</p>
+<h4>15. Reclamații și actualizarea politicii</h4>
+<p>Pentru orice întrebare sau solicitare privind datele personale, ne
+poți contacta la <strong><a
+href="mailto:office.casadeldaniel@aol.com">office.casadeldaniel@aol.com</a></strong>.</p>
+<p>Ai dreptul să depui o plângere la <strong>Autoritatea Națională de
+Supraveghere a Prelucrării Datelor cu Caracter Personal —
+ANSPDCP</strong>, prin modalitățile prezentate pe <a
+href="https://www.dataprotection.ro">www.dataprotection.ro</a>, și să te
+adresezi instanțelor competente.</p>
+<p>Putem actualiza politica atunci când se modifică funcțiile,
+furnizorii sau cerințele legale. Modificările relevante vor fi
+comunicate corespunzător. Publicarea unei versiuni noi nu înlocuiește
+consimțământul, acolo unde acesta este necesar.</p>
+</article>`;
+
 function openLegal(type){
   const privacy=type==='privacy';
   const title=privacy?'Confidențialitate':'Termeni de utilizare și politica de moderare';
   const body=privacy
-    ?`<p class="detail-desc">Support Hub Giuleștean 1923 folosește datele necesare pentru cont, publicarea anunțurilor, favorite, mesaje și contact între utilizatori. Datele de contact direct nu sunt afișate vizitatorilor neautentificați. Nu vindem date personale. Pentru lansarea publică, această pagină trebuie completată cu operatorul de date, baza legală, perioada de retenție și procedura de ștergere.</p>`
+    ?PRIVACY_POLICY_HTML
     :TERMS_OF_USE_HTML;
   $('#legalContent').innerHTML=`<div class="modal-head legal-modal-head"><div><span class="kicker">HUB • GIULEȘTI • 1923</span><h2>${title}</h2></div><button class="close" data-close="legalModal">×</button></div>${body}`;
   bindCloseButtons($('#legalContent'));
