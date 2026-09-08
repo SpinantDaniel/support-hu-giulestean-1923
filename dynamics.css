@@ -1485,3 +1485,87 @@ footer.global-footer .global-footer-note{
 #siguranta .trust-card:active{
   transform:translateY(-2px) scale(.995);
 }
+
+
+/* v5.20 — standalone iOS/PWA pull-to-refresh */
+.pwa-pull-refresh{
+  --pull-progress:0;
+  position:fixed;
+  z-index:100000;
+  top:calc(env(safe-area-inset-top,0px) + 10px);
+  left:50%;
+  display:flex;
+  align-items:center;
+  gap:8px;
+  min-height:42px;
+  padding:7px 13px 7px 8px;
+  border:1px solid rgba(111,21,48,.12);
+  border-radius:999px;
+  background:rgba(255,255,255,.97);
+  color:var(--ink);
+  box-shadow:0 10px 30px rgba(35,15,22,.16);
+  -webkit-backdrop-filter:blur(12px);
+  backdrop-filter:blur(12px);
+  opacity:0;
+  pointer-events:none;
+  transform:
+    translate(-50%,-155%)
+    scale(calc(.94 + min(var(--pull-progress),1)*.06));
+  transition:
+    opacity .15s ease,
+    transform .18s cubic-bezier(.2,.75,.2,1),
+    border-color .15s ease;
+}
+.pwa-pull-refresh.visible{
+  opacity:1;
+  transform:translate(-50%,0) scale(1);
+}
+.pwa-pull-refresh-icon{
+  width:28px;
+  height:28px;
+  display:grid;
+  place-items:center;
+  flex:0 0 28px;
+  border-radius:50%;
+  background:var(--wine);
+  color:#fff;
+  font-size:18px;
+  font-weight:900;
+  line-height:1;
+  transition:transform .18s ease,background-color .18s ease;
+}
+.pwa-pull-refresh-label{
+  font-size:10px;
+  font-weight:850;
+  white-space:nowrap;
+}
+.pwa-pull-refresh.armed{
+  border-color:rgba(111,21,48,.28);
+}
+.pwa-pull-refresh.armed .pwa-pull-refresh-icon{
+  transform:rotate(90deg);
+}
+.pwa-pull-refresh.refreshing .pwa-pull-refresh-icon{
+  animation:pwaRefreshSpin .72s linear infinite;
+}
+.pwa-pull-refresh.offline .pwa-pull-refresh-icon{
+  background:#8d2525;
+}
+@keyframes pwaRefreshSpin{
+  to{transform:rotate(360deg)}
+}
+@media(max-width:430px){
+  .pwa-pull-refresh{
+    max-width:calc(100vw - 28px);
+  }
+  .pwa-pull-refresh-label{
+    font-size:9.5px;
+  }
+}
+@media(prefers-reduced-motion:reduce){
+  .pwa-pull-refresh,
+  .pwa-pull-refresh-icon{
+    transition:none!important;
+    animation-duration:.01ms!important;
+  }
+}

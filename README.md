@@ -32,3 +32,10 @@ Marketplace comunitar independent. Frontend static pe Vercel, backend Supabase.
 - card 03 (Raportezi rapid) now uses the same dark treatment as card 01
 - all Safety card text aligned justify on desktop and mobile
 - enhanced hover motion / depth for all Safety cards
+
+
+## v5.20 — PWA Pull-to-Refresh
+- custom pull-to-refresh active only in standalone/Home Screen mode
+- browser Safari/Chrome keep their native refresh behavior
+- burgundy refresh indicator with armed/reloading/offline states
+- horizontal carousels, image editor and open dialogs are excluded from the gesture
