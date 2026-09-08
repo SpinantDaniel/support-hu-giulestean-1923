@@ -128,13 +128,18 @@ footer.global-footer .global-footer-links a:hover{
     grid-template-columns:1fr!important;
     padding:28px 20px 90px!important;
     gap:18px!important;
+    justify-items:center!important;
   }
   footer.global-footer .global-footer-note{
     grid-column:auto!important;
     grid-row:auto!important;
-    text-align:left!important;
+    text-align:center!important;
   }
   footer.global-footer .global-footer-links{
-    justify-content:flex-start!important;
+    width:100%!important;
+    justify-content:center!important;
+    align-items:center!important;
+    text-align:center!important;
+    row-gap:10px!important;
   }
 }
