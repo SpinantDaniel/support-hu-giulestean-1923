@@ -75,7 +75,12 @@
       <img class="brand-lockup-logo" src="/brand-logo.jpg" alt="Support Hub Giuleștean 1923">
       <span class="brand-lockup-copy"><strong>SUPPORT HUB</strong><span>GIULEȘTEAN 1923</span></span>
     </a></div>
-    <p class="global-footer-note">Support Hub Giuleștean 1923 este o platformă independentă a comunității și nu este afiliată oficial cu FC Rapid București. Mărcile și însemnele oficiale aparțin titularilor lor. Platforma nu este parte în tranzacțiile dintre utilizatori.</p>
+    <div class="global-footer-note footer-legal-copy">
+      <p>Support Hub Giuleștean 1923 este o platformă independentă a comunității și nu este afiliată oficial cu FC Rapid București.</p>
+      <p>Mărcile și însemnele oficiale aparțin titularilor lor.</p>
+      <p>Platforma nu este parte în tranzacțiile dintre utilizatori.</p>
+      <p class="footer-powered">Powered by Casa del Daniel Digital Consulting S.R.L.</p>
+    </div>
     <nav class="global-footer-links"><a href="/newsletter.html">Noutăți</a><a href="#" data-legal="terms">Termeni</a><a href="#" data-legal="privacy">Confidențialitate</a><a href="#siguranta">Siguranță</a><a href="mailto:contact@hubgiulestean.ro">Contact</a></nav>
   </footer>
 
@@ -86,6 +91,19 @@
 
   <dialog id="sellModal"><form class="modal" id="sellForm"><div class="modal-head"><div><span class="kicker">ANUNȚ NOU</span><h2>Ce vrei să vinzi?</h2></div><button class="close" type="button" data-close="sellModal">×</button></div><div class="form-grid"><label class="full">Titlu<input name="title" required minlength="4" maxlength="120" placeholder="ex. Tricou vișiniu, mărimea L"></label><label>Categorie<select name="category" id="sellCategory" required></select></label><label>Preț<input name="price" required min="0" step="0.01" type="number" placeholder="250"></label><label>Monedă<select name="currency"><option value="RON">RON</option><option value="EUR">EUR</option></select></label><label>Stare<select name="condition"><option value="new">Nou</option><option value="like_new">Ca nou</option><option value="used" selected>Utilizat</option><option value="damaged">Cu defecte</option><option value="service">Serviciu</option><option value="not_applicable">Nu se aplică</option></select></label><label>Locație<input name="location" value="București" required maxlength="120" placeholder="Giulești, București"></label><label class="checkbox-label"><input name="negotiable" type="checkbox"> Preț negociabil</label><label class="full">Descriere<textarea name="description" required minlength="10" maxlength="5000" rows="5" placeholder="Spune clar ce vinzi, starea produsului și detalii utile."></textarea></label><label>Telefon<input name="phone" inputmode="tel" maxlength="30" placeholder="07xx xxx xxx"></label><label>WhatsApp<input name="whatsapp" inputmode="tel" maxlength="30" placeholder="07xx xxx xxx"></label><label class="full file-label">Fotografii — maximum 8<input name="images" type="file" accept="image/jpeg,image/png,image/webp" multiple><small id="imageHelp">JPG, PNG sau WEBP. Recomandat sub 5 MB / imagine.</small></label></div><div class="notice">Support Hub Giuleștean 1923 nu procesează plăți. Nu publica date bancare, CNP sau alte informații sensibile în descriere.</div><div class="modal-actions"><button type="button" class="ghost" data-close="sellModal">Renunță</button><button class="primary" id="publishBtn">Publică anunț</button></div></form></dialog>
 
+  <dialog id="listingLimitModal">
+    <div class="modal listing-limit-modal">
+      <div class="modal-head">
+        <div><span class="kicker">LIMITĂ ANUNȚURI ACTIVE</span><h2>Ai ajuns la limita de publicare.</h2></div>
+        <button class="close" type="button" data-close="listingLimitModal">×</button>
+      </div>
+      <p class="detail-desc">Poți avea maximum 10 anunțuri active în același timp. Pentru a publica unul nou, șterge mai întâi un anunț pe care nu îl mai folosești din „Anunțurile mele”.</p>
+      <div class="modal-actions listing-limit-actions">
+        <button type="button" class="ghost" data-close="listingLimitModal">Am înțeles</button>
+        <button type="button" class="primary" id="listingLimitManage">Anunțurile mele</button>
+      </div>
+    </div>
+  </dialog>
   <dialog id="detailModal"><div class="modal detail" id="detailContent"></div></dialog>
   <dialog id="photoLightbox" class="photo-lightbox" aria-label="Galerie fotografii anunț">
     <div class="photo-lightbox-shell">

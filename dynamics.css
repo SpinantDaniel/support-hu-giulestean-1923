@@ -749,3 +749,104 @@ body::after{
     font-size:11px;
   }
 }
+
+
+/* v5.10 — centered legal footer, dynamic reset button, listing-limit modal */
+
+/* Footer legal copy: exact stacked form, centered on the page on every viewport. */
+footer.global-footer .global-footer-note.footer-legal-copy{
+  text-align:center!important;
+  justify-self:center!important;
+  width:100%!important;
+  max-width:660px!important;
+  margin:0 auto!important;
+}
+footer.global-footer .footer-legal-copy p{
+  margin:0!important;
+  color:#777277!important;
+  font-size:10px!important;
+  line-height:1.55!important;
+  text-align:center!important;
+}
+footer.global-footer .footer-legal-copy .footer-powered{
+  margin-top:14px!important;
+  color:#5f5a5e!important;
+  font-weight:700!important;
+}
+
+/* Make all footer note text centered too, including Noutăți/Admin. */
+footer.global-footer .global-footer-note{
+  text-align:center!important;
+  justify-self:center!important;
+}
+
+/* Dynamic burgundy reset button. */
+#allCategories{
+  position:relative;
+  overflow:hidden;
+  border:1px solid rgba(111,21,48,.15)!important;
+  border-radius:12px!important;
+  background:var(--wine)!important;
+  color:#fff!important;
+  padding:11px 16px!important;
+  font-size:12px!important;
+  font-weight:900!important;
+  letter-spacing:-.01em;
+  box-shadow:0 7px 18px rgba(111,21,48,.16)!important;
+  transform:translateZ(0);
+  transition:transform .18s ease,box-shadow .22s ease,background .18s ease!important;
+}
+#allCategories::before{
+  content:"";
+  position:absolute;
+  inset:0;
+  background:linear-gradient(110deg,transparent 20%,rgba(255,255,255,.18) 47%,transparent 72%);
+  transform:translateX(-135%);
+  transition:transform .55s ease;
+  pointer-events:none;
+}
+@media(hover:hover){
+  #allCategories:hover{
+    background:var(--wine2)!important;
+    transform:translateY(-2px);
+    box-shadow:0 11px 24px rgba(111,21,48,.22)!important;
+  }
+  #allCategories:hover::before{
+    transform:translateX(135%);
+  }
+}
+#allCategories:active{
+  transform:scale(.975)!important;
+}
+
+/* Friendly listing-limit dialog. */
+.listing-limit-modal{
+  max-width:540px;
+}
+.listing-limit-modal .detail-desc{
+  margin-top:2px;
+  font-size:13px;
+  line-height:1.65;
+}
+.listing-limit-actions{
+  align-items:center;
+}
+@media(max-width:650px){
+  footer.global-footer .global-footer-note,
+  footer.global-footer .global-footer-note.footer-legal-copy,
+  footer.global-footer .footer-legal-copy p{
+    text-align:center!important;
+  }
+  #allCategories{
+    padding:9px 12px!important;
+    font-size:10px!important;
+    white-space:nowrap;
+  }
+  .listing-limit-actions{
+    display:grid;
+    grid-template-columns:1fr;
+  }
+  .listing-limit-actions button{
+    width:100%;
+  }
+}

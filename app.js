@@ -497,8 +497,36 @@ function prepareSellForm(mode='new'){
   $('#imageHelp').textContent=mode==='edit'?'Fotografiile existente rămân. Poți adăuga fotografii noi până la maximum 8 în total.':'JPG, PNG sau WEBP. Recomandat sub 5 MB / imagine.';
 }
 
-function openSell(){
+function openListingLimitModal(){
+  closeDialog('sellModal');
+  const d=$('#listingLimitModal');
+  if(d&&!d.open)d.showModal();
+}
+
+function isListingLimitError(err){
+  const msg=String(err?.message||err?.details||err?.hint||'');
+  return msg.includes('ACTIVE_LISTING_LIMIT_REACHED');
+}
+
+async function activeListingCount(){
+  if(!state.user)return 0;
+  const {count,error}=await db.from('listings')
+    .select('id',{count:'exact',head:true})
+    .eq('seller_id',state.user.id)
+    .eq('state','active');
+  if(error)throw error;
+  return Number(count||0);
+}
+
+async function openSell(){
   if(!requireActive())return;
+  try{
+    const count=await activeListingCount();
+    if(count>=10){openListingLimitModal();return;}
+  }catch(error){
+    console.warn('active listing limit precheck',error);
+    /* DB trigger remains authoritative; don't block publishing only because the precheck failed. */
+  }
   state.editingListingId=null;state.editReturnToAccount=false;prepareSellForm('new');$('#sellModal').showModal();
 }
 
@@ -557,8 +585,14 @@ async function publishListing(e){
     if(editing){toast('Anunț actualizat.');if(returnToAccount)await openAccount('listings');}
     else{toast('Anunț publicat în Support Hub Giuleștean 1923.');$('#anunturi').scrollIntoView({behavior:'smooth'});}
   }catch(err){
-    console.error(err);toast(err.message||(editing?'Anunțul nu a putut fi actualizat.':'Anunțul nu a putut fi publicat.'),'error');
-    if(!editing&&listingId)await db.from('listings').delete().eq('id',listingId);
+    console.error(err);
+    if(!editing&&isListingLimitError(err)){
+      if(listingId)await db.from('listings').delete().eq('id',listingId);
+      openListingLimitModal();
+    }else{
+      toast(err.message||(editing?'Anunțul nu a putut fi actualizat.':'Anunțul nu a putut fi publicat.'),'error');
+      if(!editing&&listingId)await db.from('listings').delete().eq('id',listingId);
+    }
   }finally{setBusy(btn,false);}
 }
 async function openAccount(tab='listings'){
@@ -669,6 +703,7 @@ function bindStaticEvents(){
   $('#authForm').addEventListener('submit',submitAuth);$('#forgotPasswordBtn').onclick=requestPasswordReset;$('#passwordResetForm').addEventListener('submit',submitPasswordReset);$('#sellForm').addEventListener('submit',publishListing);$('#messageForm').addEventListener('submit',sendMessage);
   $('#logoutBtn').onclick=async()=>{await db.auth.signOut();closeDialog('accountModal');toast('Ai ieșit din cont.');};$('#editProfileBtn').onclick=openProfileEditor;$('#adminPanelBtn').onclick=()=>window.open('/admin.html','_blank','noopener');$('#profileForm').addEventListener('submit',saveProfile);$('#deleteAccountBtn').onclick=openDeleteAccount;$('#deleteAccountForm').addEventListener('submit',deleteAccount);$('#profileForm [name=avatar]').onchange=e=>{const f=e.target.files?.[0];if(f){const u=URL.createObjectURL(f);$('#profilePreview').innerHTML=`<span class="profile-preview-avatar has-image"><img src="${esc(u)}" alt="Preview avatar"></span>`;}};
   $$('[data-account-tab]').forEach(b=>b.onclick=async()=>{state.accountTab=b.dataset.accountTab;updateAccountTabButtons();await renderAccount();});
+  $('#listingLimitManage').onclick=async()=>{closeDialog('listingLimitModal');await openAccount('listings');};
   $('#searchBtn').onclick=()=>{resetMarketPage();renderListings();$('#anunturi').scrollIntoView({behavior:'smooth'});};$('#searchInput').addEventListener('keydown',e=>{if(e.key==='Enter')$('#searchBtn').click();});
   $$('[data-search]').forEach(b=>b.onclick=()=>{$('#searchInput').value=b.dataset.search;$('#searchBtn').click();});
   $('#categoryFilter').onchange=()=>{resetMarketPage();syncCategorySelection();renderListings();};$('#sortSelect').onchange=()=>{resetMarketPage();renderListings();};$('#allCategories').onclick=()=>{$('#categoryFilter').value='all';resetMarketPage();syncCategorySelection();renderListings();};
