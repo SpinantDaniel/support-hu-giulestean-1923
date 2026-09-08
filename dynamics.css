@@ -1065,3 +1065,205 @@ footer.global-footer .global-footer-note{
     height:210px;
   }
 }
+
+
+/* v5.12 — visual image editor for listing create/edit */
+
+.listing-image-editor{
+  margin-top:2px;
+  padding:16px;
+  border:1px solid rgba(111,21,48,.10);
+  border-radius:18px;
+  background:rgba(111,21,48,.028);
+}
+.listing-image-editor[hidden]{display:none!important}
+.listing-image-editor-head{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:14px;
+  margin-bottom:13px;
+}
+.listing-image-editor-head>div{
+  display:flex;
+  align-items:baseline;
+  min-width:0;
+}
+.listing-image-editor-head b{
+  font-size:15px;
+  letter-spacing:-.02em;
+}
+#listingImageEditorCount{
+  color:var(--muted);
+  font-size:10px;
+  font-weight:800;
+}
+.add-more-images{
+  flex:0 0 auto;
+  border-radius:999px!important;
+  padding:9px 14px!important;
+  font-size:10px!important;
+}
+.listing-image-editor-grid{
+  display:flex;
+  align-items:stretch;
+  gap:10px;
+  width:100%;
+  overflow-x:auto;
+  overflow-y:hidden;
+  padding:3px 2px 10px;
+  scroll-snap-type:x proximity;
+  overscroll-behavior-inline:contain;
+  -webkit-overflow-scrolling:touch;
+  scrollbar-width:thin;
+  scrollbar-color:rgba(111,21,48,.30) transparent;
+}
+.listing-image-editor-grid::-webkit-scrollbar{height:5px}
+.listing-image-editor-grid::-webkit-scrollbar-track{background:transparent}
+.listing-image-editor-grid::-webkit-scrollbar-thumb{
+  background:rgba(111,21,48,.28);
+  border-radius:99px;
+}
+.listing-image-edit-card{
+  position:relative;
+  flex:0 0 118px;
+  width:118px;
+  height:118px;
+  overflow:hidden;
+  border:1px solid rgba(111,21,48,.12);
+  border-radius:13px;
+  background:#f2edef;
+  box-shadow:0 5px 14px rgba(45,18,27,.055);
+  scroll-snap-align:start;
+  cursor:grab;
+  user-select:none;
+  -webkit-user-select:none;
+  touch-action:none;
+  transition:transform .16s ease,box-shadow .16s ease,opacity .16s ease;
+}
+.listing-image-edit-card:active{cursor:grabbing}
+.listing-image-edit-card.dragging{
+  z-index:20;
+  opacity:.88;
+  transform:scale(1.055) rotate(1deg);
+  box-shadow:0 15px 34px rgba(45,18,27,.20);
+}
+.listing-image-edit-card img{
+  display:block;
+  width:100%;
+  height:100%;
+  object-fit:cover;
+  object-position:center;
+  pointer-events:none;
+  -webkit-user-drag:none;
+}
+.listing-image-remove{
+  position:absolute!important;
+  z-index:5;
+  top:7px!important;
+  right:7px!important;
+  width:28px!important;
+  height:28px!important;
+  min-width:28px!important;
+  padding:0!important;
+  display:grid!important;
+  place-items:center;
+  border:1px solid rgba(255,255,255,.65)!important;
+  border-radius:50%!important;
+  background:rgba(111,21,48,.90)!important;
+  color:#fff!important;
+  font-size:20px!important;
+  line-height:1!important;
+  font-weight:500!important;
+  box-shadow:0 5px 12px rgba(30,10,16,.22)!important;
+  cursor:pointer;
+}
+.listing-image-primary,
+.listing-image-new{
+  position:absolute;
+  z-index:4;
+  left:7px;
+  bottom:7px;
+  padding:5px 7px;
+  border-radius:999px;
+  background:rgba(255,255,255,.94);
+  color:var(--wine);
+  font-size:7px;
+  line-height:1;
+  font-weight:950;
+  text-transform:uppercase;
+  letter-spacing:.05em;
+  box-shadow:0 4px 10px rgba(30,10,16,.08);
+}
+.listing-image-new{
+  left:auto;
+  right:7px;
+  background:rgba(24,23,26,.84);
+  color:#fff;
+}
+.listing-image-drag-handle{
+  position:absolute;
+  z-index:3;
+  left:50%;
+  top:7px;
+  transform:translateX(-50%) rotate(90deg);
+  color:rgba(255,255,255,.92);
+  font-size:14px;
+  line-height:1;
+  font-weight:950;
+  text-shadow:0 1px 5px rgba(0,0,0,.45);
+  pointer-events:none;
+}
+.listing-image-editor-tip{
+  margin:8px 0 0;
+  color:var(--muted);
+  font-size:9px;
+  line-height:1.5;
+}
+@media(hover:hover){
+  .listing-image-edit-card:hover{
+    transform:translateY(-2px);
+    box-shadow:0 9px 22px rgba(45,18,27,.10);
+  }
+  .listing-image-remove:hover{
+    transform:scale(1.08)!important;
+    background:#8b1838!important;
+  }
+}
+@media(max-width:650px){
+  .listing-image-editor{
+    margin-left:-2px;
+    margin-right:-2px;
+    padding:13px 11px;
+    border-radius:16px;
+  }
+  .listing-image-editor-head{
+    margin-bottom:10px;
+  }
+  .listing-image-editor-head b{font-size:14px}
+  .add-more-images{
+    padding:8px 11px!important;
+    font-size:9px!important;
+  }
+  .listing-image-editor-grid{
+    margin-right:-11px;
+    padding-right:11px;
+    gap:8px;
+  }
+  .listing-image-edit-card{
+    flex-basis:104px;
+    width:104px;
+    height:104px;
+    border-radius:12px;
+  }
+  .listing-image-remove{
+    width:27px!important;
+    height:27px!important;
+    min-width:27px!important;
+    top:6px!important;
+    right:6px!important;
+  }
+  .listing-image-editor-tip{
+    font-size:8.5px;
+  }
+}

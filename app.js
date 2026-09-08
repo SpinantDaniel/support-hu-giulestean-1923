@@ -11,6 +11,143 @@ const state = { session:null, user:null, profile:null, userFlag:null, adminRole:
 const icons = { 'rapid-colectii':'⚑','auto-moto':'◉','electronice':'▣','telefoane':'▯','haine-incaltaminte':'♢','casa-gradina':'⌂','servicii':'✦','bilete':'▥','imobiliare':'▤','joburi':'▰','donez-caut':'♡','diverse':'•••' };
 const conditionLabels = {new:'Nou',like_new:'Ca nou',used:'Utilizat',damaged:'Cu defecte',service:'Serviciu',not_applicable:'N/A'};
 
+const listingImageEditor={items:[],dragKey:null,dragPointerId:null};
+
+function resetListingImageEditor(){
+  listingImageEditor.items.forEach(item=>{if(item.kind==='new'&&item.url)URL.revokeObjectURL(item.url);});
+  listingImageEditor.items=[];
+  listingImageEditor.dragKey=null;
+  listingImageEditor.dragPointerId=null;
+  const root=$('#listingImageEditor');
+  if(root)root.hidden=true;
+  const grid=$('#listingImageEditorGrid');
+  if(grid)grid.innerHTML='';
+  const input=$('#sellForm [name=images]');
+  if(input)input.value='';
+}
+
+function listingImageEditorHelp(){
+  const n=listingImageEditor.items.length;
+  const editing=!!state.editingListingId;
+  const help=$('#imageHelp');
+  if(help){
+    help.textContent=editing
+      ?`${n} din 8 fotografii în anunț. Poți adăuga încă maximum ${Math.max(0,8-n)}.`
+      :(n?`${n} din 8 fotografii selectate.`:'JPG, PNG sau WEBP. Recomandat sub 5 MB / imagine.');
+  }
+  const count=$('#listingImageEditorCount');
+  if(count)count.textContent=n?` · ${n}/8`:'';
+  const add=$('#addMoreImagesBtn');
+  if(add)add.hidden=n>=8;
+}
+
+function initializeExistingListingImages(listing){
+  resetListingImageEditor();
+  const paths=listing?.image_paths||[];
+  const urls=listing?.images||[];
+  listingImageEditor.items=paths.map((path,i)=>({
+    kind:'existing',
+    key:`existing:${path}`,
+    path,
+    url:urls[i]||publicStorageUrl('listing-images',path)
+  }));
+  renderListingImageEditor();
+}
+
+function addListingImageFiles(files){
+  const incoming=(files||[]).filter(Boolean);
+  if(!incoming.length)return;
+  const room=8-listingImageEditor.items.length;
+  if(room<=0){toast('Poți avea maximum 8 fotografii.','error');return;}
+  const accepted=incoming.slice(0,room);
+  for(const file of accepted){
+    if(file.size>6*1024*1024){toast(`Imaginea ${file.name} depășește 6 MB.`,'error');continue;}
+    if(!/^image\/(jpeg|png|webp)$/i.test(file.type)){toast(`Formatul imaginii ${file.name} nu este acceptat.`,'error');continue;}
+    listingImageEditor.items.push({
+      kind:'new',
+      key:`new:${crypto.randomUUID()}`,
+      file,
+      url:URL.createObjectURL(file)
+    });
+  }
+  if(incoming.length>room)toast(`Au fost adăugate doar ${room} fotografii. Limita este 8.`,'error');
+  renderListingImageEditor();
+}
+
+function removeListingImageEditorItem(key){
+  const index=listingImageEditor.items.findIndex(item=>item.key===key);
+  if(index<0)return;
+  const [item]=listingImageEditor.items.splice(index,1);
+  if(item.kind==='new'&&item.url)URL.revokeObjectURL(item.url);
+  renderListingImageEditor();
+}
+
+function syncListingImageEditorOrderFromDom(){
+  const grid=$('#listingImageEditorGrid');
+  if(!grid)return;
+  const order=$$('[data-image-editor-key]',grid).map(el=>el.dataset.imageEditorKey);
+  const byKey=new Map(listingImageEditor.items.map(item=>[item.key,item]));
+  listingImageEditor.items=order.map(key=>byKey.get(key)).filter(Boolean);
+}
+
+function endListingImageDrag(card){
+  if(!card)return;
+  try{
+    if(listingImageEditor.dragPointerId!=null&&card.hasPointerCapture?.(listingImageEditor.dragPointerId)){
+      card.releasePointerCapture(listingImageEditor.dragPointerId);
+    }
+  }catch(_){}
+  card.classList.remove('dragging');
+  listingImageEditor.dragKey=null;
+  listingImageEditor.dragPointerId=null;
+  syncListingImageEditorOrderFromDom();
+  renderListingImageEditor();
+}
+
+function bindListingImageEditorDrag(){
+  const grid=$('#listingImageEditorGrid');
+  if(!grid)return;
+  $$('.listing-image-edit-card',grid).forEach(card=>{
+    card.addEventListener('pointerdown',e=>{
+      if(e.button!==undefined&&e.button!==0)return;
+      if(e.target.closest('.listing-image-remove'))return;
+      listingImageEditor.dragKey=card.dataset.imageEditorKey;
+      listingImageEditor.dragPointerId=e.pointerId;
+      card.classList.add('dragging');
+      card.setPointerCapture?.(e.pointerId);
+    });
+    card.addEventListener('pointermove',e=>{
+      if(listingImageEditor.dragKey!==card.dataset.imageEditorKey)return;
+      const under=document.elementFromPoint(e.clientX,e.clientY)?.closest('.listing-image-edit-card');
+      if(!under||under===card||under.parentElement!==grid)return;
+      const rect=under.getBoundingClientRect();
+      const before=e.clientX<(rect.left+rect.width/2);
+      grid.insertBefore(card,before?under:under.nextSibling);
+    });
+    card.addEventListener('pointerup',()=>endListingImageDrag(card));
+    card.addEventListener('pointercancel',()=>endListingImageDrag(card));
+  });
+}
+
+function renderListingImageEditor(){
+  const root=$('#listingImageEditor'),grid=$('#listingImageEditorGrid');
+  if(!root||!grid)return;
+  root.hidden=!listingImageEditor.items.length&&!state.editingListingId;
+  grid.innerHTML=listingImageEditor.items.map((item,index)=>`<div class="listing-image-edit-card" data-image-editor-key="${esc(item.key)}">
+    <img src="${esc(item.url)}" alt="Fotografia ${index+1}" draggable="false">
+    ${index===0?'<span class="listing-image-primary">Principală</span>':''}
+    ${item.kind==='new'?'<span class="listing-image-new">Nouă</span>':''}
+    <button type="button" class="listing-image-remove" data-remove-image="${esc(item.key)}" aria-label="Elimină fotografia">×</button>
+    <span class="listing-image-drag-handle" aria-hidden="true">⋮⋮</span>
+  </div>`).join('');
+  $$('[data-remove-image]',grid).forEach(button=>button.onclick=e=>{
+    e.stopPropagation();
+    removeListingImageEditorItem(button.dataset.removeImage);
+  });
+  bindListingImageEditorDrag();
+  listingImageEditorHelp();
+}
+
 function esc(value=''){return String(value).replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#039;','"':'&quot;'}[c]));}
 function money(n,c='RON'){return new Intl.NumberFormat('ro-RO',{style:'currency',currency:c,maximumFractionDigits:c==='RON'?0:2}).format(Number(n||0));}
 function since(iso){const d=(Date.now()-new Date(iso).getTime())/1000;if(d<60)return 'acum';if(d<3600)return `acum ${Math.floor(d/60)} min`;if(d<86400)return `acum ${Math.floor(d/3600)} h`;if(d<172800)return 'ieri';return new Intl.DateTimeFormat('ro-RO',{day:'2-digit',month:'short'}).format(new Date(iso));}
@@ -639,12 +776,13 @@ async function submitPasswordReset(e){
 
 function prepareSellForm(mode='new'){
   const form=$('#sellForm');
+  resetListingImageEditor();
   form.reset();
   form.elements.location.value='București';
   $('#sellModal .kicker').textContent=mode==='edit'?'EDITARE ANUNȚ':'ANUNȚ NOU';
   $('#sellModal h2').textContent=mode==='edit'?'Editează anunțul':'Ce vrei să vinzi?';
   $('#publishBtn').textContent=mode==='edit'?'Salvează modificările':'Publică anunț';
-  $('#imageHelp').textContent=mode==='edit'?'Fotografiile existente rămân. Poți adăuga fotografii noi până la maximum 8 în total.':'JPG, PNG sau WEBP. Recomandat sub 5 MB / imagine.';
+  $('#imageHelp').textContent=mode==='edit'?'Poți păstra, șterge, adăuga sau reordona fotografiile.':'JPG, PNG sau WEBP. Recomandat sub 5 MB / imagine.';
 }
 
 function openListingLimitModal(){
@@ -699,20 +837,22 @@ async function openEditListing(id,returnToAccount=true){
   if(error)console.warn('contact edit load',error);
   form.elements.phone.value=contact?.phone||'';
   form.elements.whatsapp.value=contact?.whatsapp||'';
-  const existing=l.image_paths?.length||0;
-  $('#imageHelp').textContent=existing?`${existing} fotografie${existing===1?'':'i'} existente. Poți adăuga încă maximum ${Math.max(0,8-existing)}.`:'Nu există fotografii. Poți adăuga maximum 8.';
+  initializeExistingListingImages(l);
   closeDialog('accountModal');
   $('#sellModal').showModal();
 }
 
 async function publishListing(e){
   e.preventDefault();if(!requireActive())return;
-  const form=e.currentTarget,btn=$('#publishBtn'),fd=new FormData(form),files=[...form.elements.images.files],editing=!!state.editingListingId;
+  const form=e.currentTarget,btn=$('#publishBtn'),fd=new FormData(form),editing=!!state.editingListingId;
   const current=editing?state.listings.find(x=>x.id===state.editingListingId):null;
-  const existingCount=current?.image_paths?.length||0;
-  if(existingCount+files.length>8)return toast(`Poți avea maximum 8 fotografii. Anunțul are deja ${existingCount}.`,'error');
+  const imageItems=[...listingImageEditor.items];
+  if(imageItems.length>8)return toast('Poți avea maximum 8 fotografii.','error');
   if(!fd.get('phone')&&!fd.get('whatsapp'))return toast('Adaugă telefon sau WhatsApp pentru contact direct.','error');
-  setBusy(btn,true,editing?'Se salvează…':'Se publică…');let listingId=state.editingListingId;
+
+  setBusy(btn,true,editing?'Se salvează…':'Se publică…');
+  let listingId=state.editingListingId;
+  const newlyUploadedPaths=[];
   try{
     const row={category_id:fd.get('category'),title:String(fd.get('title')).trim(),description:String(fd.get('description')).trim(),price:Number(fd.get('price')),currency:fd.get('currency'),condition:fd.get('condition'),location:String(fd.get('location')).trim(),negotiable:fd.get('negotiable')==='on'};
     if(editing){
@@ -722,20 +862,67 @@ async function publishListing(e){
       const rc=await db.from('listing_contacts').update(contactPatch).eq('listing_id',listingId).eq('seller_id',state.user.id);if(rc.error)throw rc.error;
     }else{
       const r=await db.from('listings').insert({...row,seller_id:state.user.id}).select('id').single();if(r.error)throw r.error;listingId=r.data.id;
-      const contact={listing_id:listingId,seller_id:state.user.id,phone:String(fd.get('phone')||'').trim()||null,whatsapp:String(fd.get('whatsapp')||'').trim()||null};const rc=await db.from('listing_contacts').insert(contact);if(rc.error)throw rc.error;
+      const contact={listing_id:listingId,seller_id:state.user.id,phone:String(fd.get('phone')||'').trim()||null,whatsapp:String(fd.get('whatsapp')||'').trim()||null};
+      const rc=await db.from('listing_contacts').insert(contact);if(rc.error)throw rc.error;
     }
-    for(let i=0;i<files.length;i++){
-      const f=files[i];if(f.size>6*1024*1024)throw new Error(`Imaginea ${f.name} depășește 6 MB.`);
-      const ext=(f.name.split('.').pop()||'jpg').toLowerCase().replace(/[^a-z0-9]/g,'');const path=`${state.user.id}/${listingId}/${crypto.randomUUID()}.${ext}`;
-      const up=await db.storage.from('listing-images').upload(path,f,{cacheControl:'3600',upsert:false,contentType:f.type});if(up.error)throw up.error;
-      const ri=await db.from('listing_images').insert({listing_id:listingId,storage_path:path,sort_order:existingCount+i});if(ri.error)throw ri.error;
+
+    const pathByKey=new Map();
+    for(const item of imageItems){
+      if(item.kind==='existing'){
+        pathByKey.set(item.key,item.path);
+        continue;
+      }
+      const f=item.file;
+      if(!f)continue;
+      if(f.size>6*1024*1024)throw new Error(`Imaginea ${f.name} depășește 6 MB.`);
+      const ext=(f.name.split('.').pop()||'jpg').toLowerCase().replace(/[^a-z0-9]/g,'');
+      const path=`${state.user.id}/${listingId}/${crypto.randomUUID()}.${ext}`;
+      const up=await db.storage.from('listing-images').upload(path,f,{cacheControl:'3600',upsert:false,contentType:f.type});
+      if(up.error)throw up.error;
+      newlyUploadedPaths.push(path);
+      const ri=await db.from('listing_images').insert({listing_id:listingId,storage_path:path,sort_order:99});
+      if(ri.error)throw ri.error;
+      pathByKey.set(item.key,path);
     }
+
+    const finalPaths=imageItems.map(item=>pathByKey.get(item.key)).filter(Boolean);
+
+    if(editing){
+      const originalPaths=current?.image_paths||[];
+      const keep=new Set(finalPaths);
+      const removed=originalPaths.filter(path=>!keep.has(path));
+      if(removed.length){
+        const rd=await db.from('listing_images').delete().eq('listing_id',listingId).in('storage_path',removed);
+        if(rd.error)throw rd.error;
+        const rs=await db.storage.from('listing-images').remove(removed);
+        if(rs.error)console.warn('storage image cleanup',rs.error);
+      }
+    }
+
+    for(let i=0;i<finalPaths.length;i++){
+      const ru=await db.from('listing_images').update({sort_order:i}).eq('listing_id',listingId).eq('storage_path',finalPaths[i]);
+      if(ru.error)throw ru.error;
+    }
+
     const returnToAccount=state.editReturnToAccount;
-    state.editingListingId=null;state.editReturnToAccount=false;prepareSellForm('new');closeDialog('sellModal');await loadListings();renderListings();
-    if(editing){toast('Anunț actualizat.');if(returnToAccount)await openAccount('listings');}
-    else{toast('Anunț publicat în Support Hub Giuleștean 1923.');$('#anunturi').scrollIntoView({behavior:'smooth'});}
+    state.editingListingId=null;state.editReturnToAccount=false;
+    prepareSellForm('new');
+    closeDialog('sellModal');
+    await loadListings();renderListings();
+
+    if(editing){
+      toast('Anunț actualizat. Ordinea fotografiilor a fost salvată.');
+      if(returnToAccount)await openAccount('listings');
+    }else{
+      toast('Anunț publicat în Support Hub Giuleștean 1923.');
+      $('#anunturi').scrollIntoView({behavior:'smooth'});
+    }
   }catch(err){
     console.error(err);
+    if(newlyUploadedPaths.length){
+      try{await db.from('listing_images').delete().in('storage_path',newlyUploadedPaths);}catch(_){}
+      try{await db.storage.from('listing-images').remove(newlyUploadedPaths);}catch(_){}
+    }
     if(!editing&&isListingLimitError(err)){
       if(listingId)await db.from('listings').delete().eq('id',listingId);
       openListingLimitModal();
@@ -859,7 +1046,8 @@ function bindStaticEvents(){
   $('#categoryFilter').onchange=()=>{resetMarketPage();syncCategorySelection();renderListings();};$('#sortSelect').onchange=()=>{resetMarketPage();renderListings();};$('#allCategories').onclick=()=>{$('#categoryFilter').value='all';resetMarketPage();syncCategorySelection();renderListings();};
   $$('[data-focus-search]').forEach(b=>b.onclick=()=>{scrollTo({top:0,behavior:'smooth'});setTimeout(()=>$('#searchInput').focus(),300);});$$('[data-home]').forEach(b=>b.onclick=()=>scrollTo({top:0,behavior:'smooth'}));$$('[data-favorites]').forEach(b=>b.onclick=()=>openAccount('favorites'));
   $$('[data-legal]').forEach(a=>a.onclick=e=>{e.preventDefault();openLegal(a.dataset.legal);});
-  $('#sellForm [name=images]').onchange=e=>{const n=e.target.files.length;$('#imageHelp').textContent=n?`${n} fotografie${n===1?'':'i'} selectată${n===1?'':'e'}.`:'JPG, PNG sau WEBP. Recomandat sub 5 MB / imagine.';};
+  $('#sellForm [name=images]').onchange=e=>{addListingImageFiles([...e.target.files]);e.target.value='';};
+  $('#addMoreImagesBtn').onclick=()=>$('#sellForm [name=images]').click();
   ['authModal','passwordResetModal','sellModal','detailModal','sellerListingsModal','messageModal','accountModal','profileModal','deleteAccountModal','legalModal'].forEach(id=>{const d=document.getElementById(id);d.addEventListener('click',e=>{if(e.target===d)d.close();});});
 }
 
