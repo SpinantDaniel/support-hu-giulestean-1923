@@ -34,7 +34,7 @@ function listingImageEditorHelp(){
   if(help){
     help.textContent=editing
       ?`${n} din 8 fotografii în anunț. Poți adăuga încă maximum ${Math.max(0,8-n)}.`
-      :(n?`${n} din 8 fotografii selectate.`:'JPG, PNG sau WEBP. Recomandat sub 5 MB / imagine.');
+      :(n?`${n} din 8 fotografii selectate.`:'Imaginile sunt optimizate automat înainte de upload.');
   }
   const count=$('#listingImageEditorCount');
   if(count)count.textContent=n?` · ${n}/8`:'';
@@ -76,8 +76,7 @@ function addListingImageFiles(files){
   if(room<=0){toast('Poți avea maximum 8 fotografii.','error');return;}
   const accepted=incoming.slice(0,room);
   for(const file of accepted){
-    if(file.size>6*1024*1024){toast(`Imaginea ${file.name} depășește 6 MB.`,'error');continue;}
-    if(!/^image\/(jpeg|png|webp)$/i.test(file.type)){toast(`Formatul imaginii ${file.name} nu este acceptat.`,'error');continue;}
+    try{imageService.validateInput(file);}catch(error){toast(error.message||`Imaginea ${file.name} nu poate fi procesată.`,'error');continue;}
     listingImageEditor.items.push({
       kind:'new',
       key:`new:${crypto.randomUUID()}`,
@@ -216,7 +215,7 @@ function updateAdminAccessUI(){const zone=$('#adminAccessZone');if(!zone)return;
 function updateSuspensionUI(){const box=$('#accountSuspension');if(!box)return;box.hidden=!isSuspended();box.textContent=isSuspended()?suspensionText():'';}
 function setBusy(button,busy,label){if(!button)return; if(busy){button.dataset.label=button.textContent;button.disabled=true;button.textContent=label||'Se procesează…';}else{button.disabled=false;button.textContent=button.dataset.label||button.textContent;}}
 
-function publicStorageUrl(bucket,path){if(!path)return '';return `${SUPABASE_URL}/storage/v1/object/public/${bucket}/${String(path).split('/').map(encodeURIComponent).join('/')}`;}
+function publicStorageUrl(bucket,path){return path?imageService.getPublicUrl(db,bucket,path):'';}
 function initials(name='Membru'){return String(name).trim().split(/\s+/).slice(0,2).map(x=>x[0]||'').join('').toUpperCase()||'M';}
 function avatarUrl(profile){return profile?.avatar_path?publicStorageUrl('profile-avatars',profile.avatar_path):'';}
 function avatarHtml(profile,cls='avatar'){const name=profile?.display_name||'Membru',url=avatarUrl(profile);return url?`<span class="${cls} has-image"><img src="${esc(url)}" alt="${esc(name)}"></span>`:`<span class="${cls}">${esc(initials(name))}</span>`;}
@@ -406,13 +405,14 @@ async function init(){
   showListingSkeletons();
   const {data:{session}}=await db.auth.getSession();
   await applySession(session);
+  if(state.user)imageService.flushPendingDeletes(db,state.user.id).catch(error=>console.warn('image cleanup retry',error));
   await Promise.all([loadCategories(), loadListings(), loadHomeNewsCarousel()]);
   if(state.user) await loadFavorites();
   renderAll();
   initHomeNewsRefresh();
   const sharedListingId=new URLSearchParams(location.search).get('listing');
   if(sharedListingId&&state.listings.some(l=>l.id===sharedListingId))setTimeout(()=>openDetail(sharedListingId),80);
-  db.auth.onAuthStateChange(async (event, session)=>{await applySession(session);await loadListings();if(state.user)await loadFavorites();else state.favorites.clear();renderAll()});
+  db.auth.onAuthStateChange(async (event, session)=>{await applySession(session);if(state.user)imageService.flushPendingDeletes(db,state.user.id).catch(error=>console.warn('image cleanup retry',error));await loadListings();if(state.user)await loadFavorites();else state.favorites.clear();renderAll()});
 }
 
 async function applySession(session){
@@ -961,53 +961,60 @@ async function publishListing(e){
   if(imageItems.length>8)return toast('Poți avea maximum 8 fotografii.','error');
   if(!fd.get('phone')&&!fd.get('whatsapp'))return toast('Adaugă telefon sau WhatsApp pentru contact direct.','error');
 
-  setBusy(btn,true,editing?'Se salvează…':'Se publică…');
   let listingId=state.editingListingId;
   const newlyUploadedPaths=[];
+  const optimizedByKey=new Map();
+  const newItems=imageItems.filter(item=>item.kind==='new'&&item.file);
+  setBusy(btn,true,newItems.length?'Se optimizează imaginile…':(editing?'Se salvează…':'Se publică…'));
+
   try{
+    if(newItems.length){
+      const optimized=await imageService.optimizeMany(newItems.map(item=>item.file),'listing',{
+        concurrency:Math.min(2,navigator.hardwareConcurrency&&navigator.hardwareConcurrency<=4?1:2),
+        onProgress:({completed,total})=>{btn.textContent=`Se optimizează imaginile… ${completed}/${total}`;}
+      });
+      newItems.forEach((item,index)=>optimizedByKey.set(item.key,optimized[index]));
+      console.info('listing image optimization',optimized.map(x=>({from:imageService.formatBytes(x.originalSizeBytes),to:imageService.formatBytes(x.sizeBytes),size:`${x.width}×${x.height}`,type:x.mime,quality:x.quality})));
+    }
+
     const row={category_id:fd.get('category'),title:String(fd.get('title')).trim(),description:String(fd.get('description')).trim(),price:Number(fd.get('price')),currency:fd.get('currency'),condition:fd.get('condition'),location:String(fd.get('location')).trim(),negotiable:fd.get('negotiable')==='on'};
+
     if(editing){
       if(!current||current.seller_id!==state.user.id)throw new Error('Anunțul nu îți aparține.');
-      const r=await db.from('listings').update({...row,state:'active',updated_at:new Date().toISOString()}).eq('id',listingId).eq('seller_id',state.user.id).select('id').single();if(r.error)throw r.error;
-      const contactPatch={phone:String(fd.get('phone')||'').trim()||null,whatsapp:String(fd.get('whatsapp')||'').trim()||null};
-      const rc=await db.from('listing_contacts').update(contactPatch).eq('listing_id',listingId).eq('seller_id',state.user.id);if(rc.error)throw rc.error;
     }else{
+      btn.textContent='Se pregătește anunțul…';
       const r=await db.from('listings').insert({...row,seller_id:state.user.id}).select('id').single();if(r.error)throw r.error;listingId=r.data.id;
       const contact={listing_id:listingId,seller_id:state.user.id,phone:String(fd.get('phone')||'').trim()||null,whatsapp:String(fd.get('whatsapp')||'').trim()||null};
       const rc=await db.from('listing_contacts').insert(contact);if(rc.error)throw rc.error;
     }
 
     const pathByKey=new Map();
-    for(let itemIndex=0;itemIndex<imageItems.length;itemIndex++){
-      const item=imageItems[itemIndex];
-      if(item.kind==='existing'){
-        pathByKey.set(item.key,item.path);
-        continue;
-      }
-      const f=item.file;
-      if(!f)continue;
-      if(f.size>6*1024*1024)throw new Error(`Imaginea ${f.name} depășește 6 MB.`);
-      const ext=(f.name.split('.').pop()||'jpg').toLowerCase().replace(/[^a-z0-9]/g,'');
-      const path=`${state.user.id}/${listingId}/${crypto.randomUUID()}.${ext}`;
-      const up=await db.storage.from('listing-images').upload(path,f,{cacheControl:'3600',upsert:false,contentType:f.type});
-      if(up.error)throw up.error;
-      newlyUploadedPaths.push(path);
+    imageItems.filter(item=>item.kind==='existing').forEach(item=>pathByKey.set(item.key,item.path));
 
-      // listing_images_sort_order_check allows 0..20.
-      // The UI already limits a listing to maximum 8 images, so the real
-      // image position is always valid and can be inserted directly.
-      const provisionalSortOrder=itemIndex;
-      if(provisionalSortOrder<0||provisionalSortOrder>20){
-        throw new Error('Ordinea fotografiilor este invalidă. Reîncarcă pagina și încearcă din nou.');
+    if(newItems.length){
+      btn.textContent='Se încarcă imaginile…';
+      for(let index=0;index<newItems.length;index++){
+        const item=newItems[index];
+        const processed=optimizedByKey.get(item.key);
+        if(!processed)throw new Error(`Imaginea ${item.file?.name||''} nu a fost optimizată.`);
+        const path=imageService.uniquePath({userId:state.user.id,scopeId:listingId},processed);
+        await imageService.upload(db,{bucket:'listing-images',path,processed});
+        newlyUploadedPaths.push(path);
+        const provisionalSortOrder=imageItems.findIndex(x=>x.key===item.key);
+        if(provisionalSortOrder<0||provisionalSortOrder>20)throw new Error('Ordinea fotografiilor este invalidă. Reîncarcă pagina și încearcă din nou.');
+        const ri=await db.from('listing_images').insert({listing_id:listingId,storage_path:path,sort_order:provisionalSortOrder});
+        if(ri.error)throw ri.error;
+        pathByKey.set(item.key,path);
+        btn.textContent=`Se încarcă imaginile… ${index+1}/${newItems.length}`;
       }
+    }
 
-      const ri=await db.from('listing_images').insert({
-        listing_id:listingId,
-        storage_path:path,
-        sort_order:provisionalSortOrder
-      });
-      if(ri.error)throw ri.error;
-      pathByKey.set(item.key,path);
+    // For edits, update the listing only after new files have been optimized and uploaded.
+    if(editing){
+      btn.textContent='Se salvează modificările…';
+      const r=await db.from('listings').update({...row,state:'active',updated_at:new Date().toISOString()}).eq('id',listingId).eq('seller_id',state.user.id).select('id').single();if(r.error)throw r.error;
+      const contactPatch={phone:String(fd.get('phone')||'').trim()||null,whatsapp:String(fd.get('whatsapp')||'').trim()||null};
+      const rc=await db.from('listing_contacts').update(contactPatch).eq('listing_id',listingId).eq('seller_id',state.user.id);if(rc.error)throw rc.error;
     }
 
     const finalPaths=imageItems.map(item=>pathByKey.get(item.key)).filter(Boolean);
@@ -1019,8 +1026,8 @@ async function publishListing(e){
       if(removed.length){
         const rd=await db.from('listing_images').delete().eq('listing_id',listingId).in('storage_path',removed);
         if(rd.error)throw rd.error;
-        const rs=await db.storage.from('listing-images').remove(removed);
-        if(rs.error)console.warn('storage image cleanup',rs.error);
+        const cleanup=await imageService.delete(db,'listing-images',removed,{ownerId:state.user.id,retries:2});
+        if(!cleanup.ok)console.warn('storage image cleanup queued',cleanup.error);
       }
     }
 
@@ -1036,7 +1043,7 @@ async function publishListing(e){
     await loadListings();renderListings();
 
     if(editing){
-      toast('Anunț actualizat. Ordinea fotografiilor a fost salvată.');
+      toast('Anunț actualizat. Fotografiile au fost optimizate și ordinea a fost salvată.');
       if(returnToAccount)await openAccount('listings');
     }else{
       toast('Anunț publicat în Support Hub Giuleștean 1923.');
@@ -1046,7 +1053,8 @@ async function publishListing(e){
     console.error(err);
     if(newlyUploadedPaths.length){
       try{await db.from('listing_images').delete().in('storage_path',newlyUploadedPaths);}catch(_){}
-      try{await db.storage.from('listing-images').remove(newlyUploadedPaths);}catch(_){}
+      const cleanup=await imageService.delete(db,'listing-images',newlyUploadedPaths,{ownerId:state.user?.id,retries:2});
+      if(!cleanup.ok)console.warn('orphan cleanup queued',cleanup.error);
     }
     if(!editing&&isListingLimitError(err)){
       if(listingId)await db.from('listings').delete().eq('id',listingId);
@@ -1085,10 +1093,16 @@ async function deleteListing(id,fromDetail=false){
   try{
     const {data:imgs}=await db.from('listing_images').select('storage_path').eq('listing_id',id);
     const paths=(imgs||[]).map(x=>x.storage_path).filter(Boolean);
-    if(paths.length){const rm=await db.storage.from('listing-images').remove(paths);if(rm.error)console.warn('storage cleanup',rm.error);}
     const {data,error}=await db.from('listings').delete().eq('id',id).eq('seller_id',state.user.id).select('id');
     if(error)throw error;if(!data?.length)throw new Error('Anunțul nu a fost șters. Reîncarcă pagina și încearcă din nou.');
-    if(fromDetail)closeDialog('detailModal');await loadListings();renderListings();if($('#accountModal').open)await renderAccount();toast('Anunț șters definitiv.');
+    let cleanupOk=true;
+    if(paths.length){
+      const cleanup=await imageService.delete(db,'listing-images',paths,{ownerId:state.user.id,retries:2});
+      cleanupOk=cleanup.ok;
+      if(!cleanup.ok)console.warn('listing storage cleanup queued',cleanup.error);
+    }
+    if(fromDetail)closeDialog('detailModal');await loadListings();renderListings();if($('#accountModal').open)await renderAccount();
+    toast(cleanupOk?'Anunț șters definitiv.':'Anunț șters. Curățarea fotografiilor va fi reîncercată automat.');
   }catch(err){console.error(err);toast(err.message||'Anunțul nu a putut fi șters.','error');}
 }
 
@@ -1115,17 +1129,45 @@ function openProfileEditor(){
   $('#profileModal').showModal();
 }
 async function saveProfile(e){
-  e.preventDefault();if(!requireAuth())return;const form=e.currentTarget,btn=$('#profileSaveBtn'),fd=new FormData(form),file=form.elements.avatar.files?.[0];setBusy(btn,true,'Se salvează…');
+  e.preventDefault();if(!requireAuth())return;
+  const form=e.currentTarget,btn=$('#profileSaveBtn'),fd=new FormData(form),file=form.elements.avatar.files?.[0];
+  setBusy(btn,true,file?'Se optimizează avatarul…':'Se salvează…');
+  let uploadedAvatar=null;
   try{
     const display=String(fd.get('display_name')||'').trim();if(display.length<2)throw new Error('Numele trebuie să aibă minimum 2 caractere.');
     let nextAvatar=state.profile?.avatar_path||null;const oldAvatar=nextAvatar;
-    if(fd.get('remove_avatar')==='on'){nextAvatar=null;}
-    if(file){if(file.size>3*1024*1024)throw new Error('Avatarul poate avea maximum 3 MB.');if(!['image/jpeg','image/png','image/webp'].includes(file.type))throw new Error('Avatarul trebuie să fie JPG, PNG sau WEBP.');const ext=(file.name.split('.').pop()||'jpg').toLowerCase().replace(/[^a-z0-9]/g,'');const path=`${state.user.id}/avatar-${Date.now()}.${ext}`;const up=await db.storage.from('profile-avatars').upload(path,file,{upsert:false,contentType:file.type,cacheControl:'3600'});if(up.error)throw up.error;nextAvatar=path;}
+    if(fd.get('remove_avatar')==='on')nextAvatar=null;
+
+    if(file){
+      const processed=await imageService.optimize(file,'avatar');
+      btn.textContent='Se încarcă avatarul…';
+      const path=imageService.uniquePath({userId:state.user.id,prefix:'avatar'},processed);
+      await imageService.upload(db,{bucket:'profile-avatars',path,processed});
+      uploadedAvatar=path;
+      nextAvatar=path;
+      console.info('avatar optimization',{from:imageService.formatBytes(processed.originalSizeBytes),to:imageService.formatBytes(processed.sizeBytes),size:`${processed.width}×${processed.height}`,type:processed.mime,quality:processed.quality});
+    }
+
     const patch={display_name:display,location:String(fd.get('location')||'').trim()||null,bio:String(fd.get('bio')||'').trim()||null,avatar_path:nextAvatar,contact_incognito:fd.get('contact_incognito')==='on'};
-    const {data,error}=await db.from('profiles').update(patch).eq('id',state.user.id).select('*').single();if(error)throw error;state.profile=data;
-    if(oldAvatar&&oldAvatar!==nextAvatar){const rm=await db.storage.from('profile-avatars').remove([oldAvatar]);if(rm.error)console.warn('old avatar cleanup',rm.error);}
+    const {data,error}=await db.from('profiles').update(patch).eq('id',state.user.id).select('*').single();
+    if(error)throw error;
+    state.profile=data;
+
+    // Delete the old avatar only after the new upload AND DB update both succeeded.
+    if(oldAvatar&&oldAvatar!==nextAvatar){
+      const cleanup=await imageService.delete(db,'profile-avatars',[oldAvatar],{ownerId:state.user.id,retries:2});
+      if(!cleanup.ok)console.warn('old avatar cleanup queued',cleanup.error);
+    }
+
     closeDialog('profileModal');updateAccountButtons();$('#accountName').textContent=state.profile.display_name;$('#accountAvatar').innerHTML=avatarHtml(state.profile,'account-avatar-inner');toast('Profil actualizat.');
-  }catch(err){console.error(err);toast(err.message||'Profilul nu a putut fi salvat.','error');}finally{setBusy(btn,false);}
+  }catch(err){
+    console.error(err);
+    if(uploadedAvatar){
+      const cleanup=await imageService.delete(db,'profile-avatars',[uploadedAvatar],{ownerId:state.user?.id,retries:2});
+      if(!cleanup.ok)console.warn('failed avatar upload cleanup queued',cleanup.error);
+    }
+    toast(err.message||'Profilul nu a putut fi salvat.','error');
+  }finally{setBusy(btn,false);}
 }
 
 
