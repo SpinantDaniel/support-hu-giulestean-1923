@@ -1,12 +1,18 @@
 
 const SUPABASE_URL = 'https://bhqpixyiojthpfqnyhsh.supabase.co';
 const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_U2IRhs6K85S43ZRqKK5U8Q_HSknWMNY';
+const INITIAL_AUTH_URL = location.href;
+const AUTH_CONFIG = window.HUB_AUTH_CONFIG || {};
+const TURNSTILE_SITE_KEY = String(AUTH_CONFIG.turnstileSiteKey || '').trim();
+const TERMS_VERSION = String(AUTH_CONFIG.termsVersion || '1.0');
+const PRIVACY_VERSION = String(AUTH_CONFIG.privacyVersion || '1.0');
+const authSecurity = { turnstileWidgetId:null, turnstileToken:null, recoveryActive:false };
 const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
   auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true }
 });
 
 const $ = (s, el=document) => el.querySelector(s);
-const $$ = (s, el=document) => [...el.querySelectorAll(s)];
+const $ = (s, el=document) => [...el.querySelectorAll(s)];
 const state = { session:null, user:null, profile:null, userFlag:null, adminRole:'none', categories:[], listings:[], favorites:new Set(), homeNews:[], selectedListing:null, authMode:'login', accountTab:'listings', editingListingId:null, editReturnToAccount:false, marketPage:1, marketPageSize:150 };
 const icons = { 'rapid-colectii':'⚑','auto-moto':'◉','electronice':'▣','telefoane':'▯','haine-incaltaminte':'♢','casa-gradina':'⌂','servicii':'✦','bilete':'▥','imobiliare':'▤','joburi':'▰','donez-caut':'♡','diverse':'•••' };
 const conditionLabels = {new:'Nou',like_new:'Ca nou',used:'Utilizat',damaged:'Cu defecte',service:'Serviciu',not_applicable:'N/A'};
@@ -403,8 +409,12 @@ function initHomeNewsRefresh(){clearInterval(homeNewsRefreshTimer);homeNewsRefre
 async function init(){
   bindStaticEvents();
   showListingSkeletons();
+  const initialRecovery=authUrlHasType('recovery');
+  const initialConfirmation=authUrlHasType('signup')||authUrlHasType('email');
   const {data:{session}}=await db.auth.getSession();
   await applySession(session);
+  if(initialRecovery&&session)setTimeout(()=>openPasswordRecovery(),0);
+  else if(initialConfirmation&&session){scrubAuthUrl();setTimeout(()=>toast('Email confirmat. Contul este acum activ.'),50);}
   if(state.user)imageService.flushPendingDeletes(db,state.user.id).catch(error=>console.warn('image cleanup retry',error));
   await Promise.all([loadCategories(), loadListings(), loadHomeNewsCarousel()]);
   if(state.user) await loadFavorites();
@@ -412,7 +422,14 @@ async function init(){
   initHomeNewsRefresh();
   const sharedListingId=new URLSearchParams(location.search).get('listing');
   if(sharedListingId&&state.listings.some(l=>l.id===sharedListingId))setTimeout(()=>openDetail(sharedListingId),80);
-  db.auth.onAuthStateChange(async (event, session)=>{await applySession(session);if(state.user)imageService.flushPendingDeletes(db,state.user.id).catch(error=>console.warn('image cleanup retry',error));await loadListings();if(state.user)await loadFavorites();else state.favorites.clear();renderAll()});
+  db.auth.onAuthStateChange(async (event, session)=>{
+    await applySession(session);
+    if(event==='PASSWORD_RECOVERY'&&session){scrubAuthUrl();setTimeout(()=>openPasswordRecovery(),0);}
+    if(state.user)imageService.flushPendingDeletes(db,state.user.id).catch(error=>console.warn('image cleanup retry',error));
+    await loadListings();
+    if(state.user)await loadFavorites();else state.favorites.clear();
+    renderAll();
+  });
 }
 
 async function applySession(session){
@@ -817,6 +834,82 @@ function updateSignupConsentUI(){
   box.classList.toggle('accepted',signup&&input.checked);
 }
 
+function authRedirectUrl(){
+  const url=new URL(location.href);
+  url.hash='';
+  url.search='';
+  return url.toString();
+}
+
+function authUrlHasType(type){
+  try{
+    const url=new URL(INITIAL_AUTH_URL);
+    const hash=new URLSearchParams(url.hash.replace(/^#/,''));
+    return url.searchParams.get('type')===type||hash.get('type')===type;
+  }catch(_){return false;}
+}
+
+function scrubAuthUrl(){
+  if(!location.hash)return;
+  if(/(?:^|[&#])(access_token|refresh_token|expires_in|expires_at|token_type|type)=/.test(location.hash)){
+    history.replaceState(null,'',location.pathname+location.search);
+  }
+}
+
+function setTurnstileNote(message,status=''){
+  const note=$('#authTurnstileNote');
+  if(!note)return;
+  note.textContent=message;
+  note.dataset.status=status;
+}
+
+function renderAuthTurnstile(attempt=0){
+  const wrap=$('#authTurnstileWrap'),host=$('#authTurnstile');
+  if(!wrap||!host)return;
+  wrap.hidden=false;
+  if(!TURNSTILE_SITE_KEY){
+    setTurnstileNote('Verificarea anti-abuz nu este configurată.','error');
+    return;
+  }
+  if(authSecurity.turnstileWidgetId!==null)return;
+  if(!window.turnstile){
+    if(attempt<24)setTimeout(()=>renderAuthTurnstile(attempt+1),150);
+    else setTurnstileNote('Verificarea anti-abuz nu s-a putut încărca. Reîncarcă pagina.','error');
+    return;
+  }
+  authSecurity.turnstileWidgetId=window.turnstile.render(host,{
+    sitekey:TURNSTILE_SITE_KEY,
+    theme:'auto',
+    action:'auth',
+    callback:(token)=>{
+      authSecurity.turnstileToken=token||null;
+      setTurnstileNote('Verificare anti-abuz completă.','ok');
+    },
+    'expired-callback':()=>{
+      authSecurity.turnstileToken=null;
+      setTurnstileNote('Verificarea a expirat. Confirm-o din nou.','error');
+    },
+    'error-callback':()=>{
+      authSecurity.turnstileToken=null;
+      setTurnstileNote('Verificarea anti-abuz a eșuat. Încearcă din nou.','error');
+    }
+  });
+}
+
+function resetAuthCaptcha(){
+  authSecurity.turnstileToken=null;
+  setTurnstileNote('Confirmă verificarea anti-abuz pentru a continua.');
+  if(window.turnstile&&authSecurity.turnstileWidgetId!==null){
+    try{window.turnstile.reset(authSecurity.turnstileWidgetId);}catch(_){}
+  }
+}
+
+function requireAuthCaptchaToken(){
+  if(!TURNSTILE_SITE_KEY)throw new Error('Verificarea anti-abuz nu este configurată momentan.');
+  if(!authSecurity.turnstileToken)throw new Error('Completează verificarea anti-abuz pentru a continua.');
+  return authSecurity.turnstileToken;
+}
+
 function openAuth(mode='login'){
   state.authMode=mode;
   if(mode==='signup'){
@@ -825,6 +918,8 @@ function openAuth(mode='login'){
   }
   updateAuthMode();
   $('#authModal').showModal();
+  renderAuthTurnstile();
+  resetAuthCaptcha();
 }
 
 function updateAuthMode(){
@@ -833,56 +928,138 @@ function updateAuthMode(){
   $('#authSubmit').textContent=signup?'Creează cont':'Intră în cont';
   $('#displayNameField').hidden=!signup;
   $('#forgotPasswordRow').hidden=signup;
-  $('#authNotice').textContent=signup?'Fiecare adresă de email poate avea un singur cont. Dacă emailul este deja înregistrat, crearea unui cont nou este blocată.':'Contul îți permite să publici, să salvezi favorite și să contactezi vânzătorii.';
+  $('#authNotice').textContent=signup
+    ?'După creare trebuie să confirmi adresa de email înainte de prima autentificare.'
+    :'Contul îți permite să publici, să salvezi favorite și să contactezi vânzătorii.';
   $('#authForm [name=password]').autocomplete=signup?'new-password':'current-password';
   $$('[data-auth-mode]').forEach(b=>b.classList.toggle('active',b.dataset.authMode===state.authMode));
   updateSignupConsentUI();
 }
+
 async function submitAuth(e){
   e.preventDefault();
-  const form=e.currentTarget,btn=$('#authSubmit'),fd=new FormData(form),email=String(fd.get('email')).trim(),password=String(fd.get('password'));
+  const form=e.currentTarget,btn=$('#authSubmit'),fd=new FormData(form),email=String(fd.get('email')||'').trim().toLowerCase(),password=String(fd.get('password')||'');
   if(state.authMode==='signup'&&!form.elements.legal_acceptance.checked){
     form.elements.legal_acceptance.focus();
     return toast('Pentru a crea contul trebuie să accepți Termenii de utilizare și să confirmi că ai citit Politica de confidențialitate.','error');
   }
+  let captchaToken;
+  try{captchaToken=requireAuthCaptchaToken();}catch(error){return toast(error.message,'error');}
   setBusy(btn,true,state.authMode==='signup'?'Se creează…':'Se autentifică…');
   try{
     if(state.authMode==='signup'){
-      const display=String(fd.get('display_name')||'').trim();if(display.length<2)throw new Error('Completează numele afișat.');
-      const response=await fetch(`${SUPABASE_URL}/functions/v1/register-user`,{method:'POST',headers:{'Content-Type':'application/json','apikey':SUPABASE_PUBLISHABLE_KEY},body:JSON.stringify({email,password,display_name:display,accept_terms:true,acknowledge_privacy:true})});
-      const result=await response.json().catch(()=>({}));
-      if(!response.ok)throw new Error(result.error||'Contul nu a putut fi creat.');
-      const login=await db.auth.signInWithPassword({email,password});if(login.error)throw login.error;
-      closeDialog('authModal');toast('Cont creat. Bine ai venit!');
-    } else {const {error}=await db.auth.signInWithPassword({email,password});if(error)throw error;closeDialog('authModal');toast('Ai intrat în cont.');}
-  }catch(err){console.error(err);toast(err.message||'Autentificarea a eșuat.','error');}finally{setBusy(btn,false);}
+      const display=String(fd.get('display_name')||'').trim();
+      if(display.length<2)throw new Error('Completează numele afișat.');
+      const acceptedAt=new Date().toISOString();
+      const {data,error}=await db.auth.signUp({
+        email,
+        password,
+        options:{
+          captchaToken,
+          emailRedirectTo:authRedirectUrl(),
+          data:{
+            display_name:display,
+            accept_terms:true,
+            acknowledge_privacy:true,
+            terms_version:TERMS_VERSION,
+            privacy_version:PRIVACY_VERSION,
+            signup_client_timestamp:acceptedAt
+          }
+        }
+      });
+      if(error)throw error;
+      if(data?.session){
+        await db.auth.signOut({scope:'local'}).catch(()=>undefined);
+        throw new Error('Verificarea emailului nu este activă în configurarea Auth. Contul nu a fost autentificat.');
+      }
+      form.reset();
+      state.authMode='login';
+      updateAuthMode();
+      closeDialog('authModal');
+      toast('Verifică inboxul. Dacă adresa poate fi înregistrată, vei primi un email de confirmare.');
+    }else{
+      const {error}=await db.auth.signInWithPassword({email,password,options:{captchaToken}});
+      if(error){
+        if(String(error.code||'')==='email_not_confirmed')throw new Error('Confirmă adresa de email înainte de autentificare.');
+        throw error;
+      }
+      closeDialog('authModal');
+      toast('Ai intrat în cont.');
+    }
+  }catch(err){
+    console.error(err);
+    toast(err.message||'Autentificarea a eșuat.','error');
+  }finally{
+    resetAuthCaptcha();
+    setBusy(btn,false);
+    updateSignupConsentUI();
+  }
 }
 
 async function requestPasswordReset(){
-  const input=$('#authForm [name=email]');const email=String(input?.value||'').trim().toLowerCase();
-  if(!email||!/^\S+@\S+\.\S+$/.test(email)){input?.focus();return toast('Introdu mai întâi adresa de email.','error');}
-  const btn=$('#forgotPasswordBtn');setBusy(btn,true,'Se trimite…');
+  const input=$('#authForm [name=email]');
+  const email=String(input?.value||'').trim().toLowerCase();
+  if(!email||!/^\S+@\S+\.\S+$/.test(email)){
+    input?.focus();
+    return toast('Introdu mai întâi adresa de email.','error');
+  }
+  let captchaToken;
+  try{captchaToken=requireAuthCaptchaToken();}catch(error){return toast(error.message,'error');}
+  const btn=$('#forgotPasswordBtn');
+  setBusy(btn,true,'Se trimite…');
   try{
-    const {error}=await db.auth.resetPasswordForEmail(email);
+    const {error}=await db.auth.resetPasswordForEmail(email,{redirectTo:authRedirectUrl(),captchaToken});
     if(error)throw error;
-    sessionStorage.setItem('fsh_recovery_email',email);
-    const form=$('#passwordResetForm');form.reset();form.elements.recovery_email.value=email;$('#recoveryEmailHint').textContent=`Cod trimis la ${email}.`;closeDialog('authModal');$('#passwordResetModal').showModal();
-    toast('Dacă există un cont pentru acest email, vei primi un cod temporar.');
-  }catch(err){console.error(err);toast('Codul de recuperare nu a putut fi trimis.','error');}finally{setBusy(btn,false);}
+    closeDialog('authModal');
+    toast('Dacă există un cont pentru această adresă, vei primi un link securizat pentru schimbarea parolei.');
+  }catch(err){
+    console.error(err);
+    toast('Solicitarea de recuperare nu a putut fi trimisă. Încearcă din nou.','error');
+  }finally{
+    resetAuthCaptcha();
+    setBusy(btn,false);
+  }
+}
+
+function openPasswordRecovery(){
+  authSecurity.recoveryActive=true;
+  const form=$('#passwordResetForm');
+  form?.reset();
+  closeDialog('authModal');
+  const modal=$('#passwordResetModal');
+  if(modal&&!modal.open)modal.showModal();
+}
+
+async function abandonPasswordRecovery(){
+  const wasActive=authSecurity.recoveryActive;
+  authSecurity.recoveryActive=false;
+  closeDialog('passwordResetModal');
+  if(wasActive){
+    try{await db.auth.signOut({scope:'local'});}catch(error){console.warn('recovery signout',error);}
+    toast('Recuperarea parolei a fost anulată.');
+  }
 }
 
 async function submitPasswordReset(e){
-  e.preventDefault();const form=e.currentTarget,btn=$('#passwordResetSubmit'),fd=new FormData(form),email=String(fd.get('recovery_email')||sessionStorage.getItem('fsh_recovery_email')||'').trim().toLowerCase(),token=String(fd.get('temporary_code')||'').trim(),password=String(fd.get('new_password')||''),confirm=String(fd.get('confirm_password')||'');
-  if(!email)return toast('Adresa de email pentru recuperare lipsește. Cere un cod nou.','error');
-  if(token.length<6)return toast('Introdu codul temporar primit pe email.','error');
+  e.preventDefault();
+  const form=e.currentTarget,btn=$('#passwordResetSubmit'),fd=new FormData(form),password=String(fd.get('new_password')||''),confirm=String(fd.get('confirm_password')||'');
+  if(!authSecurity.recoveryActive||!state.user)return toast('Linkul de recuperare nu este activ sau a expirat. Cere un link nou.','error');
   if(password.length<8)return toast('Parola trebuie să aibă minimum 8 caractere.','error');
   if(password!==confirm)return toast('Parolele nu coincid.','error');
-  setBusy(btn,true,'Se verifică…');
+  setBusy(btn,true,'Se schimbă…');
   try{
-    const verified=await db.auth.verifyOtp({email,token,type:'recovery'});if(verified.error)throw verified.error;
-    const changed=await db.auth.updateUser({password});if(changed.error)throw changed.error;
-    sessionStorage.removeItem('fsh_recovery_email');form.reset();await db.auth.signOut({scope:'local'});closeDialog('passwordResetModal');openAuth('login');$('#authForm [name=email]').value=email;$('#authForm [name=password]').value='';toast('Parola a fost schimbată. Intră în cont cu parola nouă.');
-  }catch(err){console.error(err);toast('Codul este invalid sau expirat. Cere un cod nou și încearcă din nou.','error');}finally{setBusy(btn,false);}
+    const changed=await db.auth.updateUser({password});
+    if(changed.error)throw changed.error;
+    authSecurity.recoveryActive=false;
+    form.reset();
+    await db.auth.signOut();
+    closeDialog('passwordResetModal');
+    openAuth('login');
+    toast('Parola a fost schimbată. Intră în cont cu parola nouă.');
+  }catch(err){
+    console.error(err);
+    toast('Parola nu a putut fi schimbată. Cere un link nou dacă sesiunea de recuperare a expirat.','error');
+  }finally{setBusy(btn,false);}
 }
 
 function prepareSellForm(mode='new'){
@@ -1300,15 +1477,20 @@ async function resolveReport(id){const {error}=await db.from('reports').update({
 function renderAll(){renderCategories();renderListings();updateAccountButtons();}
 function showListingSkeletons(){$('#listingGrid').innerHTML=Array.from({length:8},()=>'<div class="listing-card skeleton-card"><div class="listing-image"></div><div class="listing-body"><div class="skeleton"></div><div class="skeleton short"></div></div></div>').join('');}
 
-function bindCloseButtons(root=document){$$('[data-close]',root).forEach(b=>b.onclick=()=>closeDialog(b.dataset.close));}
+function bindCloseButtons(root=document){$('[data-close]',root).forEach(b=>b.onclick=()=>{
+  const id=b.dataset.close;
+  if(id==='passwordResetModal'&&authSecurity.recoveryActive)return void abandonPasswordRecovery();
+  if(id==='authModal')resetAuthCaptcha();
+  closeDialog(id);
+});}
 function bindStaticEvents(){
   bindCloseButtons();
-  $$('[data-open-sell]').forEach(b=>b.onclick=openSell);
+  $('[data-open-sell]').forEach(b=>b.onclick=openSell);
   $('#loginBtn').onclick=()=>state.user?openAccount():openAuth('login');$('#mobileAccount').onclick=$('#loginBtn').onclick;
-  $$('[data-auth-mode]').forEach(b=>b.onclick=()=>{state.authMode=b.dataset.authMode;updateAuthMode();});
+  $('[data-auth-mode]').forEach(b=>b.onclick=()=>{state.authMode=b.dataset.authMode;updateAuthMode();renderAuthTurnstile();resetAuthCaptcha();});
   $('#authForm').addEventListener('submit',submitAuth);
   $('#authForm [name=legal_acceptance]').onchange=updateSignupConsentUI;
-  $$('[data-signup-legal]').forEach(button=>button.onclick=e=>{e.preventDefault();e.stopPropagation();openLegal(button.dataset.signupLegal);});
+  $('[data-signup-legal]').forEach(button=>button.onclick=e=>{e.preventDefault();e.stopPropagation();openLegal(button.dataset.signupLegal);});
   $('#forgotPasswordBtn').onclick=requestPasswordReset;$('#passwordResetForm').addEventListener('submit',submitPasswordReset);$('#sellForm').addEventListener('submit',publishListing);$('#messageForm').addEventListener('submit',sendMessage);
   $('#logoutBtn').onclick=async()=>{await db.auth.signOut();closeDialog('accountModal');toast('Ai ieșit din cont.');};$('#editProfileBtn').onclick=openProfileEditor;$('#adminPanelBtn').onclick=()=>window.open('/admin.html','_blank','noopener');$('#profileForm').addEventListener('submit',saveProfile);$('#deleteAccountBtn').onclick=openDeleteAccount;$('#deleteAccountForm').addEventListener('submit',deleteAccount);$('#profileForm [name=avatar]').onchange=e=>{const f=e.target.files?.[0];if(f){const u=URL.createObjectURL(f);$('#profilePreview').innerHTML=`<span class="profile-preview-avatar has-image"><img src="${esc(u)}" alt="Preview avatar"></span>`;}};
   $('#profileForm [name=contact_incognito]').onchange=updateContactIncognitoUI;
@@ -1321,7 +1503,7 @@ function bindStaticEvents(){
   $$('[data-legal]').forEach(a=>a.onclick=e=>{e.preventDefault();openLegal(a.dataset.legal);});
   $('#sellForm [name=images]').onchange=e=>{addListingImageFiles([...e.target.files]);e.target.value='';};
   $('#addMoreImagesBtn').onclick=()=>$('#sellForm [name=images]').click();
-  ['authModal','passwordResetModal','sellModal','detailModal','sellerListingsModal','messageModal','accountModal','profileModal','deleteAccountModal','legalModal'].forEach(id=>{const d=document.getElementById(id);d.addEventListener('click',e=>{if(e.target===d)d.close();});});
+  ['authModal','passwordResetModal','sellModal','detailModal','sellerListingsModal','messageModal','accountModal','profileModal','deleteAccountModal','legalModal'].forEach(id=>{const d=document.getElementById(id);d.addEventListener('click',e=>{if(e.target!==d)return;if(id==='passwordResetModal'&&authSecurity.recoveryActive)return void abandonPasswordRecovery();if(id==='authModal')resetAuthCaptcha();d.close();});});
 }
 
 const TERMS_OF_USE_HTML=`<article class="legal-doc"><h3 class="legal-doc-title">TERMENI DE UTILIZARE ȘI POLITICA DE MODERARE</h3><p class="legal-doc-subtitle"><strong>HUB Giuleștean — Support Hub Giuleștean 1923</strong></p><p class="legal-doc-meta">Versiunea 1.0</p><p class="legal-doc-meta">Data intrării în vigoare: [se completează la publicare]</p><h4>1. Identitatea operatorului și contact</h4><p>Platforma HUB Giuleștean, denumită și „Support Hub Giuleștean 1923”, este administrată de <strong>CASA DEL DANIEL DIGITAL CONSULTING S.R.L.</strong>, denumită în continuare „Operatorul”, având următoarele date de identificare:</p><ul><li><strong>Sediul social:</strong> Strada Valea Gârboului nr. 5, Florești, județul Cluj, România;</li><li><strong>Cod unic de înregistrare:</strong> 511***88;</li><li><strong>Număr de ordine în Registrul Comerțului:</strong> J2025<strong>*</strong>*001;</li><li><strong>Identificator unic european — EUID:</strong> ROONRC.J2025<strong>*</strong>*001;</li><li><strong>Telefon:</strong> 0753.670.173;</li><li><strong>E-mail:</strong> <a href="mailto:office.casadeldaniel@aol.com">office.casadeldaniel@aol.com</a>.</li></ul><p>Adresa de e-mail reprezintă punctul de contact pentru asistență, reclamații, raportarea conținutului, contestarea măsurilor de moderare și comunicarea cu autoritățile. Comunicarea se desfășoară în limba română și permite contactul cu o persoană din partea Operatorului.</p><h4>2. Scopul și caracterul independent al Platformei</h4><p>HUB Giuleștean este o platformă independentă de anunțuri, destinată facilitării contactului dintre persoanele care oferă sau caută bunuri și servicii.</p><p>Caracterul comunitar al Platformei nu reprezintă o verificare sau o garanție a identității, seriozității ori capacității utilizatorilor de a-și îndeplini obligațiile.</p><p>Referirile la comunitatea giuleșteană și utilizarea denumirii Platformei nu trebuie interpretate, prin ele însele, ca dovadă a unei afilieri oficiale cu un club sportiv sau cu o altă organizație. Orice parteneriat oficial va fi prezentat explicit.</p><h4>3. Domeniul de aplicare și acceptarea termenilor</h4><p>Acești termeni reglementează utilizarea Platformei, crearea conturilor, publicarea anunțurilor și interacțiunile realizate prin funcțiile disponibile.</p><p>Crearea unui cont presupune acceptarea expresă a termenilor prin mecanismul pus la dispoziție în Platformă. Termenii trebuie să poată fi consultați și salvați înainte de acceptare.</p><p>Acceptarea lor reglementează relația dintre utilizator și Operator. Condițiile tranzacțiilor dintre utilizatori se stabilesc separat între persoanele implicate, cu respectarea legii.</p><h4>4. Eligibilitatea și gestionarea contului</h4><p>Crearea conturilor și publicarea anunțurilor sunt permise persoanelor care au împlinit 18 ani. Persoana care acționează pentru o societate sau organizație trebuie să aibă dreptul de a o reprezenta.</p><p>Utilizatorul se obligă:</p><ul><li>să furnizeze informații corecte și actualizate;</li><li>să utilizeze date de contact asupra cărora are control;</li><li>să protejeze parola și codurile de autentificare;</li><li>să nu folosească fără drept identitatea altei persoane;</li><li>să anunțe Operatorul când suspectează compromiterea contului;</li><li>să nu creeze conturi pentru a evita restricțiile aplicate justificat.</li></ul><p>Utilizatorul răspunde pentru propriile acțiuni și pentru activitățile autorizate de acesta. Folosirea neautorizată a contului nu stabilește automat culpa titularului.</p><p>Operatorul nu solicită parole, coduri PIN sau coduri de autentificare pentru verificarea unui anunț ori pentru confirmarea unei tranzacții.</p><h4>5. Rolul Platformei în tranzacții</h4><p>Platforma oferă infrastructura necesară publicării anunțurilor și facilitării contactului dintre utilizatori.</p><p><strong>Operatorul nu este parte în tranzacțiile dintre utilizatori</strong> și nu acționează ca vânzător, cumpărător, mandatar sau garant al acestora.</p><p>Părțile stabilesc direct:</p><ul><li>prețul și modalitatea de plată;</li><li>condițiile de predare sau livrare;</li><li>verificarea bunului;</li><li>condițiile prestării serviciului;</li><li>eventualele garanții contractuale și condiții de restituire, cu respectarea drepturilor legale aplicabile.</li></ul><p>În modelul de anunțuri reglementat de acești termeni, Operatorul nu încasează și nu păstrează contravaloarea bunurilor ori serviciilor tranzacționate între utilizatori.</p><p>Aceste precizări nu înlătură obligațiile legale și răspunderea proprie a Operatorului.</p><h4>6. Responsabilitatea pentru ofertele publicate</h4><p>Autorul răspunde pentru legalitatea ofertei, autenticitatea bunului, exactitatea descrierii și dreptul de a utiliza fotografiile, textele și celelalte materiale publicate.</p><p>Utilizatorul trebuie să dețină bunul sau să fie autorizat să îl ofere și să aibă calificările ori autorizațiile necesare pentru serviciile prestate, atunci când legea le impune.</p><p>Anunțul trebuie să prezinte clar:</p><ul><li>bunul sau serviciul oferit;</li><li>caracteristicile esențiale;</li><li>starea reală și defectele cunoscute;</li><li>prețul sau modul de calcul;</li><li>costurile suplimentare cunoscute;</li><li>condițiile și limitările relevante ale ofertei.</li></ul><p>Fotografiile trebuie să reflecte corect oferta. Imaginile ilustrative trebuie identificate ca atare.</p><p>Sunt interzise ascunderea defectelor, prezentarea produselor contrafăcute drept originale, ofertele inexistente și prețurile fictive folosite pentru atragerea accesărilor.</p><p>Anunțurile trebuie actualizate sau retrase când oferta nu mai este disponibilă.</p><h4>7. Utilizatori particulari și profesioniști</h4><p>Utilizatorii trebuie să declare corect dacă acționează ca particulari sau în cadrul unei activități profesionale.</p><p>Profesioniștii răspund pentru furnizarea informațiilor comerciale obligatorii, respectarea cerințelor de autorizare, emiterea documentelor fiscale și respectarea drepturilor consumatorilor.</p><p>Dreptul de retragere, obligațiile privind conformitatea și celelalte drepturi specifice consumatorilor se aplică în condițiile prevăzute de lege. Acestea nu se aplică automat tranzacțiilor între particulari, pentru care rămân valabile regulile dreptului civil.</p><p>Selectarea unui cont de particular nu înlătură obligațiile aferente unei activități care este, în realitate, profesională.</p><h4>8. Bunuri, servicii și conținut interzis</h4><p>Sunt interzise:</p><ul><li>bunurile furate, contrafăcute sau comercializate fără drept;</li><li>produsele și serviciile interzise de lege;</li><li>fraudele, schemele piramidale și ofertele cu promisiuni înșelătoare de câștig;</li><li>documentele false, datele bancare, parolele și conturile compromise;</li><li>comercializarea sau divulgarea fără drept a datelor personale;</li><li>materialele care încalcă drepturi de autor, mărci sau dreptul la imagine;</li><li>conținutul care exploatează minori;</li><li>amenințările, hărțuirea și incitarea la ură sau violență;</li><li>linkurile de phishing, programele malițioase și tentativele de furt de date;</li><li>anunțurile care folosesc fără drept identitatea unei persoane ori organizații.</li></ul><p>Prin politica Platformei sunt interzise și ofertele de arme, muniții, explozibili, articole pirotehnice, droguri, medicamente, tutun, produse cu nicotină și servicii sexuale, chiar dacă anumite categorii pot fi comercializate legal în alte condiții.</p><p>Biletele și abonamentele la evenimente pot fi oferite numai dacă transferul este permis de lege și de condițiile emitentului. Nu sunt acceptate bilete false, duplicate sau prezentate înșelător.</p><h4>9. Reguli de conduită</h4><p>Comunicarea trebuie să fie relevantă și să respecte drepturile celorlalte persoane.</p><p>Nu sunt permise:</p><ul><li>intimidarea și insultele repetate adresate altor utilizatori;</li><li>mesajele comerciale nesolicitate trimise în masă;</li><li>anunțurile duplicate excesiv;</li><li>recenziile fictive și manipularea reputației;</li><li>raportările abuzive;</li><li>colectarea masivă a datelor cu încălcarea legii;</li><li>accesarea neautorizată și perturbarea Platformei.</li></ul><p>Datele de contact publicate pentru o ofertă trebuie folosite în legătură cu aceasta. Publicarea lor nu reprezintă acord pentru includerea în baze de date de marketing.</p><p>Criticile formulate cu bună-credință, inclusiv cele privind Platforma, nu constituie prin ele însele un motiv de sancționare.</p><h4>10. Siguranța tranzacțiilor</h4><p>Utilizatorilor li se recomandă să verifice bunul, condițiile ofertei și dreptul vânzătorului de a-l comercializa înainte de efectuarea plății.</p><p>Apartenența la aceeași comunitate nu înlocuiește aceste verificări.</p><p>Publicarea sau menținerea unui anunț după moderare nu reprezintă certificarea autenticității produsului, a calității serviciului sau a executării tranzacției.</p><p>În cazul unei suspiciuni de fraudă, utilizatorul poate informa Operatorul și autoritățile competente, păstrând dovezile relevante.</p><h4>11. Raportarea conținutului</h4><p>Orice persoană poate semnala conținut presupus ilegal sau contrar regulilor la <strong><a href="mailto:office.casadeldaniel@aol.com">office.casadeldaniel@aol.com</a></strong>, fără a avea nevoie de cont. Poate fi utilizată și funcția de raportare, dacă este disponibilă.</p><p>Sesizarea trebuie să includă:</p><ul><li>localizarea exactă a conținutului, prin link sau identificator;</li><li>explicația motivelor raportării;</li><li>dovezile disponibile;</li><li>numele și adresa de e-mail, cu excepțiile legale;</li><li>confirmarea că informațiile sunt transmise cu bună-credință și sunt considerate exacte și complete.</li></ul><p>Operatorul confirmă primirea când dispune de date electronice de contact și comunică decizia și căile de contestare fără întârzieri nejustificate. Sesizările sunt tratate diligent, obiectiv și proporțional cu gravitatea situației.</p><h4>12. Politica de moderare</h4><p>Moderarea se realizează manual, de persoane desemnate de Operator, pe baza sesizărilor și a verificărilor proprii. Nu se promite verificarea prealabilă a fiecărui anunț.</p><p>Operatorul poate solicita corectarea unei oferte, limita vizibilitatea, elimina conținutul sau suspenda temporar contul. Închiderea definitivă poate interveni pentru fraude, abateri grave ori repetate.</p><p>Măsura ține cont de gravitate, impact și istoricul abaterilor. Pentru riscuri urgente se poate interveni imediat.</p><p>Persoanei afectate i se comunică motivul concret, temeiul, întinderea și durata restricției, precum și căile de contestare, cu excepțiile legale. Eventuala introducere a moderării automate va fi explicată prin actualizarea acestei politici.</p><h4>13. Contestarea măsurilor</h4><p>Utilizatorul poate solicita gratuit reanalizarea unei măsuri prin e-mail la <strong><a href="mailto:office.casadeldaniel@aol.com">office.casadeldaniel@aol.com</a></strong>, indicând contul sau anunțul, decizia și motivele contestației.</p><p>Cererea este examinată de o persoană desemnată. Dacă măsura este nejustificată, Operatorul o corectează și comunică rezultatul.</p><p>Procedura nu limitează drepturile legale de contestare, sesizarea autorităților sau accesul la instanță.</p><h4>14. Drepturile asupra materialelor</h4><p>Utilizatorul păstrează drepturile asupra conținutului propriu.</p><p>Prin publicare, acordă Operatorului o permisiune neexclusivă și gratuită de a stoca, reproduce, adapta tehnic și afișa materialele pentru funcționarea Platformei și prezentarea anunțului.</p><p>Permisiunea nu transferă proprietatea asupra materialelor și nu autorizează folosirea acestora în campanii publicitare externe fără un acord separat.</p><p>După retragerea conținutului, păstrarea unor copii este limitată la situații justificate privind copiile de siguranță, obligațiile legale sau apărarea unor drepturi.</p><h4>15. Gratuitate și servicii opționale</h4><p>Publicarea standard a anunțurilor este gratuită.</p><p>Eventualele servicii opționale contra cost vor avea prețul total, durata, caracteristicile și condițiile comunicate înainte de comandă. Nu vor fi activate fără acceptare expresă.</p><p>Anunțurile promovate vor fi identificate vizibil. Plata promovării nu garantează vânzarea și nu exonerează autorul de respectarea regulilor.</p><p>Criteriile principale care influențează ordinea ofertelor și efectul eventualelor promovări vor fi explicate în interfața de afișare a anunțurilor, potrivit funcționării reale.</p><h4>16. Date personale</h4><p>Modul de prelucrare a datelor personale este descris separat în Politica de Confidențialitate a Platformei. Utilizarea cookie-urilor și a tehnologiilor similare este explicată în informarea dedicată.</p><p>Acceptarea termenilor nu reprezintă consimțământ general pentru marketing sau pentru orice utilizare a datelor. Atunci când este necesar, consimțământul se solicită separat.</p><p>Utilizatorii nu trebuie să publice CNP-uri, copii ale actelor de identitate, date complete de card sau alte informații care nu sunt necesare prezentării ofertei.</p><p>Solicitările privind datele personale pot fi transmise la <strong><a href="mailto:office.casadeldaniel@aol.com">office.casadeldaniel@aol.com</a></strong>.</p><h4>17. Disponibilitate și răspundere</h4><p>Operatorul depune eforturi rezonabile pentru funcționarea și securitatea Platformei. Pot exista întreruperi pentru mentenanță, incidente tehnice sau cauze externe.</p><p>Nu se garantează disponibilitatea neîntreruptă, vânzarea bunurilor, un anumit număr de vizualizări ori comportamentul altor utilizatori.</p><p>Autorul răspunde pentru propriul anunț și pentru obligațiile asumate în tranzacție. Operatorul răspunde pentru propriile fapte și obligații potrivit legii.</p><p>Nicio clauză nu exclude răspunderea care nu poate fi limitată legal și nu restrânge drepturile obligatorii ale consumatorilor.</p><h4>18. Închiderea contului</h4><p>Utilizatorul poate solicita închiderea contului prin funcția disponibilă sau prin e-mail la <strong><a href="mailto:office.casadeldaniel@aol.com">office.casadeldaniel@aol.com</a></strong>. Pentru prevenirea solicitărilor neautorizate, Operatorul poate verifica în mod proporțional identitatea solicitantului.</p><p>Anunțurile active vor fi retrase la închiderea contului. Datele vor fi șterse sau păstrate limitat, în condițiile Politicii de confidențialitate și ale legii.</p><p>Închiderea contului nu anulează obligațiile din tranzacțiile deja încheiate și nu presupune ștergerea imediată a tuturor evidențelor necesare legal.</p><h4>19. Modificarea termenilor</h4><p>Termenii pot fi actualizați pentru modificări legislative, de securitate sau de funcționalitate.</p><p>Modificările relevante vor fi comunicate înainte de aplicare, cu un preaviz rezonabil, exceptând situațiile care impun intervenția imediată. Comunicarea va indica data aplicării.</p><p>Modificările nu produc efecte retroactive. Acceptarea expresă va fi solicitată când este necesară. Utilizatorul care nu acceptă noile condiții poate înceta utilizarea și solicita închiderea contului.</p><h4>20. Reclamații, lege aplicabilă și litigii</h4><p>Reclamațiile privind Platforma pot fi transmise la <strong><a href="mailto:office.casadeldaniel@aol.com">office.casadeldaniel@aol.com</a></strong>, cu descrierea situației și dovezile relevante.</p><p>Neînțelegerile dintre cumpărător și vânzător se soluționează între aceștia și, după caz, prin autorități sau instanțele abilitate. Operatorul poate analiza conduita utilizatorilor pentru aplicarea regulilor Platformei, fără a decide obligatoriu asupra litigiului.</p><p>Termenii sunt guvernați de legea română, fără înlăturarea protecției obligatorii de care consumatorul beneficiază potrivit legii aplicabile.</p><p>În funcție de obiectul sesizării, utilizatorul se poate adresa ANPC, ANSPDCP, ANCOM sau altor autorități competente. ANCOM supraveghează respectarea obligațiilor privind serviciile digitale, fără a înlocui instanțele în soluționarea litigiilor dintre utilizatori.</p><p>Accesul la autorități sau instanțele competente nu este condiționat de parcurgerea prealabilă a unei proceduri amiabile.</p></article>`;
