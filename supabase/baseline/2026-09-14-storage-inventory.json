@@ -1,0 +1,23 @@
+{
+  "snapshot_date": "2026-09-14",
+  "buckets": [
+    {
+      "bucket_id": "blog-images",
+      "object_count": 3,
+      "total_bytes": 7399911,
+      "max_bytes": 4129851
+    },
+    {
+      "bucket_id": "listing-images",
+      "object_count": 27,
+      "total_bytes": 54997078,
+      "max_bytes": 5973530
+    },
+    {
+      "bucket_id": "profile-avatars",
+      "object_count": 2,
+      "total_bytes": 2338584,
+      "max_bytes": 2194505
+    }
+  ]
+}
