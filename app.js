@@ -12,7 +12,8 @@ const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, 
 });
 
 const $ = (s, el=document) => el.querySelector(s);
-const $$ = (s, el=document) => [...el.querySelectorAll(s)];
+const $ = (s, el=document) => [...el.querySelectorAll(s)];
+const qsa = (s, el=document) => [...el.querySelectorAll(s)];
 const state = { session:null, user:null, profile:null, userFlag:null, adminRole:'none', categories:[], listings:[], favorites:new Set(), homeNews:[], selectedListing:null, authMode:'login', accountTab:'listings', editingListingId:null, editReturnToAccount:false, marketPage:1, marketPageSize:150 };
 const icons = { 'rapid-colectii':'⚑','auto-moto':'◉','electronice':'▣','telefoane':'▯','haine-incaltaminte':'♢','casa-gradina':'⌂','servicii':'✦','bilete':'▥','imobiliare':'▤','joburi':'▰','donez-caut':'♡','diverse':'•••' };
 const conditionLabels = {new:'Nou',like_new:'Ca nou',used:'Utilizat',damaged:'Cu defecte',service:'Serviciu',not_applicable:'N/A'};
@@ -1477,7 +1478,7 @@ async function resolveReport(id){const {error}=await db.from('reports').update({
 function renderAll(){renderCategories();renderListings();updateAccountButtons();}
 function showListingSkeletons(){$('#listingGrid').innerHTML=Array.from({length:8},()=>'<div class="listing-card skeleton-card"><div class="listing-image"></div><div class="listing-body"><div class="skeleton"></div><div class="skeleton short"></div></div></div>').join('');}
 
-function bindCloseButtons(root=document){$('[data-close]',root).forEach(b=>b.onclick=()=>{
+function bindCloseButtons(root=document){qsa('[data-close]',root).forEach(b=>b.onclick=()=>{
   const id=b.dataset.close;
   if(id==='passwordResetModal'&&authSecurity.recoveryActive)return void abandonPasswordRecovery();
   if(id==='authModal')resetAuthCaptcha();
@@ -1485,12 +1486,12 @@ function bindCloseButtons(root=document){$('[data-close]',root).forEach(b=>b.onc
 });}
 function bindStaticEvents(){
   bindCloseButtons();
-  $('[data-open-sell]').forEach(b=>b.onclick=openSell);
+  qsa('[data-open-sell]').forEach(b=>b.onclick=openSell);
   $('#loginBtn').onclick=()=>state.user?openAccount():openAuth('login');$('#mobileAccount').onclick=$('#loginBtn').onclick;
-  $('[data-auth-mode]').forEach(b=>b.onclick=()=>{state.authMode=b.dataset.authMode;updateAuthMode();renderAuthTurnstile();resetAuthCaptcha();});
+  qsa('[data-auth-mode]').forEach(b=>b.onclick=()=>{state.authMode=b.dataset.authMode;updateAuthMode();renderAuthTurnstile();resetAuthCaptcha();});
   $('#authForm').addEventListener('submit',submitAuth);
   $('#authForm [name=legal_acceptance]').onchange=updateSignupConsentUI;
-  $('[data-signup-legal]').forEach(button=>button.onclick=e=>{e.preventDefault();e.stopPropagation();openLegal(button.dataset.signupLegal);});
+  qsa('[data-signup-legal]').forEach(button=>button.onclick=e=>{e.preventDefault();e.stopPropagation();openLegal(button.dataset.signupLegal);});
   $('#forgotPasswordBtn').onclick=requestPasswordReset;$('#passwordResetForm').addEventListener('submit',submitPasswordReset);$('#sellForm').addEventListener('submit',publishListing);$('#messageForm').addEventListener('submit',sendMessage);
   $('#logoutBtn').onclick=async()=>{await db.auth.signOut();closeDialog('accountModal');toast('Ai ieșit din cont.');};$('#editProfileBtn').onclick=openProfileEditor;$('#adminPanelBtn').onclick=()=>window.open('/admin.html','_blank','noopener');$('#profileForm').addEventListener('submit',saveProfile);$('#deleteAccountBtn').onclick=openDeleteAccount;$('#deleteAccountForm').addEventListener('submit',deleteAccount);$('#profileForm [name=avatar]').onchange=e=>{const f=e.target.files?.[0];if(f){const u=URL.createObjectURL(f);$('#profilePreview').innerHTML=`<span class="profile-preview-avatar has-image"><img src="${esc(u)}" alt="Preview avatar"></span>`;}};
   $('#profileForm [name=contact_incognito]').onchange=updateContactIncognitoUI;
