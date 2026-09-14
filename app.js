@@ -12,7 +12,6 @@ const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, 
 });
 
 const $ = (s, el=document) => el.querySelector(s);
-const $ = (s, el=document) => [...el.querySelectorAll(s)];
 const qsa = (s, el=document) => [...el.querySelectorAll(s)];
 const state = { session:null, user:null, profile:null, userFlag:null, adminRole:'none', categories:[], listings:[], favorites:new Set(), homeNews:[], selectedListing:null, authMode:'login', accountTab:'listings', editingListingId:null, editReturnToAccount:false, marketPage:1, marketPageSize:150 };
 const icons = { 'rapid-colectii':'⚑','auto-moto':'◉','electronice':'▣','telefoane':'▯','haine-incaltaminte':'♢','casa-gradina':'⌂','servicii':'✦','bilete':'▥','imobiliare':'▤','joburi':'▰','donez-caut':'♡','diverse':'•••' };
@@ -106,7 +105,7 @@ function removeListingImageEditorItem(key){
 function syncListingImageEditorOrderFromDom(){
   const grid=$('#listingImageEditorGrid');
   if(!grid)return;
-  const order=$$('[data-image-editor-key]',grid).map(el=>el.dataset.imageEditorKey);
+  const order=qsa('[data-image-editor-key]',grid).map(el=>el.dataset.imageEditorKey);
   const byKey=new Map(listingImageEditor.items.map(item=>[item.key,item]));
   listingImageEditor.items=order.map(key=>byKey.get(key)).filter(Boolean);
 }
@@ -114,7 +113,7 @@ function syncListingImageEditorOrderFromDom(){
 function draggedListingImageCard(){
   const grid=$('#listingImageEditorGrid');
   if(!grid||!listingImageEditor.dragKey)return null;
-  return $$('.listing-image-edit-card',grid).find(card=>card.dataset.imageEditorKey===listingImageEditor.dragKey)||null;
+  return qsa('.listing-image-edit-card',grid).find(card=>card.dataset.imageEditorKey===listingImageEditor.dragKey)||null;
 }
 
 function endListingImageDrag(){
@@ -140,7 +139,7 @@ function moveListingImageCardAtPointer(clientX){
   if(clientX<gridRect.left+edge)grid.scrollLeft-=16;
   else if(clientX>gridRect.right-edge)grid.scrollLeft+=16;
 
-  const others=$$('.listing-image-edit-card',grid).filter(card=>card!==dragged);
+  const others=qsa('.listing-image-edit-card',grid).filter(card=>card!==dragged);
   let before=null;
   for(const card of others){
     const rect=card.getBoundingClientRect();
@@ -197,7 +196,7 @@ function renderListingImageEditor(){
     <button type="button" class="listing-image-remove" data-remove-image="${esc(item.key)}" aria-label="Elimină fotografia">×</button>
     <span class="listing-image-drag-handle" aria-hidden="true">⋮⋮</span>
   </div>`).join('');
-  $$('[data-remove-image]',grid).forEach(button=>button.onclick=e=>{
+  qsa('[data-remove-image]',grid).forEach(button=>button.onclick=e=>{
     e.stopPropagation();
     removeListingImageEditorItem(button.dataset.removeImage);
   });
@@ -474,7 +473,7 @@ async function loadFavorites(){
 
 function syncCategorySelection(){
   const selected=$('#categoryFilter')?.value||'all';
-  $$('.category').forEach(button=>{
+  qsa('.category').forEach(button=>{
     const active=button.dataset.cat===selected;
     button.classList.toggle('is-selected',active);
     button.setAttribute('aria-pressed',active?'true':'false');
@@ -494,7 +493,7 @@ function renderCategories(){
   if(previous==='all'||state.categories.some(c=>c.id===previous))$('#categoryFilter').value=previous;
   $('#sellCategory').innerHTML='<option value="">Alege categoria</option>'+opts;
 
-  $$('.category').forEach(b=>b.onclick=()=>{
+  qsa('.category').forEach(b=>b.onclick=()=>{
     $('#categoryFilter').value=b.dataset.cat;
     resetMarketPage();
     syncCategorySelection();
@@ -550,7 +549,7 @@ function renderMarketPagination(totalRows){
   navs.forEach(nav=>{
     nav.hidden=false;
     nav.innerHTML=html;
-    $$('[data-market-page]',nav).forEach(button=>button.onclick=()=>{
+    qsa('[data-market-page]',nav).forEach(button=>button.onclick=()=>{
       if(button.disabled)return;
       const target=Number(button.dataset.marketPage);
       if(!Number.isFinite(target)||target===state.marketPage)return;
@@ -587,9 +586,9 @@ function cardHtml(l){
 }
 
 function bindListingCards(root=document){
-  $$('[data-fav]',root).forEach(b=>b.onclick=async e=>{e.stopPropagation();await toggleFavorite(b.dataset.fav);});
-  $$('[data-share-listing]',root).forEach(b=>b.onclick=async e=>{e.stopPropagation();await shareListing(b.dataset.shareListing);});
-  $$('.listing-card',root).forEach(c=>c.onclick=()=>openDetail(c.dataset.id));
+  qsa('[data-fav]',root).forEach(b=>b.onclick=async e=>{e.stopPropagation();await toggleFavorite(b.dataset.fav);});
+  qsa('[data-share-listing]',root).forEach(b=>b.onclick=async e=>{e.stopPropagation();await shareListing(b.dataset.shareListing);});
+  qsa('.listing-card',root).forEach(c=>c.onclick=()=>openDetail(c.dataset.id));
 }
 
 async function toggleFavorite(listingId){
@@ -655,7 +654,7 @@ async function getSellerRatingData(sellerId,own=false){
 function bindSellerRatingControls(sellerId){
   const block=$('#sellerRatingBlock');
   if(!block)return;
-  $$('[data-rate-seller]',block).forEach(button=>{
+  qsa('[data-rate-seller]',block).forEach(button=>{
     button.onclick=()=>submitSellerRating(sellerId,Number(button.dataset.rateSeller));
   });
 }
@@ -717,7 +716,7 @@ function openSellerListings(sellerId,sellerName,currentListingId){
     ?rows.map(sellerOtherListingCardHtml).join('')
     :'<div class="empty compact seller-listings-empty"><b>Niciun alt anunț activ.</b><span>Revino mai târziu pentru alte produse publicate de acest utilizator.</span></div>';
 
-  $$('[data-other-listing]',root).forEach(card=>card.onclick=()=>{
+  qsa('[data-other-listing]',root).forEach(card=>card.onclick=()=>{
     const nextId=card.dataset.otherListing;
     closeDialog('sellerListingsModal');
     closeDialog('detailModal');
@@ -766,7 +765,7 @@ async function openDetail(id){
   }
 
   $('#detailShareBtn').onclick=()=>shareListing(l.id);
-  $$('.photo-thumb',$('#detailContent')).forEach(b=>b.onclick=()=>openPhotoGallery(l.images,Number(b.dataset.photoIndex)||0,l.title));
+  qsa('.photo-thumb',$('#detailContent')).forEach(b=>b.onclick=()=>openPhotoGallery(l.images,Number(b.dataset.photoIndex)||0,l.title));
   $('#detailModal').showModal();
 }
 
@@ -933,7 +932,7 @@ function updateAuthMode(){
     ?'După creare trebuie să confirmi adresa de email înainte de prima autentificare.'
     :'Contul îți permite să publici, să salvezi favorite și să contactezi vânzătorii.';
   $('#authForm [name=password]').autocomplete=signup?'new-password':'current-password';
-  $$('[data-auth-mode]').forEach(b=>b.classList.toggle('active',b.dataset.authMode===state.authMode));
+  qsa('[data-auth-mode]').forEach(b=>b.classList.toggle('active',b.dataset.authMode===state.authMode));
   updateSignupConsentUI();
 }
 
@@ -1246,7 +1245,7 @@ async function publishListing(e){
 async function openAccount(tab='listings'){
   if(!requireAuth())return;state.accountTab=tab;$('#accountName').textContent=state.profile?.display_name||'Contul meu';$('#accountEmail').textContent=state.user.email||'';$('#accountAvatar').innerHTML=avatarHtml(state.profile,'account-avatar-inner');updateSuspensionUI();updateAccountTabButtons();await renderAccount();$('#accountModal').showModal();
 }
-function updateAccountTabButtons(){$$('[data-account-tab]').forEach(b=>b.classList.toggle('active',b.dataset.accountTab===state.accountTab));}
+function updateAccountTabButtons(){qsa('[data-account-tab]').forEach(b=>b.classList.toggle('active',b.dataset.accountTab===state.accountTab));}
 async function renderAccount(){
   const root=$('#accountContent');root.innerHTML='<div class="loading-line">Se încarcă…</div>';
   try{
@@ -1254,7 +1253,7 @@ async function renderAccount(){
       const own=state.listings.filter(l=>l.seller_id===state.user.id).sort((a,b)=>new Date(b.created_at)-new Date(a.created_at));
       let statuses={};if(own.length){const {data}=await db.from('listing_approvals').select('listing_id,status').in('listing_id',own.map(x=>x.id));(data||[]).forEach(x=>statuses[x.listing_id]=x.status);}
       root.innerHTML=own.length?`<div class="account-list">${own.map(l=>`<div class="account-row"><div><b>${esc(l.title)}</b><small>${money(l.price,l.currency)} • ${esc(l.location)}</small></div><span class="status ${statuses[l.id]||'approved'}">${statuses[l.id]==='pending'?'În moderare':statuses[l.id]==='rejected'?'Respins':'Activ'}</span><button class="ghost mini" data-edit="${l.id}">Editează</button><button class="danger mini" data-delete="${l.id}">Șterge</button></div>`).join('')}</div>`:'<div class="empty compact"><b>N-ai publicat încă.</b><span>Primul anunț poate fi pus chiar acum.</span></div>';
-      $$('[data-edit]',root).forEach(b=>b.onclick=()=>openEditListing(b.dataset.edit,true));$$('[data-delete]',root).forEach(b=>b.onclick=()=>deleteListing(b.dataset.delete));
+      qsa('[data-edit]',root).forEach(b=>b.onclick=()=>openEditListing(b.dataset.edit,true));qsa('[data-delete]',root).forEach(b=>b.onclick=()=>deleteListing(b.dataset.delete));
     } else if(state.accountTab==='favorites'){
       const favs=state.listings.filter(l=>state.favorites.has(l.id));root.innerHTML=favs.length?`<div class="listing-grid account-grid">${favs.map(cardHtml).join('')}</div>`:'<div class="empty compact"><b>N-ai favorite.</b><span>Apasă ♡ pe un anunț ca să-l păstrezi aici.</span></div>';bindListingCards(root);
     } else if(state.accountTab==='messages'){
@@ -1431,8 +1430,8 @@ async function renderMessages(root){
 
   root.innerHTML=`<div class="conversation-list">${cards.join('')}</div><div class="thread" id="threadPane"><div class="thread-placeholder">Alege o conversație.</div></div>`;
 
-  $$('[data-conv]',root).forEach(b=>b.onclick=()=>openThread(b));
-  $$('[data-delete-conv]',root).forEach(b=>b.onclick=e=>{
+  qsa('[data-conv]',root).forEach(b=>b.onclick=()=>openThread(b));
+  qsa('[data-delete-conv]',root).forEach(b=>b.onclick=e=>{
     e.preventDefault();
     e.stopPropagation();
     hideConversationForMe(b.dataset.deleteConv);
@@ -1470,7 +1469,7 @@ async function renderAdmin(root){
   const {data:reports,error}=await db.from('reports').select('id,listing_id,reason,status,created_at').in('status',['open','reviewing']).order('created_at',{ascending:false});if(error)throw error;
   const {data:pending}=await db.from('listing_approvals').select('listing_id,status,updated_at').eq('status','pending').order('updated_at',{ascending:false});
   root.innerHTML=`<div class="admin-grid"><section><h3>În moderare</h3>${pending?.length?pending.map(x=>`<div class="admin-row"><span>${esc(state.listings.find(l=>l.id===x.listing_id)?.title||x.listing_id)}</span><button class="primary mini" data-approve="${x.listing_id}">Aprobă</button><button class="danger mini" data-reject="${x.listing_id}">Respinge</button></div>`).join(''):'<p class="muted">Nimic în așteptare.</p>'}</section><section><h3>Raportări deschise</h3>${reports?.length?reports.map(x=>`<div class="admin-row"><span>${esc(x.reason)} • ${esc(state.listings.find(l=>l.id===x.listing_id)?.title||x.listing_id)}</span><button class="ghost mini" data-resolve="${x.id}">Rezolvă</button></div>`).join(''):'<p class="muted">Nicio raportare deschisă.</p>'}</section></div>`;
-  $$('[data-approve]',root).forEach(b=>b.onclick=()=>moderate(b.dataset.approve,'approved'));$$('[data-reject]',root).forEach(b=>b.onclick=()=>moderate(b.dataset.reject,'rejected'));$$('[data-resolve]',root).forEach(b=>b.onclick=()=>resolveReport(b.dataset.resolve));
+  qsa('[data-approve]',root).forEach(b=>b.onclick=()=>moderate(b.dataset.approve,'approved'));qsa('[data-reject]',root).forEach(b=>b.onclick=()=>moderate(b.dataset.reject,'rejected'));qsa('[data-resolve]',root).forEach(b=>b.onclick=()=>resolveReport(b.dataset.resolve));
 }
 async function moderate(id,status){const {error}=await db.from('listing_approvals').update({status,reviewed_by:state.user.id,reviewed_at:new Date().toISOString()}).eq('listing_id',id);if(error)return toast(error.message,'error');await loadListings();renderListings();renderAccount();}
 async function resolveReport(id){const {error}=await db.from('reports').update({status:'resolved'}).eq('id',id);if(error)return toast(error.message,'error');renderAccount();}
@@ -1495,13 +1494,13 @@ function bindStaticEvents(){
   $('#forgotPasswordBtn').onclick=requestPasswordReset;$('#passwordResetForm').addEventListener('submit',submitPasswordReset);$('#sellForm').addEventListener('submit',publishListing);$('#messageForm').addEventListener('submit',sendMessage);
   $('#logoutBtn').onclick=async()=>{await db.auth.signOut();closeDialog('accountModal');toast('Ai ieșit din cont.');};$('#editProfileBtn').onclick=openProfileEditor;$('#adminPanelBtn').onclick=()=>window.open('/admin.html','_blank','noopener');$('#profileForm').addEventListener('submit',saveProfile);$('#deleteAccountBtn').onclick=openDeleteAccount;$('#deleteAccountForm').addEventListener('submit',deleteAccount);$('#profileForm [name=avatar]').onchange=e=>{const f=e.target.files?.[0];if(f){const u=URL.createObjectURL(f);$('#profilePreview').innerHTML=`<span class="profile-preview-avatar has-image"><img src="${esc(u)}" alt="Preview avatar"></span>`;}};
   $('#profileForm [name=contact_incognito]').onchange=updateContactIncognitoUI;
-  $$('[data-account-tab]').forEach(b=>b.onclick=async()=>{state.accountTab=b.dataset.accountTab;updateAccountTabButtons();await renderAccount();});
+  qsa('[data-account-tab]').forEach(b=>b.onclick=async()=>{state.accountTab=b.dataset.accountTab;updateAccountTabButtons();await renderAccount();});
   $('#listingLimitManage').onclick=async()=>{closeDialog('listingLimitModal');await openAccount('listings');};
   $('#searchBtn').onclick=()=>{resetMarketPage();renderListings();$('#anunturi').scrollIntoView({behavior:'smooth'});};$('#searchInput').addEventListener('keydown',e=>{if(e.key==='Enter')$('#searchBtn').click();});
-  $$('[data-search]').forEach(b=>b.onclick=()=>{$('#searchInput').value=b.dataset.search;$('#searchBtn').click();});
+  qsa('[data-search]').forEach(b=>b.onclick=()=>{$('#searchInput').value=b.dataset.search;$('#searchBtn').click();});
   $('#categoryFilter').onchange=()=>{resetMarketPage();syncCategorySelection();renderListings();};$('#sortSelect').onchange=()=>{resetMarketPage();renderListings();};$('#allCategories').onclick=()=>{$('#categoryFilter').value='all';resetMarketPage();syncCategorySelection();renderListings();};
-  $$('[data-focus-search]').forEach(b=>b.onclick=()=>{scrollTo({top:0,behavior:'smooth'});setTimeout(()=>$('#searchInput').focus(),300);});$$('[data-home]').forEach(b=>b.onclick=()=>scrollTo({top:0,behavior:'smooth'}));$$('[data-favorites]').forEach(b=>b.onclick=()=>openAccount('favorites'));
-  $$('[data-legal]').forEach(a=>a.onclick=e=>{e.preventDefault();openLegal(a.dataset.legal);});
+  qsa('[data-focus-search]').forEach(b=>b.onclick=()=>{scrollTo({top:0,behavior:'smooth'});setTimeout(()=>$('#searchInput').focus(),300);});qsa('[data-home]').forEach(b=>b.onclick=()=>scrollTo({top:0,behavior:'smooth'}));qsa('[data-favorites]').forEach(b=>b.onclick=()=>openAccount('favorites'));
+  qsa('[data-legal]').forEach(a=>a.onclick=e=>{e.preventDefault();openLegal(a.dataset.legal);});
   $('#sellForm [name=images]').onchange=e=>{addListingImageFiles([...e.target.files]);e.target.value='';};
   $('#addMoreImagesBtn').onclick=()=>$('#sellForm [name=images]').click();
   ['authModal','passwordResetModal','sellModal','detailModal','sellerListingsModal','messageModal','accountModal','profileModal','deleteAccountModal','legalModal'].forEach(id=>{const d=document.getElementById(id);d.addEventListener('click',e=>{if(e.target!==d)return;if(id==='passwordResetModal'&&authSecurity.recoveryActive)return void abandonPasswordRecovery();if(id==='authModal')resetAuthCaptcha();d.close();});});
