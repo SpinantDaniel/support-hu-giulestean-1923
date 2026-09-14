@@ -1,0 +1,548 @@
+{
+  "snapshot_date": "2026-09-14",
+  "security": {
+    "result": {
+      "lints": [
+        {
+          "name": "security_definer_view",
+          "title": "Security Definer View",
+          "level": "ERROR",
+          "facing": "EXTERNAL",
+          "categories": [
+            "SECURITY"
+          ],
+          "description": "Detects views defined with the SECURITY DEFINER property. These views enforce Postgres permissions and row level security policies (RLS) of the view creator, rather than that of the querying user",
+          "remediation": "https://supabase.com/docs/guides/database/database-linter?lint=0010_security_definer_view",
+          "count": 3,
+          "findings": [
+            {
+              "detail": "View \\`public.blog_post_comment_counts\\` is defined with the SECURITY DEFINER property",
+              "metadata": {
+                "name": "blog_post_comment_counts",
+                "type": "view",
+                "schema": "public"
+              },
+              "observed_at": "2026-09-14T19:55:25.823Z"
+            },
+            {
+              "detail": "View \\`public.blog_post_like_counts\\` is defined with the SECURITY DEFINER property",
+              "metadata": {
+                "name": "blog_post_like_counts",
+                "type": "view",
+                "schema": "public"
+              },
+              "observed_at": "2026-09-14T19:55:25.823Z"
+            },
+            {
+              "detail": "View \\`public.seller_rating_stats\\` is defined with the SECURITY DEFINER property",
+              "metadata": {
+                "name": "seller_rating_stats",
+                "type": "view",
+                "schema": "public"
+              },
+              "observed_at": "2026-09-14T19:55:25.823Z"
+            }
+          ]
+        },
+        {
+          "name": "anon_security_definer_function_executable",
+          "title": "Public Can Execute SECURITY DEFINER Function",
+          "level": "WARN",
+          "facing": "EXTERNAL",
+          "categories": [
+            "SECURITY"
+          ],
+          "description": "Detects `SECURITY DEFINER` functions that are callable without signing in. Revoke `EXECUTE`, switch the function to `SECURITY INVOKER`, or move it out of your exposed API schema if it is not meant to be public.",
+          "remediation": "https://supabase.com/docs/guides/database/database-linter?lint=0028_anon_security_definer_function_executable",
+          "count": 3,
+          "findings": [
+            {
+              "detail": "Function `public.is_newsletter_editor()` can be executed by the `anon` role as a `SECURITY DEFINER` function via `/rest/v1/rpc/is_newsletter_editor`. Revoke `EXECUTE` or switch it to `SECURITY INVOKER` if that is not intentional.",
+              "metadata": {
+                "name": "is_newsletter_editor",
+                "schema": "public",
+                "language": "sql",
+                "arguments": "",
+                "security_definer": true
+              },
+              "observed_at": "2026-09-14T19:55:25.823Z"
+            },
+            {
+              "detail": "Function `public.is_user_suspended(target_user uuid)` can be executed by the `anon` role as a `SECURITY DEFINER` function via `/rest/v1/rpc/is_user_suspended`. Revoke `EXECUTE` or switch it to `SECURITY INVOKER` if that is not intentional.",
+              "metadata": {
+                "name": "is_user_suspended",
+                "schema": "public",
+                "language": "sql",
+                "arguments": "target_user uuid",
+                "security_definer": true
+              },
+              "observed_at": "2026-09-14T19:55:25.823Z"
+            },
+            {
+              "detail": "Function `public.validate_blog_comment_parent()` can be executed by the `anon` role as a `SECURITY DEFINER` function via `/rest/v1/rpc/validate_blog_comment_parent`. Revoke `EXECUTE` or switch it to `SECURITY INVOKER` if that is not intentional.",
+              "metadata": {
+                "name": "validate_blog_comment_parent",
+                "schema": "public",
+                "language": "plpgsql",
+                "arguments": "",
+                "security_definer": true
+              },
+              "observed_at": "2026-09-14T19:55:25.823Z"
+            }
+          ]
+        },
+        {
+          "name": "authenticated_security_definer_function_executable",
+          "title": "Signed-In Users Can Execute SECURITY DEFINER Function",
+          "level": "WARN",
+          "facing": "EXTERNAL",
+          "categories": [
+            "SECURITY"
+          ],
+          "description": "Detects `SECURITY DEFINER` functions that are callable by signed-in users. Revoke `EXECUTE`, switch the function to `SECURITY INVOKER`, or move it out of your exposed API schema if signed-in users should not call it.",
+          "remediation": "https://supabase.com/docs/guides/database/database-linter?lint=0029_authenticated_security_definer_function_executable",
+          "count": 3,
+          "findings": [
+            {
+              "detail": "Function `public.is_newsletter_editor()` can be executed by the `authenticated` role as a `SECURITY DEFINER` function via `/rest/v1/rpc/is_newsletter_editor`. Revoke `EXECUTE` or switch it to `SECURITY INVOKER` if that is not intentional.",
+              "metadata": {
+                "name": "is_newsletter_editor",
+                "schema": "public",
+                "language": "sql",
+                "arguments": "",
+                "security_definer": true
+              },
+              "observed_at": "2026-09-14T19:55:25.823Z"
+            },
+            {
+              "detail": "Function `public.is_user_suspended(target_user uuid)` can be executed by the `authenticated` role as a `SECURITY DEFINER` function via `/rest/v1/rpc/is_user_suspended`. Revoke `EXECUTE` or switch it to `SECURITY INVOKER` if that is not intentional.",
+              "metadata": {
+                "name": "is_user_suspended",
+                "schema": "public",
+                "language": "sql",
+                "arguments": "target_user uuid",
+                "security_definer": true
+              },
+              "observed_at": "2026-09-14T19:55:25.823Z"
+            },
+            {
+              "detail": "Function `public.validate_blog_comment_parent()` can be executed by the `authenticated` role as a `SECURITY DEFINER` function via `/rest/v1/rpc/validate_blog_comment_parent`. Revoke `EXECUTE` or switch it to `SECURITY INVOKER` if that is not intentional.",
+              "metadata": {
+                "name": "validate_blog_comment_parent",
+                "schema": "public",
+                "language": "plpgsql",
+                "arguments": "",
+                "security_definer": true
+              },
+              "observed_at": "2026-09-14T19:55:25.823Z"
+            }
+          ]
+        },
+        {
+          "name": "auth_leaked_password_protection",
+          "title": "Leaked Password Protection Disabled",
+          "level": "WARN",
+          "facing": "EXTERNAL",
+          "categories": [
+            "SECURITY"
+          ],
+          "description": "Leaked password protection is currently disabled.",
+          "remediation": "https://supabase.com/docs/guides/auth/password-security#password-strength-and-leaked-password-protection",
+          "count": 1,
+          "findings": [
+            {
+              "detail": "Supabase Auth prevents the use of compromised passwords by checking against HaveIBeenPwned.org. Enable this feature to enhance security.",
+              "metadata": {
+                "type": "auth",
+                "entity": "Auth"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "performance": {
+    "result": {
+      "lints": [
+        {
+          "name": "unindexed_foreign_keys",
+          "title": "Unindexed foreign keys",
+          "level": "INFO",
+          "facing": "EXTERNAL",
+          "categories": [
+            "PERFORMANCE"
+          ],
+          "description": "Identifies foreign key constraints without a covering index, which can impact database performance.",
+          "remediation": "https://supabase.com/docs/guides/database/database-linter?lint=0001_unindexed_foreign_keys",
+          "count": 5,
+          "findings": [
+            {
+              "detail": "Table \\`public.blog_comments\\` has a foreign key \\`blog_comments_user_id_fkey\\` without a covering index. This can lead to suboptimal query performance.",
+              "metadata": {
+                "name": "blog_comments",
+                "type": "table",
+                "schema": "public",
+                "fkey_name": "blog_comments_user_id_fkey",
+                "fkey_columns": [
+                  3
+                ]
+              },
+              "observed_at": "2026-09-14T19:55:26.208Z"
+            },
+            {
+              "detail": "Table \\`public.blog_post_likes\\` has a foreign key \\`blog_post_likes_user_id_fkey\\` without a covering index. This can lead to suboptimal query performance.",
+              "metadata": {
+                "name": "blog_post_likes",
+                "type": "table",
+                "schema": "public",
+                "fkey_name": "blog_post_likes_user_id_fkey",
+                "fkey_columns": [
+                  2
+                ]
+              },
+              "observed_at": "2026-09-14T19:55:26.208Z"
+            },
+            {
+              "detail": "Table \\`public.conversation_hidden\\` has a foreign key \\`conversation_hidden_user_id_fkey\\` without a covering index. This can lead to suboptimal query performance.",
+              "metadata": {
+                "name": "conversation_hidden",
+                "type": "table",
+                "schema": "public",
+                "fkey_name": "conversation_hidden_user_id_fkey",
+                "fkey_columns": [
+                  2
+                ]
+              },
+              "observed_at": "2026-09-14T19:55:26.208Z"
+            },
+            {
+              "detail": "Table \\`public.newsletter_editors\\` has a foreign key \\`newsletter_editors_added_by_fkey\\` without a covering index. This can lead to suboptimal query performance.",
+              "metadata": {
+                "name": "newsletter_editors",
+                "type": "table",
+                "schema": "public",
+                "fkey_name": "newsletter_editors_added_by_fkey",
+                "fkey_columns": [
+                  2
+                ]
+              },
+              "observed_at": "2026-09-14T19:55:26.208Z"
+            },
+            {
+              "detail": "Table \\`public.user_flags\\` has a foreign key \\`user_flags_suspended_by_fkey\\` without a covering index. This can lead to suboptimal query performance.",
+              "metadata": {
+                "name": "user_flags",
+                "type": "table",
+                "schema": "public",
+                "fkey_name": "user_flags_suspended_by_fkey",
+                "fkey_columns": [
+                  7
+                ]
+              },
+              "observed_at": "2026-09-14T19:55:26.208Z"
+            }
+          ]
+        },
+        {
+          "name": "auth_rls_initplan",
+          "title": "Auth RLS Initialization Plan",
+          "level": "WARN",
+          "facing": "EXTERNAL",
+          "categories": [
+            "PERFORMANCE"
+          ],
+          "description": "Detects if calls to \\`current_setting()\\` and \\`auth.<function>()\\` in RLS policies are being unnecessarily re-evaluated for each row",
+          "remediation": "https://supabase.com/docs/guides/database/database-linter?lint=0003_auth_rls_initplan",
+          "count": 25,
+          "findings": [
+            {
+              "detail": "Table \\`public.blog_post_likes\\` has a row level security policy \\`blog_likes_own_read\\` that re-evaluates current_setting() or auth.<function>() for each row. This produces suboptimal query performance at scale. Resolve the issue by replacing \\`auth.<function>()\\` with \\`(select auth.<function>())\\`. See [docs](https://supabase.com/docs/guides/database/postgres/row-level-security#call-functions-with-select) for more info.",
+              "metadata": {
+                "name": "blog_post_likes",
+                "type": "table",
+                "schema": "public"
+              },
+              "observed_at": "2026-09-14T19:55:26.208Z"
+            },
+            {
+              "detail": "Table \\`public.blog_post_likes\\` has a row level security policy \\`blog_likes_own_insert\\` that re-evaluates current_setting() or auth.<function>() for each row. This produces suboptimal query performance at scale. Resolve the issue by replacing \\`auth.<function>()\\` with \\`(select auth.<function>())\\`. See [docs](https://supabase.com/docs/guides/database/postgres/row-level-security#call-functions-with-select) for more info.",
+              "metadata": {
+                "name": "blog_post_likes",
+                "type": "table",
+                "schema": "public"
+              },
+              "observed_at": "2026-09-14T19:55:26.208Z"
+            },
+            {
+              "detail": "Table \\`public.blog_post_likes\\` has a row level security policy \\`blog_likes_own_delete\\` that re-evaluates current_setting() or auth.<function>() for each row. This produces suboptimal query performance at scale. Resolve the issue by replacing \\`auth.<function>()\\` with \\`(select auth.<function>())\\`. See [docs](https://supabase.com/docs/guides/database/postgres/row-level-security#call-functions-with-select) for more info.",
+              "metadata": {
+                "name": "blog_post_likes",
+                "type": "table",
+                "schema": "public"
+              },
+              "observed_at": "2026-09-14T19:55:26.208Z"
+            },
+            {
+              "detail": "Table \\`public.newsletter_editors\\` has a row level security policy \\`newsletter_editors_read\\` that re-evaluates current_setting() or auth.<function>() for each row. This produces suboptimal query performance at scale. Resolve the issue by replacing \\`auth.<function>()\\` with \\`(select auth.<function>())\\`. See [docs](https://supabase.com/docs/guides/database/postgres/row-level-security#call-functions-with-select) for more info.",
+              "metadata": {
+                "name": "newsletter_editors",
+                "type": "table",
+                "schema": "public"
+              },
+              "observed_at": "2026-09-14T19:55:26.208Z"
+            },
+            {
+              "detail": "Table \\`public.blog_posts\\` has a row level security policy \\`blog_posts_read\\` that re-evaluates current_setting() or auth.<function>() for each row. This produces suboptimal query performance at scale. Resolve the issue by replacing \\`auth.<function>()\\` with \\`(select auth.<function>())\\`. See [docs](https://supabase.com/docs/guides/database/postgres/row-level-security#call-functions-with-select) for more info.",
+              "metadata": {
+                "name": "blog_posts",
+                "type": "table",
+                "schema": "public"
+              },
+              "observed_at": "2026-09-14T19:55:26.208Z"
+            },
+            {
+              "detail": "Table \\`public.blog_posts\\` has a row level security policy \\`blog_posts_insert\\` that re-evaluates current_setting() or auth.<function>() for each row. This produces suboptimal query performance at scale. Resolve the issue by replacing \\`auth.<function>()\\` with \\`(select auth.<function>())\\`. See [docs](https://supabase.com/docs/guides/database/postgres/row-level-security#call-functions-with-select) for more info.",
+              "metadata": {
+                "name": "blog_posts",
+                "type": "table",
+                "schema": "public"
+              },
+              "observed_at": "2026-09-14T19:55:26.208Z"
+            },
+            {
+              "detail": "Table \\`public.blog_posts\\` has a row level security policy \\`blog_posts_update\\` that re-evaluates current_setting() or auth.<function>() for each row. This produces suboptimal query performance at scale. Resolve the issue by replacing \\`auth.<function>()\\` with \\`(select auth.<function>())\\`. See [docs](https://supabase.com/docs/guides/database/postgres/row-level-security#call-functions-with-select) for more info.",
+              "metadata": {
+                "name": "blog_posts",
+                "type": "table",
+                "schema": "public"
+              },
+              "observed_at": "2026-09-14T19:55:26.208Z"
+            },
+            {
+              "detail": "Table \\`public.blog_posts\\` has a row level security policy \\`blog_posts_delete\\` that re-evaluates current_setting() or auth.<function>() for each row. This produces suboptimal query performance at scale. Resolve the issue by replacing \\`auth.<function>()\\` with \\`(select auth.<function>())\\`. See [docs](https://supabase.com/docs/guides/database/postgres/row-level-security#call-functions-with-select) for more info.",
+              "metadata": {
+                "name": "blog_posts",
+                "type": "table",
+                "schema": "public"
+              },
+              "observed_at": "2026-09-14T19:55:26.208Z"
+            },
+            {
+              "detail": "Table \\`public.listing_contacts\\` has a row level security policy \\`listing_contacts_owner_update\\` that re-evaluates current_setting() or auth.<function>() for each row. This produces suboptimal query performance at scale. Resolve the issue by replacing \\`auth.<function>()\\` with \\`(select auth.<function>())\\`. See [docs](https://supabase.com/docs/guides/database/postgres/row-level-security#call-functions-with-select) for more info.",
+              "metadata": {
+                "name": "listing_contacts",
+                "type": "table",
+                "schema": "public"
+              },
+              "observed_at": "2026-09-14T19:55:26.208Z"
+            },
+            {
+              "detail": "Table \\`public.listings\\` has a row level security policy \\`listings_owner_insert\\` that re-evaluates current_setting() or auth.<function>() for each row. This produces suboptimal query performance at scale. Resolve the issue by replacing \\`auth.<function>()\\` with \\`(select auth.<function>())\\`. See [docs](https://supabase.com/docs/guides/database/postgres/row-level-security#call-functions-with-select) for more info.",
+              "metadata": {
+                "name": "listings",
+                "type": "table",
+                "schema": "public"
+              },
+              "observed_at": "2026-09-14T19:55:26.208Z"
+            },
+            {
+              "detail": "Table \\`public.listings\\` has a row level security policy \\`listings_owner_update\\` that re-evaluates current_setting() or auth.<function>() for each row. This produces suboptimal query performance at scale. Resolve the issue by replacing \\`auth.<function>()\\` with \\`(select auth.<function>())\\`. See [docs](https://supabase.com/docs/guides/database/postgres/row-level-security#call-functions-with-select) for more info.",
+              "metadata": {
+                "name": "listings",
+                "type": "table",
+                "schema": "public"
+              },
+              "observed_at": "2026-09-14T19:55:26.208Z"
+            },
+            {
+              "detail": "Table \\`public.listings\\` has a row level security policy \\`listings_public_or_owner_read\\` that re-evaluates current_setting() or auth.<function>() for each row. This produces suboptimal query performance at scale. Resolve the issue by replacing \\`auth.<function>()\\` with \\`(select auth.<function>())\\`. See [docs](https://supabase.com/docs/guides/database/postgres/row-level-security#call-functions-with-select) for more info.",
+              "metadata": {
+                "name": "listings",
+                "type": "table",
+                "schema": "public"
+              },
+              "observed_at": "2026-09-14T19:55:26.208Z"
+            },
+            {
+              "detail": "Table \\`public.listing_contacts\\` has a row level security policy \\`listing_contacts_owner_insert\\` that re-evaluates current_setting() or auth.<function>() for each row. This produces suboptimal query performance at scale. Resolve the issue by replacing \\`auth.<function>()\\` with \\`(select auth.<function>())\\`. See [docs](https://supabase.com/docs/guides/database/postgres/row-level-security#call-functions-with-select) for more info.",
+              "metadata": {
+                "name": "listing_contacts",
+                "type": "table",
+                "schema": "public"
+              },
+              "observed_at": "2026-09-14T19:55:26.208Z"
+            },
+            {
+              "detail": "Table \\`public.listing_images\\` has a row level security policy \\`listing_images_owner_insert\\` that re-evaluates current_setting() or auth.<function>() for each row. This produces suboptimal query performance at scale. Resolve the issue by replacing \\`auth.<function>()\\` with \\`(select auth.<function>())\\`. See [docs](https://supabase.com/docs/guides/database/postgres/row-level-security#call-functions-with-select) for more info.",
+              "metadata": {
+                "name": "listing_images",
+                "type": "table",
+                "schema": "public"
+              },
+              "observed_at": "2026-09-14T19:55:26.208Z"
+            },
+            {
+              "detail": "Table \\`public.listing_images\\` has a row level security policy \\`listing_images_owner_update\\` that re-evaluates current_setting() or auth.<function>() for each row. This produces suboptimal query performance at scale. Resolve the issue by replacing \\`auth.<function>()\\` with \\`(select auth.<function>())\\`. See [docs](https://supabase.com/docs/guides/database/postgres/row-level-security#call-functions-with-select) for more info.",
+              "metadata": {
+                "name": "listing_images",
+                "type": "table",
+                "schema": "public"
+              },
+              "observed_at": "2026-09-14T19:55:26.208Z"
+            },
+            {
+              "detail": "Table \\`public.conversations\\` has a row level security policy \\`conversations_buyer_insert\\` that re-evaluates current_setting() or auth.<function>() for each row. This produces suboptimal query performance at scale. Resolve the issue by replacing \\`auth.<function>()\\` with \\`(select auth.<function>())\\`. See [docs](https://supabase.com/docs/guides/database/postgres/row-level-security#call-functions-with-select) for more info.",
+              "metadata": {
+                "name": "conversations",
+                "type": "table",
+                "schema": "public"
+              },
+              "observed_at": "2026-09-14T19:55:26.208Z"
+            },
+            {
+              "detail": "Table \\`public.messages\\` has a row level security policy \\`messages_participant_insert\\` that re-evaluates current_setting() or auth.<function>() for each row. This produces suboptimal query performance at scale. Resolve the issue by replacing \\`auth.<function>()\\` with \\`(select auth.<function>())\\`. See [docs](https://supabase.com/docs/guides/database/postgres/row-level-security#call-functions-with-select) for more info.",
+              "metadata": {
+                "name": "messages",
+                "type": "table",
+                "schema": "public"
+              },
+              "observed_at": "2026-09-14T19:55:26.208Z"
+            },
+            {
+              "detail": "Table \\`public.favorites\\` has a row level security policy \\`favorites_owner_insert\\` that re-evaluates current_setting() or auth.<function>() for each row. This produces suboptimal query performance at scale. Resolve the issue by replacing \\`auth.<function>()\\` with \\`(select auth.<function>())\\`. See [docs](https://supabase.com/docs/guides/database/postgres/row-level-security#call-functions-with-select) for more info.",
+              "metadata": {
+                "name": "favorites",
+                "type": "table",
+                "schema": "public"
+              },
+              "observed_at": "2026-09-14T19:55:26.208Z"
+            },
+            {
+              "detail": "Table \\`public.favorites\\` has a row level security policy \\`favorites_owner_delete\\` that re-evaluates current_setting() or auth.<function>() for each row. This produces suboptimal query performance at scale. Resolve the issue by replacing \\`auth.<function>()\\` with \\`(select auth.<function>())\\`. See [docs](https://supabase.com/docs/guides/database/postgres/row-level-security#call-functions-with-select) for more info.",
+              "metadata": {
+                "name": "favorites",
+                "type": "table",
+                "schema": "public"
+              },
+              "observed_at": "2026-09-14T19:55:26.208Z"
+            },
+            {
+              "detail": "Table \\`public.blog_comments\\` has a row level security policy \\`blog_comments_auth_insert\\` that re-evaluates current_setting() or auth.<function>() for each row. This produces suboptimal query performance at scale. Resolve the issue by replacing \\`auth.<function>()\\` with \\`(select auth.<function>())\\`. See [docs](https://supabase.com/docs/guides/database/postgres/row-level-security#call-functions-with-select) for more info.",
+              "metadata": {
+                "name": "blog_comments",
+                "type": "table",
+                "schema": "public"
+              },
+              "observed_at": "2026-09-14T19:55:26.208Z"
+            },
+            {
+              "detail": "Table \\`public.blog_comments\\` has a row level security policy \\`blog_comments_owner_delete\\` that re-evaluates current_setting() or auth.<function>() for each row. This produces suboptimal query performance at scale. Resolve the issue by replacing \\`auth.<function>()\\` with \\`(select auth.<function>())\\`. See [docs](https://supabase.com/docs/guides/database/postgres/row-level-security#call-functions-with-select) for more info.",
+              "metadata": {
+                "name": "blog_comments",
+                "type": "table",
+                "schema": "public"
+              },
+              "observed_at": "2026-09-14T19:55:26.208Z"
+            },
+            {
+              "detail": "Table \\`public.user_ratings\\` has a row level security policy \\`user_ratings_select_own\\` that re-evaluates current_setting() or auth.<function>() for each row. This produces suboptimal query performance at scale. Resolve the issue by replacing \\`auth.<function>()\\` with \\`(select auth.<function>())\\`. See [docs](https://supabase.com/docs/guides/database/postgres/row-level-security#call-functions-with-select) for more info.",
+              "metadata": {
+                "name": "user_ratings",
+                "type": "table",
+                "schema": "public"
+              },
+              "observed_at": "2026-09-14T19:55:26.208Z"
+            },
+            {
+              "detail": "Table \\`public.user_ratings\\` has a row level security policy \\`user_ratings_insert_own\\` that re-evaluates current_setting() or auth.<function>() for each row. This produces suboptimal query performance at scale. Resolve the issue by replacing \\`auth.<function>()\\` with \\`(select auth.<function>())\\`. See [docs](https://supabase.com/docs/guides/database/postgres/row-level-security#call-functions-with-select) for more info.",
+              "metadata": {
+                "name": "user_ratings",
+                "type": "table",
+                "schema": "public"
+              },
+              "observed_at": "2026-09-14T19:55:26.208Z"
+            },
+            {
+              "detail": "Table \\`public.user_ratings\\` has a row level security policy \\`user_ratings_update_own\\` that re-evaluates current_setting() or auth.<function>() for each row. This produces suboptimal query performance at scale. Resolve the issue by replacing \\`auth.<function>()\\` with \\`(select auth.<function>())\\`. See [docs](https://supabase.com/docs/guides/database/postgres/row-level-security#call-functions-with-select) for more info.",
+              "metadata": {
+                "name": "user_ratings",
+                "type": "table",
+                "schema": "public"
+              },
+              "observed_at": "2026-09-14T19:55:26.208Z"
+            },
+            {
+              "detail": "Table \\`public.user_ratings\\` has a row level security policy \\`user_ratings_delete_own\\` that re-evaluates current_setting() or auth.<function>() for each row. This produces suboptimal query performance at scale. Resolve the issue by replacing \\`auth.<function>()\\` with \\`(select auth.<function>())\\`. See [docs](https://supabase.com/docs/guides/database/postgres/row-level-security#call-functions-with-select) for more info.",
+              "metadata": {
+                "name": "user_ratings",
+                "type": "table",
+                "schema": "public"
+              },
+              "observed_at": "2026-09-14T19:55:26.208Z"
+            }
+          ]
+        },
+        {
+          "name": "unused_index",
+          "title": "Unused Index",
+          "level": "INFO",
+          "facing": "EXTERNAL",
+          "categories": [
+            "PERFORMANCE"
+          ],
+          "description": "Detects if an index has never been used and may be a candidate for removal.",
+          "remediation": "https://supabase.com/docs/guides/database/database-linter?lint=0005_unused_index",
+          "count": 5,
+          "findings": [
+            {
+              "detail": "Index \\`listings_category_idx\\` on table \\`public.listings\\` has not been used",
+              "metadata": {
+                "name": "listings",
+                "type": "table",
+                "schema": "public"
+              },
+              "observed_at": "2026-09-14T19:55:26.208Z"
+            },
+            {
+              "detail": "Index \\`reports_status_idx\\` on table \\`public.reports\\` has not been used",
+              "metadata": {
+                "name": "reports",
+                "type": "table",
+                "schema": "public"
+              },
+              "observed_at": "2026-09-14T19:55:26.208Z"
+            },
+            {
+              "detail": "Index \\`reports_reporter_idx\\` on table \\`public.reports\\` has not been used",
+              "metadata": {
+                "name": "reports",
+                "type": "table",
+                "schema": "public"
+              },
+              "observed_at": "2026-09-14T19:55:26.208Z"
+            },
+            {
+              "detail": "Index \\`blog_comments_parent_id_idx\\` on table \\`public.blog_comments\\` has not been used",
+              "metadata": {
+                "name": "blog_comments",
+                "type": "table",
+                "schema": "public"
+              },
+              "observed_at": "2026-09-14T19:55:26.208Z"
+            },
+            {
+              "detail": "Index \\`blog_comments_post_parent_idx\\` on table \\`public.blog_comments\\` has not been used",
+              "metadata": {
+                "name": "blog_comments",
+                "type": "table",
+                "schema": "public"
+              },
+              "observed_at": "2026-09-14T19:55:26.208Z"
+            }
+          ]
+        }
+      ]
+    }
+  }
+}
