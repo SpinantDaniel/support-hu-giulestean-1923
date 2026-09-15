@@ -149,7 +149,7 @@ Scrie ȘTERGE pentru confirmare:`,'');
   }
   setBusy(button,true,'Se șterge…');
   try{
-    await edge('admin-delete-user',{user_id:id});
+    await edge('admin-delete-user-v2',{user_id:id});
     toast('Utilizator șters definitiv.','success');
     await loadDashboard();
     await Promise.all([loadEditors(),loadPosts()]);
@@ -166,7 +166,7 @@ async function resolveReport(id){try{await adminAction('resolve_report',{report_
 
 function listingRowHtml(l){return `<div class="admin-row"><div class="main"><b>${esc(l.title)} ${l.reports_count?`<span class="tag red">${l.reports_count} raportări</span>`:''}</b><span>${esc(l.seller_name)} · ${esc(l.seller_email||'')} · ${esc(l.state)}</span><small>${fmt(l.created_at)}</small></div><div class="actions"><button class="danger" data-admin-delete="${l.id}">Șterge anunțul</button></div></div>`;}
 function renderListings(){const d=state.dashboard;if(!d)return;const q=($('#listingSearch')?.value||'').trim().toLowerCase();const rows=d.listings.filter(l=>!q||`${l.title} ${l.seller_name} ${l.seller_email}`.toLowerCase().includes(q));$('#adminListings').innerHTML=rows.length?rows.map(listingRowHtml).join(''):'<div class="empty">Niciun anunț găsit.</div>';$$('[data-admin-delete]',$('#adminListings')).forEach(b=>b.onclick=()=>adminDeleteListing(b.dataset.adminDelete));}
-async function adminDeleteListing(id){if(!confirm('Ștergi definitiv acest anunț și fotografiile lui?'))return;try{const result=await edge('admin-delete-listing',{listing_id:id});toast(result.cleanup_warning?'Anunț șters. Curățarea fotografiilor trebuie reverificată.':'Anunț șters.','success');await loadDashboard();}catch(e){toast(e.message,'error');}}
+async function adminDeleteListing(id){if(!confirm('Ștergi definitiv acest anunț și fotografiile lui?'))return;try{const result=await edge('admin-delete-listing-v2',{listing_id:id});toast(result.cleanup_warning?'Anunț șters. Curățarea fotografiilor trebuie reverificată.':'Anunț șters.','success');await loadDashboard();}catch(e){toast(e.message,'error');}}
 
 async function loadEditors(){if(state.role!=='admin')return;const {data,error}=await db.from('newsletter_editors').select('email,created_at,added_by').order('created_at',{ascending:false});if(error){console.error(error);return toast('Nu am putut încărca editorii. Dacă tocmai ai primit rolul de admin, ieși și intră din nou în cont.','error');}state.editors=data||[];renderEditors();}
 function renderEditors(){if(state.role!=='admin')return;$('#editorsList').innerHTML=state.editors.length?state.editors.map(e=>`<div class="admin-row"><div class="main"><b>${esc(e.email)}</b><small>Adăugat ${fmt(e.created_at)}</small></div><div class="actions"><button class="danger" data-remove-editor="${esc(e.email)}">Elimină</button></div></div>`).join(''):'<div class="empty">Nu există editori newsletter autorizați.</div>';$$('[data-remove-editor]',$('#editorsList')).forEach(b=>b.onclick=()=>removeEditor(b.dataset.removeEditor));}
