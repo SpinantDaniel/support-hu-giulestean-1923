@@ -25,3 +25,12 @@ button:disabled{opacity:.6;cursor:not-allowed}.muted{color:var(--muted);font-siz
 @media(max-width:650px){.admin-access-zone{align-items:stretch;flex-direction:column}.admin-access-zone .ghost{width:100%}}
 
 .listing-share{position:absolute;right:10px;top:52px;background:#fff;width:35px;height:35px;border:0;border-radius:50%;font-size:17px;font-weight:900;color:var(--wine);cursor:pointer;box-shadow:0 3px 12px rgba(0,0,0,.1);z-index:3}.listing-share:hover{background:#f7eef1}.detail-share{width:100%;margin-top:8px}
+
+
+/* v5.26 Step 3 — Auth verification / Turnstile */
+.auth-turnstile{margin-top:14px;padding:12px;border:1px solid var(--line);border-radius:12px;background:var(--soft)}
+.auth-turnstile>div:first-child{min-height:65px;display:flex;align-items:center;justify-content:center}
+.auth-turnstile p{margin:7px 0 0;text-align:center;color:var(--muted);font-size:10px;line-height:1.4}
+.auth-turnstile p[data-status="ok"]{font-weight:800}
+.auth-turnstile p[data-status="error"]{font-weight:800;text-decoration:underline}
+#passwordResetForm .muted{line-height:1.55}

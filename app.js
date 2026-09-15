@@ -1,12 +1,18 @@
 
 const SUPABASE_URL = 'https://bhqpixyiojthpfqnyhsh.supabase.co';
 const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_U2IRhs6K85S43ZRqKK5U8Q_HSknWMNY';
+const INITIAL_AUTH_URL = location.href;
+const AUTH_CONFIG = window.HUB_AUTH_CONFIG || {};
+const TURNSTILE_SITE_KEY = String(AUTH_CONFIG.turnstileSiteKey || '').trim();
+const TERMS_VERSION = String(AUTH_CONFIG.termsVersion || '1.0');
+const PRIVACY_VERSION = String(AUTH_CONFIG.privacyVersion || '1.0');
+const authSecurity = { turnstileWidgetId:null, turnstileToken:null, recoveryActive:false };
 const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
   auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true }
 });
 
 const $ = (s, el=document) => el.querySelector(s);
-const $$ = (s, el=document) => [...el.querySelectorAll(s)];
+const qsa = (s, el=document) => [...el.querySelectorAll(s)];
 const state = { session:null, user:null, profile:null, userFlag:null, adminRole:'none', categories:[], listings:[], favorites:new Set(), homeNews:[], selectedListing:null, authMode:'login', accountTab:'listings', editingListingId:null, editReturnToAccount:false, marketPage:1, marketPageSize:150 };
 const icons = { 'rapid-colectii':'⚑','auto-moto':'◉','electronice':'▣','telefoane':'▯','haine-incaltaminte':'♢','casa-gradina':'⌂','servicii':'✦','bilete':'▥','imobiliare':'▤','joburi':'▰','donez-caut':'♡','diverse':'•••' };
 const conditionLabels = {new:'Nou',like_new:'Ca nou',used:'Utilizat',damaged:'Cu defecte',service:'Serviciu',not_applicable:'N/A'};
@@ -34,7 +40,7 @@ function listingImageEditorHelp(){
   if(help){
     help.textContent=editing
       ?`${n} din 8 fotografii în anunț. Poți adăuga încă maximum ${Math.max(0,8-n)}.`
-      :(n?`${n} din 8 fotografii selectate.`:'JPG, PNG sau WEBP. Recomandat sub 5 MB / imagine.');
+      :(n?`${n} din 8 fotografii selectate.`:'Imaginile sunt optimizate automat înainte de upload.');
   }
   const count=$('#listingImageEditorCount');
   if(count)count.textContent=n?` · ${n}/8`:'';
@@ -76,8 +82,7 @@ function addListingImageFiles(files){
   if(room<=0){toast('Poți avea maximum 8 fotografii.','error');return;}
   const accepted=incoming.slice(0,room);
   for(const file of accepted){
-    if(file.size>6*1024*1024){toast(`Imaginea ${file.name} depășește 6 MB.`,'error');continue;}
-    if(!/^image\/(jpeg|png|webp)$/i.test(file.type)){toast(`Formatul imaginii ${file.name} nu este acceptat.`,'error');continue;}
+    try{imageService.validateInput(file);}catch(error){toast(error.message||`Imaginea ${file.name} nu poate fi procesată.`,'error');continue;}
     listingImageEditor.items.push({
       kind:'new',
       key:`new:${crypto.randomUUID()}`,
@@ -100,7 +105,7 @@ function removeListingImageEditorItem(key){
 function syncListingImageEditorOrderFromDom(){
   const grid=$('#listingImageEditorGrid');
   if(!grid)return;
-  const order=$$('[data-image-editor-key]',grid).map(el=>el.dataset.imageEditorKey);
+  const order=qsa('[data-image-editor-key]',grid).map(el=>el.dataset.imageEditorKey);
   const byKey=new Map(listingImageEditor.items.map(item=>[item.key,item]));
   listingImageEditor.items=order.map(key=>byKey.get(key)).filter(Boolean);
 }
@@ -108,7 +113,7 @@ function syncListingImageEditorOrderFromDom(){
 function draggedListingImageCard(){
   const grid=$('#listingImageEditorGrid');
   if(!grid||!listingImageEditor.dragKey)return null;
-  return $$('.listing-image-edit-card',grid).find(card=>card.dataset.imageEditorKey===listingImageEditor.dragKey)||null;
+  return qsa('.listing-image-edit-card',grid).find(card=>card.dataset.imageEditorKey===listingImageEditor.dragKey)||null;
 }
 
 function endListingImageDrag(){
@@ -134,7 +139,7 @@ function moveListingImageCardAtPointer(clientX){
   if(clientX<gridRect.left+edge)grid.scrollLeft-=16;
   else if(clientX>gridRect.right-edge)grid.scrollLeft+=16;
 
-  const others=$$('.listing-image-edit-card',grid).filter(card=>card!==dragged);
+  const others=qsa('.listing-image-edit-card',grid).filter(card=>card!==dragged);
   let before=null;
   for(const card of others){
     const rect=card.getBoundingClientRect();
@@ -191,7 +196,7 @@ function renderListingImageEditor(){
     <button type="button" class="listing-image-remove" data-remove-image="${esc(item.key)}" aria-label="Elimină fotografia">×</button>
     <span class="listing-image-drag-handle" aria-hidden="true">⋮⋮</span>
   </div>`).join('');
-  $$('[data-remove-image]',grid).forEach(button=>button.onclick=e=>{
+  qsa('[data-remove-image]',grid).forEach(button=>button.onclick=e=>{
     e.stopPropagation();
     removeListingImageEditorItem(button.dataset.removeImage);
   });
@@ -216,7 +221,7 @@ function updateAdminAccessUI(){const zone=$('#adminAccessZone');if(!zone)return;
 function updateSuspensionUI(){const box=$('#accountSuspension');if(!box)return;box.hidden=!isSuspended();box.textContent=isSuspended()?suspensionText():'';}
 function setBusy(button,busy,label){if(!button)return; if(busy){button.dataset.label=button.textContent;button.disabled=true;button.textContent=label||'Se procesează…';}else{button.disabled=false;button.textContent=button.dataset.label||button.textContent;}}
 
-function publicStorageUrl(bucket,path){if(!path)return '';return `${SUPABASE_URL}/storage/v1/object/public/${bucket}/${String(path).split('/').map(encodeURIComponent).join('/')}`;}
+function publicStorageUrl(bucket,path){return path?imageService.getPublicUrl(db,bucket,path):'';}
 function initials(name='Membru'){return String(name).trim().split(/\s+/).slice(0,2).map(x=>x[0]||'').join('').toUpperCase()||'M';}
 function avatarUrl(profile){return profile?.avatar_path?publicStorageUrl('profile-avatars',profile.avatar_path):'';}
 function avatarHtml(profile,cls='avatar'){const name=profile?.display_name||'Membru',url=avatarUrl(profile);return url?`<span class="${cls} has-image"><img src="${esc(url)}" alt="${esc(name)}"></span>`:`<span class="${cls}">${esc(initials(name))}</span>`;}
@@ -404,15 +409,27 @@ function initHomeNewsRefresh(){clearInterval(homeNewsRefreshTimer);homeNewsRefre
 async function init(){
   bindStaticEvents();
   showListingSkeletons();
+  const initialRecovery=authUrlHasType('recovery');
+  const initialConfirmation=authUrlHasType('signup')||authUrlHasType('email');
   const {data:{session}}=await db.auth.getSession();
   await applySession(session);
+  if(initialRecovery&&session)setTimeout(()=>openPasswordRecovery(),0);
+  else if(initialConfirmation&&session){scrubAuthUrl();setTimeout(()=>toast('Email confirmat. Contul este acum activ.'),50);}
+  if(state.user)imageService.flushPendingDeletes(db,state.user.id).catch(error=>console.warn('image cleanup retry',error));
   await Promise.all([loadCategories(), loadListings(), loadHomeNewsCarousel()]);
   if(state.user) await loadFavorites();
   renderAll();
   initHomeNewsRefresh();
   const sharedListingId=new URLSearchParams(location.search).get('listing');
   if(sharedListingId&&state.listings.some(l=>l.id===sharedListingId))setTimeout(()=>openDetail(sharedListingId),80);
-  db.auth.onAuthStateChange(async (event, session)=>{await applySession(session);await loadListings();if(state.user)await loadFavorites();else state.favorites.clear();renderAll()});
+  db.auth.onAuthStateChange(async (event, session)=>{
+    await applySession(session);
+    if(event==='PASSWORD_RECOVERY'&&session){scrubAuthUrl();setTimeout(()=>openPasswordRecovery(),0);}
+    if(state.user)imageService.flushPendingDeletes(db,state.user.id).catch(error=>console.warn('image cleanup retry',error));
+    await loadListings();
+    if(state.user)await loadFavorites();else state.favorites.clear();
+    renderAll();
+  });
 }
 
 async function applySession(session){
@@ -456,7 +473,7 @@ async function loadFavorites(){
 
 function syncCategorySelection(){
   const selected=$('#categoryFilter')?.value||'all';
-  $$('.category').forEach(button=>{
+  qsa('.category').forEach(button=>{
     const active=button.dataset.cat===selected;
     button.classList.toggle('is-selected',active);
     button.setAttribute('aria-pressed',active?'true':'false');
@@ -476,7 +493,7 @@ function renderCategories(){
   if(previous==='all'||state.categories.some(c=>c.id===previous))$('#categoryFilter').value=previous;
   $('#sellCategory').innerHTML='<option value="">Alege categoria</option>'+opts;
 
-  $$('.category').forEach(b=>b.onclick=()=>{
+  qsa('.category').forEach(b=>b.onclick=()=>{
     $('#categoryFilter').value=b.dataset.cat;
     resetMarketPage();
     syncCategorySelection();
@@ -532,7 +549,7 @@ function renderMarketPagination(totalRows){
   navs.forEach(nav=>{
     nav.hidden=false;
     nav.innerHTML=html;
-    $$('[data-market-page]',nav).forEach(button=>button.onclick=()=>{
+    qsa('[data-market-page]',nav).forEach(button=>button.onclick=()=>{
       if(button.disabled)return;
       const target=Number(button.dataset.marketPage);
       if(!Number.isFinite(target)||target===state.marketPage)return;
@@ -569,9 +586,9 @@ function cardHtml(l){
 }
 
 function bindListingCards(root=document){
-  $$('[data-fav]',root).forEach(b=>b.onclick=async e=>{e.stopPropagation();await toggleFavorite(b.dataset.fav);});
-  $$('[data-share-listing]',root).forEach(b=>b.onclick=async e=>{e.stopPropagation();await shareListing(b.dataset.shareListing);});
-  $$('.listing-card',root).forEach(c=>c.onclick=()=>openDetail(c.dataset.id));
+  qsa('[data-fav]',root).forEach(b=>b.onclick=async e=>{e.stopPropagation();await toggleFavorite(b.dataset.fav);});
+  qsa('[data-share-listing]',root).forEach(b=>b.onclick=async e=>{e.stopPropagation();await shareListing(b.dataset.shareListing);});
+  qsa('.listing-card',root).forEach(c=>c.onclick=()=>openDetail(c.dataset.id));
 }
 
 async function toggleFavorite(listingId){
@@ -637,7 +654,7 @@ async function getSellerRatingData(sellerId,own=false){
 function bindSellerRatingControls(sellerId){
   const block=$('#sellerRatingBlock');
   if(!block)return;
-  $$('[data-rate-seller]',block).forEach(button=>{
+  qsa('[data-rate-seller]',block).forEach(button=>{
     button.onclick=()=>submitSellerRating(sellerId,Number(button.dataset.rateSeller));
   });
 }
@@ -699,7 +716,7 @@ function openSellerListings(sellerId,sellerName,currentListingId){
     ?rows.map(sellerOtherListingCardHtml).join('')
     :'<div class="empty compact seller-listings-empty"><b>Niciun alt anunț activ.</b><span>Revino mai târziu pentru alte produse publicate de acest utilizator.</span></div>';
 
-  $$('[data-other-listing]',root).forEach(card=>card.onclick=()=>{
+  qsa('[data-other-listing]',root).forEach(card=>card.onclick=()=>{
     const nextId=card.dataset.otherListing;
     closeDialog('sellerListingsModal');
     closeDialog('detailModal');
@@ -748,7 +765,7 @@ async function openDetail(id){
   }
 
   $('#detailShareBtn').onclick=()=>shareListing(l.id);
-  $$('.photo-thumb',$('#detailContent')).forEach(b=>b.onclick=()=>openPhotoGallery(l.images,Number(b.dataset.photoIndex)||0,l.title));
+  qsa('.photo-thumb',$('#detailContent')).forEach(b=>b.onclick=()=>openPhotoGallery(l.images,Number(b.dataset.photoIndex)||0,l.title));
   $('#detailModal').showModal();
 }
 
@@ -817,6 +834,82 @@ function updateSignupConsentUI(){
   box.classList.toggle('accepted',signup&&input.checked);
 }
 
+function authRedirectUrl(){
+  const url=new URL(location.href);
+  url.hash='';
+  url.search='';
+  return url.toString();
+}
+
+function authUrlHasType(type){
+  try{
+    const url=new URL(INITIAL_AUTH_URL);
+    const hash=new URLSearchParams(url.hash.replace(/^#/,''));
+    return url.searchParams.get('type')===type||hash.get('type')===type;
+  }catch(_){return false;}
+}
+
+function scrubAuthUrl(){
+  if(!location.hash)return;
+  if(/(?:^|[&#])(access_token|refresh_token|expires_in|expires_at|token_type|type)=/.test(location.hash)){
+    history.replaceState(null,'',location.pathname+location.search);
+  }
+}
+
+function setTurnstileNote(message,status=''){
+  const note=$('#authTurnstileNote');
+  if(!note)return;
+  note.textContent=message;
+  note.dataset.status=status;
+}
+
+function renderAuthTurnstile(attempt=0){
+  const wrap=$('#authTurnstileWrap'),host=$('#authTurnstile');
+  if(!wrap||!host)return;
+  wrap.hidden=false;
+  if(!TURNSTILE_SITE_KEY){
+    setTurnstileNote('Verificarea anti-abuz nu este configurată.','error');
+    return;
+  }
+  if(authSecurity.turnstileWidgetId!==null)return;
+  if(!window.turnstile){
+    if(attempt<24)setTimeout(()=>renderAuthTurnstile(attempt+1),150);
+    else setTurnstileNote('Verificarea anti-abuz nu s-a putut încărca. Reîncarcă pagina.','error');
+    return;
+  }
+  authSecurity.turnstileWidgetId=window.turnstile.render(host,{
+    sitekey:TURNSTILE_SITE_KEY,
+    theme:'auto',
+    action:'auth',
+    callback:(token)=>{
+      authSecurity.turnstileToken=token||null;
+      setTurnstileNote('Verificare anti-abuz completă.','ok');
+    },
+    'expired-callback':()=>{
+      authSecurity.turnstileToken=null;
+      setTurnstileNote('Verificarea a expirat. Confirm-o din nou.','error');
+    },
+    'error-callback':()=>{
+      authSecurity.turnstileToken=null;
+      setTurnstileNote('Verificarea anti-abuz a eșuat. Încearcă din nou.','error');
+    }
+  });
+}
+
+function resetAuthCaptcha(){
+  authSecurity.turnstileToken=null;
+  setTurnstileNote('Confirmă verificarea anti-abuz pentru a continua.');
+  if(window.turnstile&&authSecurity.turnstileWidgetId!==null){
+    try{window.turnstile.reset(authSecurity.turnstileWidgetId);}catch(_){}
+  }
+}
+
+function requireAuthCaptchaToken(){
+  if(!TURNSTILE_SITE_KEY)throw new Error('Verificarea anti-abuz nu este configurată momentan.');
+  if(!authSecurity.turnstileToken)throw new Error('Completează verificarea anti-abuz pentru a continua.');
+  return authSecurity.turnstileToken;
+}
+
 function openAuth(mode='login'){
   state.authMode=mode;
   if(mode==='signup'){
@@ -825,6 +918,8 @@ function openAuth(mode='login'){
   }
   updateAuthMode();
   $('#authModal').showModal();
+  renderAuthTurnstile();
+  resetAuthCaptcha();
 }
 
 function updateAuthMode(){
@@ -833,56 +928,138 @@ function updateAuthMode(){
   $('#authSubmit').textContent=signup?'Creează cont':'Intră în cont';
   $('#displayNameField').hidden=!signup;
   $('#forgotPasswordRow').hidden=signup;
-  $('#authNotice').textContent=signup?'Fiecare adresă de email poate avea un singur cont. Dacă emailul este deja înregistrat, crearea unui cont nou este blocată.':'Contul îți permite să publici, să salvezi favorite și să contactezi vânzătorii.';
+  $('#authNotice').textContent=signup
+    ?'După creare trebuie să confirmi adresa de email înainte de prima autentificare.'
+    :'Contul îți permite să publici, să salvezi favorite și să contactezi vânzătorii.';
   $('#authForm [name=password]').autocomplete=signup?'new-password':'current-password';
-  $$('[data-auth-mode]').forEach(b=>b.classList.toggle('active',b.dataset.authMode===state.authMode));
+  qsa('[data-auth-mode]').forEach(b=>b.classList.toggle('active',b.dataset.authMode===state.authMode));
   updateSignupConsentUI();
 }
+
 async function submitAuth(e){
   e.preventDefault();
-  const form=e.currentTarget,btn=$('#authSubmit'),fd=new FormData(form),email=String(fd.get('email')).trim(),password=String(fd.get('password'));
+  const form=e.currentTarget,btn=$('#authSubmit'),fd=new FormData(form),email=String(fd.get('email')||'').trim().toLowerCase(),password=String(fd.get('password')||'');
   if(state.authMode==='signup'&&!form.elements.legal_acceptance.checked){
     form.elements.legal_acceptance.focus();
     return toast('Pentru a crea contul trebuie să accepți Termenii de utilizare și să confirmi că ai citit Politica de confidențialitate.','error');
   }
+  let captchaToken;
+  try{captchaToken=requireAuthCaptchaToken();}catch(error){return toast(error.message,'error');}
   setBusy(btn,true,state.authMode==='signup'?'Se creează…':'Se autentifică…');
   try{
     if(state.authMode==='signup'){
-      const display=String(fd.get('display_name')||'').trim();if(display.length<2)throw new Error('Completează numele afișat.');
-      const response=await fetch(`${SUPABASE_URL}/functions/v1/register-user`,{method:'POST',headers:{'Content-Type':'application/json','apikey':SUPABASE_PUBLISHABLE_KEY},body:JSON.stringify({email,password,display_name:display,accept_terms:true,acknowledge_privacy:true})});
-      const result=await response.json().catch(()=>({}));
-      if(!response.ok)throw new Error(result.error||'Contul nu a putut fi creat.');
-      const login=await db.auth.signInWithPassword({email,password});if(login.error)throw login.error;
-      closeDialog('authModal');toast('Cont creat. Bine ai venit!');
-    } else {const {error}=await db.auth.signInWithPassword({email,password});if(error)throw error;closeDialog('authModal');toast('Ai intrat în cont.');}
-  }catch(err){console.error(err);toast(err.message||'Autentificarea a eșuat.','error');}finally{setBusy(btn,false);}
+      const display=String(fd.get('display_name')||'').trim();
+      if(display.length<2)throw new Error('Completează numele afișat.');
+      const acceptedAt=new Date().toISOString();
+      const {data,error}=await db.auth.signUp({
+        email,
+        password,
+        options:{
+          captchaToken,
+          emailRedirectTo:authRedirectUrl(),
+          data:{
+            display_name:display,
+            accept_terms:true,
+            acknowledge_privacy:true,
+            terms_version:TERMS_VERSION,
+            privacy_version:PRIVACY_VERSION,
+            signup_client_timestamp:acceptedAt
+          }
+        }
+      });
+      if(error)throw error;
+      if(data?.session){
+        await db.auth.signOut({scope:'local'}).catch(()=>undefined);
+        throw new Error('Verificarea emailului nu este activă în configurarea Auth. Contul nu a fost autentificat.');
+      }
+      form.reset();
+      state.authMode='login';
+      updateAuthMode();
+      closeDialog('authModal');
+      toast('Verifică inboxul. Dacă adresa poate fi înregistrată, vei primi un email de confirmare.');
+    }else{
+      const {error}=await db.auth.signInWithPassword({email,password,options:{captchaToken}});
+      if(error){
+        if(String(error.code||'')==='email_not_confirmed')throw new Error('Confirmă adresa de email înainte de autentificare.');
+        throw error;
+      }
+      closeDialog('authModal');
+      toast('Ai intrat în cont.');
+    }
+  }catch(err){
+    console.error(err);
+    toast(err.message||'Autentificarea a eșuat.','error');
+  }finally{
+    resetAuthCaptcha();
+    setBusy(btn,false);
+    updateSignupConsentUI();
+  }
 }
 
 async function requestPasswordReset(){
-  const input=$('#authForm [name=email]');const email=String(input?.value||'').trim().toLowerCase();
-  if(!email||!/^\S+@\S+\.\S+$/.test(email)){input?.focus();return toast('Introdu mai întâi adresa de email.','error');}
-  const btn=$('#forgotPasswordBtn');setBusy(btn,true,'Se trimite…');
+  const input=$('#authForm [name=email]');
+  const email=String(input?.value||'').trim().toLowerCase();
+  if(!email||!/^\S+@\S+\.\S+$/.test(email)){
+    input?.focus();
+    return toast('Introdu mai întâi adresa de email.','error');
+  }
+  let captchaToken;
+  try{captchaToken=requireAuthCaptchaToken();}catch(error){return toast(error.message,'error');}
+  const btn=$('#forgotPasswordBtn');
+  setBusy(btn,true,'Se trimite…');
   try{
-    const {error}=await db.auth.resetPasswordForEmail(email);
+    const {error}=await db.auth.resetPasswordForEmail(email,{redirectTo:authRedirectUrl(),captchaToken});
     if(error)throw error;
-    sessionStorage.setItem('fsh_recovery_email',email);
-    const form=$('#passwordResetForm');form.reset();form.elements.recovery_email.value=email;$('#recoveryEmailHint').textContent=`Cod trimis la ${email}.`;closeDialog('authModal');$('#passwordResetModal').showModal();
-    toast('Dacă există un cont pentru acest email, vei primi un cod temporar.');
-  }catch(err){console.error(err);toast('Codul de recuperare nu a putut fi trimis.','error');}finally{setBusy(btn,false);}
+    closeDialog('authModal');
+    toast('Dacă există un cont pentru această adresă, vei primi un link securizat pentru schimbarea parolei.');
+  }catch(err){
+    console.error(err);
+    toast('Solicitarea de recuperare nu a putut fi trimisă. Încearcă din nou.','error');
+  }finally{
+    resetAuthCaptcha();
+    setBusy(btn,false);
+  }
+}
+
+function openPasswordRecovery(){
+  authSecurity.recoveryActive=true;
+  const form=$('#passwordResetForm');
+  form?.reset();
+  closeDialog('authModal');
+  const modal=$('#passwordResetModal');
+  if(modal&&!modal.open)modal.showModal();
+}
+
+async function abandonPasswordRecovery(){
+  const wasActive=authSecurity.recoveryActive;
+  authSecurity.recoveryActive=false;
+  closeDialog('passwordResetModal');
+  if(wasActive){
+    try{await db.auth.signOut({scope:'local'});}catch(error){console.warn('recovery signout',error);}
+    toast('Recuperarea parolei a fost anulată.');
+  }
 }
 
 async function submitPasswordReset(e){
-  e.preventDefault();const form=e.currentTarget,btn=$('#passwordResetSubmit'),fd=new FormData(form),email=String(fd.get('recovery_email')||sessionStorage.getItem('fsh_recovery_email')||'').trim().toLowerCase(),token=String(fd.get('temporary_code')||'').trim(),password=String(fd.get('new_password')||''),confirm=String(fd.get('confirm_password')||'');
-  if(!email)return toast('Adresa de email pentru recuperare lipsește. Cere un cod nou.','error');
-  if(token.length<6)return toast('Introdu codul temporar primit pe email.','error');
+  e.preventDefault();
+  const form=e.currentTarget,btn=$('#passwordResetSubmit'),fd=new FormData(form),password=String(fd.get('new_password')||''),confirm=String(fd.get('confirm_password')||'');
+  if(!authSecurity.recoveryActive||!state.user)return toast('Linkul de recuperare nu este activ sau a expirat. Cere un link nou.','error');
   if(password.length<8)return toast('Parola trebuie să aibă minimum 8 caractere.','error');
   if(password!==confirm)return toast('Parolele nu coincid.','error');
-  setBusy(btn,true,'Se verifică…');
+  setBusy(btn,true,'Se schimbă…');
   try{
-    const verified=await db.auth.verifyOtp({email,token,type:'recovery'});if(verified.error)throw verified.error;
-    const changed=await db.auth.updateUser({password});if(changed.error)throw changed.error;
-    sessionStorage.removeItem('fsh_recovery_email');form.reset();await db.auth.signOut({scope:'local'});closeDialog('passwordResetModal');openAuth('login');$('#authForm [name=email]').value=email;$('#authForm [name=password]').value='';toast('Parola a fost schimbată. Intră în cont cu parola nouă.');
-  }catch(err){console.error(err);toast('Codul este invalid sau expirat. Cere un cod nou și încearcă din nou.','error');}finally{setBusy(btn,false);}
+    const changed=await db.auth.updateUser({password});
+    if(changed.error)throw changed.error;
+    authSecurity.recoveryActive=false;
+    form.reset();
+    await db.auth.signOut();
+    closeDialog('passwordResetModal');
+    openAuth('login');
+    toast('Parola a fost schimbată. Intră în cont cu parola nouă.');
+  }catch(err){
+    console.error(err);
+    toast('Parola nu a putut fi schimbată. Cere un link nou dacă sesiunea de recuperare a expirat.','error');
+  }finally{setBusy(btn,false);}
 }
 
 function prepareSellForm(mode='new'){
@@ -961,53 +1138,60 @@ async function publishListing(e){
   if(imageItems.length>8)return toast('Poți avea maximum 8 fotografii.','error');
   if(!fd.get('phone')&&!fd.get('whatsapp'))return toast('Adaugă telefon sau WhatsApp pentru contact direct.','error');
 
-  setBusy(btn,true,editing?'Se salvează…':'Se publică…');
   let listingId=state.editingListingId;
   const newlyUploadedPaths=[];
+  const optimizedByKey=new Map();
+  const newItems=imageItems.filter(item=>item.kind==='new'&&item.file);
+  setBusy(btn,true,newItems.length?'Se optimizează imaginile…':(editing?'Se salvează…':'Se publică…'));
+
   try{
+    if(newItems.length){
+      const optimized=await imageService.optimizeMany(newItems.map(item=>item.file),'listing',{
+        concurrency:Math.min(2,navigator.hardwareConcurrency&&navigator.hardwareConcurrency<=4?1:2),
+        onProgress:({completed,total})=>{btn.textContent=`Se optimizează imaginile… ${completed}/${total}`;}
+      });
+      newItems.forEach((item,index)=>optimizedByKey.set(item.key,optimized[index]));
+      console.info('listing image optimization',optimized.map(x=>({from:imageService.formatBytes(x.originalSizeBytes),to:imageService.formatBytes(x.sizeBytes),size:`${x.width}×${x.height}`,type:x.mime,quality:x.quality})));
+    }
+
     const row={category_id:fd.get('category'),title:String(fd.get('title')).trim(),description:String(fd.get('description')).trim(),price:Number(fd.get('price')),currency:fd.get('currency'),condition:fd.get('condition'),location:String(fd.get('location')).trim(),negotiable:fd.get('negotiable')==='on'};
+
     if(editing){
       if(!current||current.seller_id!==state.user.id)throw new Error('Anunțul nu îți aparține.');
-      const r=await db.from('listings').update({...row,state:'active',updated_at:new Date().toISOString()}).eq('id',listingId).eq('seller_id',state.user.id).select('id').single();if(r.error)throw r.error;
-      const contactPatch={phone:String(fd.get('phone')||'').trim()||null,whatsapp:String(fd.get('whatsapp')||'').trim()||null};
-      const rc=await db.from('listing_contacts').update(contactPatch).eq('listing_id',listingId).eq('seller_id',state.user.id);if(rc.error)throw rc.error;
     }else{
+      btn.textContent='Se pregătește anunțul…';
       const r=await db.from('listings').insert({...row,seller_id:state.user.id}).select('id').single();if(r.error)throw r.error;listingId=r.data.id;
       const contact={listing_id:listingId,seller_id:state.user.id,phone:String(fd.get('phone')||'').trim()||null,whatsapp:String(fd.get('whatsapp')||'').trim()||null};
       const rc=await db.from('listing_contacts').insert(contact);if(rc.error)throw rc.error;
     }
 
     const pathByKey=new Map();
-    for(let itemIndex=0;itemIndex<imageItems.length;itemIndex++){
-      const item=imageItems[itemIndex];
-      if(item.kind==='existing'){
-        pathByKey.set(item.key,item.path);
-        continue;
-      }
-      const f=item.file;
-      if(!f)continue;
-      if(f.size>6*1024*1024)throw new Error(`Imaginea ${f.name} depășește 6 MB.`);
-      const ext=(f.name.split('.').pop()||'jpg').toLowerCase().replace(/[^a-z0-9]/g,'');
-      const path=`${state.user.id}/${listingId}/${crypto.randomUUID()}.${ext}`;
-      const up=await db.storage.from('listing-images').upload(path,f,{cacheControl:'3600',upsert:false,contentType:f.type});
-      if(up.error)throw up.error;
-      newlyUploadedPaths.push(path);
+    imageItems.filter(item=>item.kind==='existing').forEach(item=>pathByKey.set(item.key,item.path));
 
-      // listing_images_sort_order_check allows 0..20.
-      // The UI already limits a listing to maximum 8 images, so the real
-      // image position is always valid and can be inserted directly.
-      const provisionalSortOrder=itemIndex;
-      if(provisionalSortOrder<0||provisionalSortOrder>20){
-        throw new Error('Ordinea fotografiilor este invalidă. Reîncarcă pagina și încearcă din nou.');
+    if(newItems.length){
+      btn.textContent='Se încarcă imaginile…';
+      for(let index=0;index<newItems.length;index++){
+        const item=newItems[index];
+        const processed=optimizedByKey.get(item.key);
+        if(!processed)throw new Error(`Imaginea ${item.file?.name||''} nu a fost optimizată.`);
+        const path=imageService.uniquePath({userId:state.user.id,scopeId:listingId},processed);
+        await imageService.upload(db,{bucket:'listing-images',path,processed});
+        newlyUploadedPaths.push(path);
+        const provisionalSortOrder=imageItems.findIndex(x=>x.key===item.key);
+        if(provisionalSortOrder<0||provisionalSortOrder>20)throw new Error('Ordinea fotografiilor este invalidă. Reîncarcă pagina și încearcă din nou.');
+        const ri=await db.from('listing_images').insert({listing_id:listingId,storage_path:path,sort_order:provisionalSortOrder});
+        if(ri.error)throw ri.error;
+        pathByKey.set(item.key,path);
+        btn.textContent=`Se încarcă imaginile… ${index+1}/${newItems.length}`;
       }
+    }
 
-      const ri=await db.from('listing_images').insert({
-        listing_id:listingId,
-        storage_path:path,
-        sort_order:provisionalSortOrder
-      });
-      if(ri.error)throw ri.error;
-      pathByKey.set(item.key,path);
+    // For edits, update the listing only after new files have been optimized and uploaded.
+    if(editing){
+      btn.textContent='Se salvează modificările…';
+      const r=await db.from('listings').update({...row,state:'active',updated_at:new Date().toISOString()}).eq('id',listingId).eq('seller_id',state.user.id).select('id').single();if(r.error)throw r.error;
+      const contactPatch={phone:String(fd.get('phone')||'').trim()||null,whatsapp:String(fd.get('whatsapp')||'').trim()||null};
+      const rc=await db.from('listing_contacts').update(contactPatch).eq('listing_id',listingId).eq('seller_id',state.user.id);if(rc.error)throw rc.error;
     }
 
     const finalPaths=imageItems.map(item=>pathByKey.get(item.key)).filter(Boolean);
@@ -1019,8 +1203,8 @@ async function publishListing(e){
       if(removed.length){
         const rd=await db.from('listing_images').delete().eq('listing_id',listingId).in('storage_path',removed);
         if(rd.error)throw rd.error;
-        const rs=await db.storage.from('listing-images').remove(removed);
-        if(rs.error)console.warn('storage image cleanup',rs.error);
+        const cleanup=await imageService.delete(db,'listing-images',removed,{ownerId:state.user.id,retries:2});
+        if(!cleanup.ok)console.warn('storage image cleanup queued',cleanup.error);
       }
     }
 
@@ -1036,7 +1220,7 @@ async function publishListing(e){
     await loadListings();renderListings();
 
     if(editing){
-      toast('Anunț actualizat. Ordinea fotografiilor a fost salvată.');
+      toast('Anunț actualizat. Fotografiile au fost optimizate și ordinea a fost salvată.');
       if(returnToAccount)await openAccount('listings');
     }else{
       toast('Anunț publicat în Support Hub Giuleștean 1923.');
@@ -1046,7 +1230,8 @@ async function publishListing(e){
     console.error(err);
     if(newlyUploadedPaths.length){
       try{await db.from('listing_images').delete().in('storage_path',newlyUploadedPaths);}catch(_){}
-      try{await db.storage.from('listing-images').remove(newlyUploadedPaths);}catch(_){}
+      const cleanup=await imageService.delete(db,'listing-images',newlyUploadedPaths,{ownerId:state.user?.id,retries:2});
+      if(!cleanup.ok)console.warn('orphan cleanup queued',cleanup.error);
     }
     if(!editing&&isListingLimitError(err)){
       if(listingId)await db.from('listings').delete().eq('id',listingId);
@@ -1060,7 +1245,7 @@ async function publishListing(e){
 async function openAccount(tab='listings'){
   if(!requireAuth())return;state.accountTab=tab;$('#accountName').textContent=state.profile?.display_name||'Contul meu';$('#accountEmail').textContent=state.user.email||'';$('#accountAvatar').innerHTML=avatarHtml(state.profile,'account-avatar-inner');updateSuspensionUI();updateAccountTabButtons();await renderAccount();$('#accountModal').showModal();
 }
-function updateAccountTabButtons(){$$('[data-account-tab]').forEach(b=>b.classList.toggle('active',b.dataset.accountTab===state.accountTab));}
+function updateAccountTabButtons(){qsa('[data-account-tab]').forEach(b=>b.classList.toggle('active',b.dataset.accountTab===state.accountTab));}
 async function renderAccount(){
   const root=$('#accountContent');root.innerHTML='<div class="loading-line">Se încarcă…</div>';
   try{
@@ -1068,7 +1253,7 @@ async function renderAccount(){
       const own=state.listings.filter(l=>l.seller_id===state.user.id).sort((a,b)=>new Date(b.created_at)-new Date(a.created_at));
       let statuses={};if(own.length){const {data}=await db.from('listing_approvals').select('listing_id,status').in('listing_id',own.map(x=>x.id));(data||[]).forEach(x=>statuses[x.listing_id]=x.status);}
       root.innerHTML=own.length?`<div class="account-list">${own.map(l=>`<div class="account-row"><div><b>${esc(l.title)}</b><small>${money(l.price,l.currency)} • ${esc(l.location)}</small></div><span class="status ${statuses[l.id]||'approved'}">${statuses[l.id]==='pending'?'În moderare':statuses[l.id]==='rejected'?'Respins':'Activ'}</span><button class="ghost mini" data-edit="${l.id}">Editează</button><button class="danger mini" data-delete="${l.id}">Șterge</button></div>`).join('')}</div>`:'<div class="empty compact"><b>N-ai publicat încă.</b><span>Primul anunț poate fi pus chiar acum.</span></div>';
-      $$('[data-edit]',root).forEach(b=>b.onclick=()=>openEditListing(b.dataset.edit,true));$$('[data-delete]',root).forEach(b=>b.onclick=()=>deleteListing(b.dataset.delete));
+      qsa('[data-edit]',root).forEach(b=>b.onclick=()=>openEditListing(b.dataset.edit,true));qsa('[data-delete]',root).forEach(b=>b.onclick=()=>deleteListing(b.dataset.delete));
     } else if(state.accountTab==='favorites'){
       const favs=state.listings.filter(l=>state.favorites.has(l.id));root.innerHTML=favs.length?`<div class="listing-grid account-grid">${favs.map(cardHtml).join('')}</div>`:'<div class="empty compact"><b>N-ai favorite.</b><span>Apasă ♡ pe un anunț ca să-l păstrezi aici.</span></div>';bindListingCards(root);
     } else if(state.accountTab==='messages'){
@@ -1085,10 +1270,16 @@ async function deleteListing(id,fromDetail=false){
   try{
     const {data:imgs}=await db.from('listing_images').select('storage_path').eq('listing_id',id);
     const paths=(imgs||[]).map(x=>x.storage_path).filter(Boolean);
-    if(paths.length){const rm=await db.storage.from('listing-images').remove(paths);if(rm.error)console.warn('storage cleanup',rm.error);}
     const {data,error}=await db.from('listings').delete().eq('id',id).eq('seller_id',state.user.id).select('id');
     if(error)throw error;if(!data?.length)throw new Error('Anunțul nu a fost șters. Reîncarcă pagina și încearcă din nou.');
-    if(fromDetail)closeDialog('detailModal');await loadListings();renderListings();if($('#accountModal').open)await renderAccount();toast('Anunț șters definitiv.');
+    let cleanupOk=true;
+    if(paths.length){
+      const cleanup=await imageService.delete(db,'listing-images',paths,{ownerId:state.user.id,retries:2});
+      cleanupOk=cleanup.ok;
+      if(!cleanup.ok)console.warn('listing storage cleanup queued',cleanup.error);
+    }
+    if(fromDetail)closeDialog('detailModal');await loadListings();renderListings();if($('#accountModal').open)await renderAccount();
+    toast(cleanupOk?'Anunț șters definitiv.':'Anunț șters. Curățarea fotografiilor va fi reîncercată automat.');
   }catch(err){console.error(err);toast(err.message||'Anunțul nu a putut fi șters.','error');}
 }
 
@@ -1115,17 +1306,45 @@ function openProfileEditor(){
   $('#profileModal').showModal();
 }
 async function saveProfile(e){
-  e.preventDefault();if(!requireAuth())return;const form=e.currentTarget,btn=$('#profileSaveBtn'),fd=new FormData(form),file=form.elements.avatar.files?.[0];setBusy(btn,true,'Se salvează…');
+  e.preventDefault();if(!requireAuth())return;
+  const form=e.currentTarget,btn=$('#profileSaveBtn'),fd=new FormData(form),file=form.elements.avatar.files?.[0];
+  setBusy(btn,true,file?'Se optimizează avatarul…':'Se salvează…');
+  let uploadedAvatar=null;
   try{
     const display=String(fd.get('display_name')||'').trim();if(display.length<2)throw new Error('Numele trebuie să aibă minimum 2 caractere.');
     let nextAvatar=state.profile?.avatar_path||null;const oldAvatar=nextAvatar;
-    if(fd.get('remove_avatar')==='on'){nextAvatar=null;}
-    if(file){if(file.size>3*1024*1024)throw new Error('Avatarul poate avea maximum 3 MB.');if(!['image/jpeg','image/png','image/webp'].includes(file.type))throw new Error('Avatarul trebuie să fie JPG, PNG sau WEBP.');const ext=(file.name.split('.').pop()||'jpg').toLowerCase().replace(/[^a-z0-9]/g,'');const path=`${state.user.id}/avatar-${Date.now()}.${ext}`;const up=await db.storage.from('profile-avatars').upload(path,file,{upsert:false,contentType:file.type,cacheControl:'3600'});if(up.error)throw up.error;nextAvatar=path;}
+    if(fd.get('remove_avatar')==='on')nextAvatar=null;
+
+    if(file){
+      const processed=await imageService.optimize(file,'avatar');
+      btn.textContent='Se încarcă avatarul…';
+      const path=imageService.uniquePath({userId:state.user.id,prefix:'avatar'},processed);
+      await imageService.upload(db,{bucket:'profile-avatars',path,processed});
+      uploadedAvatar=path;
+      nextAvatar=path;
+      console.info('avatar optimization',{from:imageService.formatBytes(processed.originalSizeBytes),to:imageService.formatBytes(processed.sizeBytes),size:`${processed.width}×${processed.height}`,type:processed.mime,quality:processed.quality});
+    }
+
     const patch={display_name:display,location:String(fd.get('location')||'').trim()||null,bio:String(fd.get('bio')||'').trim()||null,avatar_path:nextAvatar,contact_incognito:fd.get('contact_incognito')==='on'};
-    const {data,error}=await db.from('profiles').update(patch).eq('id',state.user.id).select('*').single();if(error)throw error;state.profile=data;
-    if(oldAvatar&&oldAvatar!==nextAvatar){const rm=await db.storage.from('profile-avatars').remove([oldAvatar]);if(rm.error)console.warn('old avatar cleanup',rm.error);}
+    const {data,error}=await db.from('profiles').update(patch).eq('id',state.user.id).select('*').single();
+    if(error)throw error;
+    state.profile=data;
+
+    // Delete the old avatar only after the new upload AND DB update both succeeded.
+    if(oldAvatar&&oldAvatar!==nextAvatar){
+      const cleanup=await imageService.delete(db,'profile-avatars',[oldAvatar],{ownerId:state.user.id,retries:2});
+      if(!cleanup.ok)console.warn('old avatar cleanup queued',cleanup.error);
+    }
+
     closeDialog('profileModal');updateAccountButtons();$('#accountName').textContent=state.profile.display_name;$('#accountAvatar').innerHTML=avatarHtml(state.profile,'account-avatar-inner');toast('Profil actualizat.');
-  }catch(err){console.error(err);toast(err.message||'Profilul nu a putut fi salvat.','error');}finally{setBusy(btn,false);}
+  }catch(err){
+    console.error(err);
+    if(uploadedAvatar){
+      const cleanup=await imageService.delete(db,'profile-avatars',[uploadedAvatar],{ownerId:state.user?.id,retries:2});
+      if(!cleanup.ok)console.warn('failed avatar upload cleanup queued',cleanup.error);
+    }
+    toast(err.message||'Profilul nu a putut fi salvat.','error');
+  }finally{setBusy(btn,false);}
 }
 
 
@@ -1211,8 +1430,8 @@ async function renderMessages(root){
 
   root.innerHTML=`<div class="conversation-list">${cards.join('')}</div><div class="thread" id="threadPane"><div class="thread-placeholder">Alege o conversație.</div></div>`;
 
-  $$('[data-conv]',root).forEach(b=>b.onclick=()=>openThread(b));
-  $$('[data-delete-conv]',root).forEach(b=>b.onclick=e=>{
+  qsa('[data-conv]',root).forEach(b=>b.onclick=()=>openThread(b));
+  qsa('[data-delete-conv]',root).forEach(b=>b.onclick=e=>{
     e.preventDefault();
     e.stopPropagation();
     hideConversationForMe(b.dataset.deleteConv);
@@ -1250,7 +1469,7 @@ async function renderAdmin(root){
   const {data:reports,error}=await db.from('reports').select('id,listing_id,reason,status,created_at').in('status',['open','reviewing']).order('created_at',{ascending:false});if(error)throw error;
   const {data:pending}=await db.from('listing_approvals').select('listing_id,status,updated_at').eq('status','pending').order('updated_at',{ascending:false});
   root.innerHTML=`<div class="admin-grid"><section><h3>În moderare</h3>${pending?.length?pending.map(x=>`<div class="admin-row"><span>${esc(state.listings.find(l=>l.id===x.listing_id)?.title||x.listing_id)}</span><button class="primary mini" data-approve="${x.listing_id}">Aprobă</button><button class="danger mini" data-reject="${x.listing_id}">Respinge</button></div>`).join(''):'<p class="muted">Nimic în așteptare.</p>'}</section><section><h3>Raportări deschise</h3>${reports?.length?reports.map(x=>`<div class="admin-row"><span>${esc(x.reason)} • ${esc(state.listings.find(l=>l.id===x.listing_id)?.title||x.listing_id)}</span><button class="ghost mini" data-resolve="${x.id}">Rezolvă</button></div>`).join(''):'<p class="muted">Nicio raportare deschisă.</p>'}</section></div>`;
-  $$('[data-approve]',root).forEach(b=>b.onclick=()=>moderate(b.dataset.approve,'approved'));$$('[data-reject]',root).forEach(b=>b.onclick=()=>moderate(b.dataset.reject,'rejected'));$$('[data-resolve]',root).forEach(b=>b.onclick=()=>resolveReport(b.dataset.resolve));
+  qsa('[data-approve]',root).forEach(b=>b.onclick=()=>moderate(b.dataset.approve,'approved'));qsa('[data-reject]',root).forEach(b=>b.onclick=()=>moderate(b.dataset.reject,'rejected'));qsa('[data-resolve]',root).forEach(b=>b.onclick=()=>resolveReport(b.dataset.resolve));
 }
 async function moderate(id,status){const {error}=await db.from('listing_approvals').update({status,reviewed_by:state.user.id,reviewed_at:new Date().toISOString()}).eq('listing_id',id);if(error)return toast(error.message,'error');await loadListings();renderListings();renderAccount();}
 async function resolveReport(id){const {error}=await db.from('reports').update({status:'resolved'}).eq('id',id);if(error)return toast(error.message,'error');renderAccount();}
@@ -1258,28 +1477,33 @@ async function resolveReport(id){const {error}=await db.from('reports').update({
 function renderAll(){renderCategories();renderListings();updateAccountButtons();}
 function showListingSkeletons(){$('#listingGrid').innerHTML=Array.from({length:8},()=>'<div class="listing-card skeleton-card"><div class="listing-image"></div><div class="listing-body"><div class="skeleton"></div><div class="skeleton short"></div></div></div>').join('');}
 
-function bindCloseButtons(root=document){$$('[data-close]',root).forEach(b=>b.onclick=()=>closeDialog(b.dataset.close));}
+function bindCloseButtons(root=document){qsa('[data-close]',root).forEach(b=>b.onclick=()=>{
+  const id=b.dataset.close;
+  if(id==='passwordResetModal'&&authSecurity.recoveryActive)return void abandonPasswordRecovery();
+  if(id==='authModal')resetAuthCaptcha();
+  closeDialog(id);
+});}
 function bindStaticEvents(){
   bindCloseButtons();
-  $$('[data-open-sell]').forEach(b=>b.onclick=openSell);
+  qsa('[data-open-sell]').forEach(b=>b.onclick=openSell);
   $('#loginBtn').onclick=()=>state.user?openAccount():openAuth('login');$('#mobileAccount').onclick=$('#loginBtn').onclick;
-  $$('[data-auth-mode]').forEach(b=>b.onclick=()=>{state.authMode=b.dataset.authMode;updateAuthMode();});
+  qsa('[data-auth-mode]').forEach(b=>b.onclick=()=>{state.authMode=b.dataset.authMode;updateAuthMode();renderAuthTurnstile();resetAuthCaptcha();});
   $('#authForm').addEventListener('submit',submitAuth);
   $('#authForm [name=legal_acceptance]').onchange=updateSignupConsentUI;
-  $$('[data-signup-legal]').forEach(button=>button.onclick=e=>{e.preventDefault();e.stopPropagation();openLegal(button.dataset.signupLegal);});
+  qsa('[data-signup-legal]').forEach(button=>button.onclick=e=>{e.preventDefault();e.stopPropagation();openLegal(button.dataset.signupLegal);});
   $('#forgotPasswordBtn').onclick=requestPasswordReset;$('#passwordResetForm').addEventListener('submit',submitPasswordReset);$('#sellForm').addEventListener('submit',publishListing);$('#messageForm').addEventListener('submit',sendMessage);
   $('#logoutBtn').onclick=async()=>{await db.auth.signOut();closeDialog('accountModal');toast('Ai ieșit din cont.');};$('#editProfileBtn').onclick=openProfileEditor;$('#adminPanelBtn').onclick=()=>window.open('/admin.html','_blank','noopener');$('#profileForm').addEventListener('submit',saveProfile);$('#deleteAccountBtn').onclick=openDeleteAccount;$('#deleteAccountForm').addEventListener('submit',deleteAccount);$('#profileForm [name=avatar]').onchange=e=>{const f=e.target.files?.[0];if(f){const u=URL.createObjectURL(f);$('#profilePreview').innerHTML=`<span class="profile-preview-avatar has-image"><img src="${esc(u)}" alt="Preview avatar"></span>`;}};
   $('#profileForm [name=contact_incognito]').onchange=updateContactIncognitoUI;
-  $$('[data-account-tab]').forEach(b=>b.onclick=async()=>{state.accountTab=b.dataset.accountTab;updateAccountTabButtons();await renderAccount();});
+  qsa('[data-account-tab]').forEach(b=>b.onclick=async()=>{state.accountTab=b.dataset.accountTab;updateAccountTabButtons();await renderAccount();});
   $('#listingLimitManage').onclick=async()=>{closeDialog('listingLimitModal');await openAccount('listings');};
   $('#searchBtn').onclick=()=>{resetMarketPage();renderListings();$('#anunturi').scrollIntoView({behavior:'smooth'});};$('#searchInput').addEventListener('keydown',e=>{if(e.key==='Enter')$('#searchBtn').click();});
-  $$('[data-search]').forEach(b=>b.onclick=()=>{$('#searchInput').value=b.dataset.search;$('#searchBtn').click();});
+  qsa('[data-search]').forEach(b=>b.onclick=()=>{$('#searchInput').value=b.dataset.search;$('#searchBtn').click();});
   $('#categoryFilter').onchange=()=>{resetMarketPage();syncCategorySelection();renderListings();};$('#sortSelect').onchange=()=>{resetMarketPage();renderListings();};$('#allCategories').onclick=()=>{$('#categoryFilter').value='all';resetMarketPage();syncCategorySelection();renderListings();};
-  $$('[data-focus-search]').forEach(b=>b.onclick=()=>{scrollTo({top:0,behavior:'smooth'});setTimeout(()=>$('#searchInput').focus(),300);});$$('[data-home]').forEach(b=>b.onclick=()=>scrollTo({top:0,behavior:'smooth'}));$$('[data-favorites]').forEach(b=>b.onclick=()=>openAccount('favorites'));
-  $$('[data-legal]').forEach(a=>a.onclick=e=>{e.preventDefault();openLegal(a.dataset.legal);});
+  qsa('[data-focus-search]').forEach(b=>b.onclick=()=>{scrollTo({top:0,behavior:'smooth'});setTimeout(()=>$('#searchInput').focus(),300);});qsa('[data-home]').forEach(b=>b.onclick=()=>scrollTo({top:0,behavior:'smooth'}));qsa('[data-favorites]').forEach(b=>b.onclick=()=>openAccount('favorites'));
+  qsa('[data-legal]').forEach(a=>a.onclick=e=>{e.preventDefault();openLegal(a.dataset.legal);});
   $('#sellForm [name=images]').onchange=e=>{addListingImageFiles([...e.target.files]);e.target.value='';};
   $('#addMoreImagesBtn').onclick=()=>$('#sellForm [name=images]').click();
-  ['authModal','passwordResetModal','sellModal','detailModal','sellerListingsModal','messageModal','accountModal','profileModal','deleteAccountModal','legalModal'].forEach(id=>{const d=document.getElementById(id);d.addEventListener('click',e=>{if(e.target===d)d.close();});});
+  ['authModal','passwordResetModal','sellModal','detailModal','sellerListingsModal','messageModal','accountModal','profileModal','deleteAccountModal','legalModal'].forEach(id=>{const d=document.getElementById(id);d.addEventListener('click',e=>{if(e.target!==d)return;if(id==='passwordResetModal'&&authSecurity.recoveryActive)return void abandonPasswordRecovery();if(id==='authModal')resetAuthCaptcha();d.close();});});
 }
 
 const TERMS_OF_USE_HTML=`<article class="legal-doc"><h3 class="legal-doc-title">TERMENI DE UTILIZARE ȘI POLITICA DE MODERARE</h3><p class="legal-doc-subtitle"><strong>HUB Giuleștean — Support Hub Giuleștean 1923</strong></p><p class="legal-doc-meta">Versiunea 1.0</p><p class="legal-doc-meta">Data intrării în vigoare: [se completează la publicare]</p><h4>1. Identitatea operatorului și contact</h4><p>Platforma HUB Giuleștean, denumită și „Support Hub Giuleștean 1923”, este administrată de <strong>CASA DEL DANIEL DIGITAL CONSULTING S.R.L.</strong>, denumită în continuare „Operatorul”, având următoarele date de identificare:</p><ul><li><strong>Sediul social:</strong> Strada Valea Gârboului nr. 5, Florești, județul Cluj, România;</li><li><strong>Cod unic de înregistrare:</strong> 511***88;</li><li><strong>Număr de ordine în Registrul Comerțului:</strong> J2025<strong>*</strong>*001;</li><li><strong>Identificator unic european — EUID:</strong> ROONRC.J2025<strong>*</strong>*001;</li><li><strong>Telefon:</strong> 0753.670.173;</li><li><strong>E-mail:</strong> <a href="mailto:office.casadeldaniel@aol.com">office.casadeldaniel@aol.com</a>.</li></ul><p>Adresa de e-mail reprezintă punctul de contact pentru asistență, reclamații, raportarea conținutului, contestarea măsurilor de moderare și comunicarea cu autoritățile. Comunicarea se desfășoară în limba română și permite contactul cu o persoană din partea Operatorului.</p><h4>2. Scopul și caracterul independent al Platformei</h4><p>HUB Giuleștean este o platformă independentă de anunțuri, destinată facilitării contactului dintre persoanele care oferă sau caută bunuri și servicii.</p><p>Caracterul comunitar al Platformei nu reprezintă o verificare sau o garanție a identității, seriozității ori capacității utilizatorilor de a-și îndeplini obligațiile.</p><p>Referirile la comunitatea giuleșteană și utilizarea denumirii Platformei nu trebuie interpretate, prin ele însele, ca dovadă a unei afilieri oficiale cu un club sportiv sau cu o altă organizație. Orice parteneriat oficial va fi prezentat explicit.</p><h4>3. Domeniul de aplicare și acceptarea termenilor</h4><p>Acești termeni reglementează utilizarea Platformei, crearea conturilor, publicarea anunțurilor și interacțiunile realizate prin funcțiile disponibile.</p><p>Crearea unui cont presupune acceptarea expresă a termenilor prin mecanismul pus la dispoziție în Platformă. Termenii trebuie să poată fi consultați și salvați înainte de acceptare.</p><p>Acceptarea lor reglementează relația dintre utilizator și Operator. Condițiile tranzacțiilor dintre utilizatori se stabilesc separat între persoanele implicate, cu respectarea legii.</p><h4>4. Eligibilitatea și gestionarea contului</h4><p>Crearea conturilor și publicarea anunțurilor sunt permise persoanelor care au împlinit 18 ani. Persoana care acționează pentru o societate sau organizație trebuie să aibă dreptul de a o reprezenta.</p><p>Utilizatorul se obligă:</p><ul><li>să furnizeze informații corecte și actualizate;</li><li>să utilizeze date de contact asupra cărora are control;</li><li>să protejeze parola și codurile de autentificare;</li><li>să nu folosească fără drept identitatea altei persoane;</li><li>să anunțe Operatorul când suspectează compromiterea contului;</li><li>să nu creeze conturi pentru a evita restricțiile aplicate justificat.</li></ul><p>Utilizatorul răspunde pentru propriile acțiuni și pentru activitățile autorizate de acesta. Folosirea neautorizată a contului nu stabilește automat culpa titularului.</p><p>Operatorul nu solicită parole, coduri PIN sau coduri de autentificare pentru verificarea unui anunț ori pentru confirmarea unei tranzacții.</p><h4>5. Rolul Platformei în tranzacții</h4><p>Platforma oferă infrastructura necesară publicării anunțurilor și facilitării contactului dintre utilizatori.</p><p><strong>Operatorul nu este parte în tranzacțiile dintre utilizatori</strong> și nu acționează ca vânzător, cumpărător, mandatar sau garant al acestora.</p><p>Părțile stabilesc direct:</p><ul><li>prețul și modalitatea de plată;</li><li>condițiile de predare sau livrare;</li><li>verificarea bunului;</li><li>condițiile prestării serviciului;</li><li>eventualele garanții contractuale și condiții de restituire, cu respectarea drepturilor legale aplicabile.</li></ul><p>În modelul de anunțuri reglementat de acești termeni, Operatorul nu încasează și nu păstrează contravaloarea bunurilor ori serviciilor tranzacționate între utilizatori.</p><p>Aceste precizări nu înlătură obligațiile legale și răspunderea proprie a Operatorului.</p><h4>6. Responsabilitatea pentru ofertele publicate</h4><p>Autorul răspunde pentru legalitatea ofertei, autenticitatea bunului, exactitatea descrierii și dreptul de a utiliza fotografiile, textele și celelalte materiale publicate.</p><p>Utilizatorul trebuie să dețină bunul sau să fie autorizat să îl ofere și să aibă calificările ori autorizațiile necesare pentru serviciile prestate, atunci când legea le impune.</p><p>Anunțul trebuie să prezinte clar:</p><ul><li>bunul sau serviciul oferit;</li><li>caracteristicile esențiale;</li><li>starea reală și defectele cunoscute;</li><li>prețul sau modul de calcul;</li><li>costurile suplimentare cunoscute;</li><li>condițiile și limitările relevante ale ofertei.</li></ul><p>Fotografiile trebuie să reflecte corect oferta. Imaginile ilustrative trebuie identificate ca atare.</p><p>Sunt interzise ascunderea defectelor, prezentarea produselor contrafăcute drept originale, ofertele inexistente și prețurile fictive folosite pentru atragerea accesărilor.</p><p>Anunțurile trebuie actualizate sau retrase când oferta nu mai este disponibilă.</p><h4>7. Utilizatori particulari și profesioniști</h4><p>Utilizatorii trebuie să declare corect dacă acționează ca particulari sau în cadrul unei activități profesionale.</p><p>Profesioniștii răspund pentru furnizarea informațiilor comerciale obligatorii, respectarea cerințelor de autorizare, emiterea documentelor fiscale și respectarea drepturilor consumatorilor.</p><p>Dreptul de retragere, obligațiile privind conformitatea și celelalte drepturi specifice consumatorilor se aplică în condițiile prevăzute de lege. Acestea nu se aplică automat tranzacțiilor între particulari, pentru care rămân valabile regulile dreptului civil.</p><p>Selectarea unui cont de particular nu înlătură obligațiile aferente unei activități care este, în realitate, profesională.</p><h4>8. Bunuri, servicii și conținut interzis</h4><p>Sunt interzise:</p><ul><li>bunurile furate, contrafăcute sau comercializate fără drept;</li><li>produsele și serviciile interzise de lege;</li><li>fraudele, schemele piramidale și ofertele cu promisiuni înșelătoare de câștig;</li><li>documentele false, datele bancare, parolele și conturile compromise;</li><li>comercializarea sau divulgarea fără drept a datelor personale;</li><li>materialele care încalcă drepturi de autor, mărci sau dreptul la imagine;</li><li>conținutul care exploatează minori;</li><li>amenințările, hărțuirea și incitarea la ură sau violență;</li><li>linkurile de phishing, programele malițioase și tentativele de furt de date;</li><li>anunțurile care folosesc fără drept identitatea unei persoane ori organizații.</li></ul><p>Prin politica Platformei sunt interzise și ofertele de arme, muniții, explozibili, articole pirotehnice, droguri, medicamente, tutun, produse cu nicotină și servicii sexuale, chiar dacă anumite categorii pot fi comercializate legal în alte condiții.</p><p>Biletele și abonamentele la evenimente pot fi oferite numai dacă transferul este permis de lege și de condițiile emitentului. Nu sunt acceptate bilete false, duplicate sau prezentate înșelător.</p><h4>9. Reguli de conduită</h4><p>Comunicarea trebuie să fie relevantă și să respecte drepturile celorlalte persoane.</p><p>Nu sunt permise:</p><ul><li>intimidarea și insultele repetate adresate altor utilizatori;</li><li>mesajele comerciale nesolicitate trimise în masă;</li><li>anunțurile duplicate excesiv;</li><li>recenziile fictive și manipularea reputației;</li><li>raportările abuzive;</li><li>colectarea masivă a datelor cu încălcarea legii;</li><li>accesarea neautorizată și perturbarea Platformei.</li></ul><p>Datele de contact publicate pentru o ofertă trebuie folosite în legătură cu aceasta. Publicarea lor nu reprezintă acord pentru includerea în baze de date de marketing.</p><p>Criticile formulate cu bună-credință, inclusiv cele privind Platforma, nu constituie prin ele însele un motiv de sancționare.</p><h4>10. Siguranța tranzacțiilor</h4><p>Utilizatorilor li se recomandă să verifice bunul, condițiile ofertei și dreptul vânzătorului de a-l comercializa înainte de efectuarea plății.</p><p>Apartenența la aceeași comunitate nu înlocuiește aceste verificări.</p><p>Publicarea sau menținerea unui anunț după moderare nu reprezintă certificarea autenticității produsului, a calității serviciului sau a executării tranzacției.</p><p>În cazul unei suspiciuni de fraudă, utilizatorul poate informa Operatorul și autoritățile competente, păstrând dovezile relevante.</p><h4>11. Raportarea conținutului</h4><p>Orice persoană poate semnala conținut presupus ilegal sau contrar regulilor la <strong><a href="mailto:office.casadeldaniel@aol.com">office.casadeldaniel@aol.com</a></strong>, fără a avea nevoie de cont. Poate fi utilizată și funcția de raportare, dacă este disponibilă.</p><p>Sesizarea trebuie să includă:</p><ul><li>localizarea exactă a conținutului, prin link sau identificator;</li><li>explicația motivelor raportării;</li><li>dovezile disponibile;</li><li>numele și adresa de e-mail, cu excepțiile legale;</li><li>confirmarea că informațiile sunt transmise cu bună-credință și sunt considerate exacte și complete.</li></ul><p>Operatorul confirmă primirea când dispune de date electronice de contact și comunică decizia și căile de contestare fără întârzieri nejustificate. Sesizările sunt tratate diligent, obiectiv și proporțional cu gravitatea situației.</p><h4>12. Politica de moderare</h4><p>Moderarea se realizează manual, de persoane desemnate de Operator, pe baza sesizărilor și a verificărilor proprii. Nu se promite verificarea prealabilă a fiecărui anunț.</p><p>Operatorul poate solicita corectarea unei oferte, limita vizibilitatea, elimina conținutul sau suspenda temporar contul. Închiderea definitivă poate interveni pentru fraude, abateri grave ori repetate.</p><p>Măsura ține cont de gravitate, impact și istoricul abaterilor. Pentru riscuri urgente se poate interveni imediat.</p><p>Persoanei afectate i se comunică motivul concret, temeiul, întinderea și durata restricției, precum și căile de contestare, cu excepțiile legale. Eventuala introducere a moderării automate va fi explicată prin actualizarea acestei politici.</p><h4>13. Contestarea măsurilor</h4><p>Utilizatorul poate solicita gratuit reanalizarea unei măsuri prin e-mail la <strong><a href="mailto:office.casadeldaniel@aol.com">office.casadeldaniel@aol.com</a></strong>, indicând contul sau anunțul, decizia și motivele contestației.</p><p>Cererea este examinată de o persoană desemnată. Dacă măsura este nejustificată, Operatorul o corectează și comunică rezultatul.</p><p>Procedura nu limitează drepturile legale de contestare, sesizarea autorităților sau accesul la instanță.</p><h4>14. Drepturile asupra materialelor</h4><p>Utilizatorul păstrează drepturile asupra conținutului propriu.</p><p>Prin publicare, acordă Operatorului o permisiune neexclusivă și gratuită de a stoca, reproduce, adapta tehnic și afișa materialele pentru funcționarea Platformei și prezentarea anunțului.</p><p>Permisiunea nu transferă proprietatea asupra materialelor și nu autorizează folosirea acestora în campanii publicitare externe fără un acord separat.</p><p>După retragerea conținutului, păstrarea unor copii este limitată la situații justificate privind copiile de siguranță, obligațiile legale sau apărarea unor drepturi.</p><h4>15. Gratuitate și servicii opționale</h4><p>Publicarea standard a anunțurilor este gratuită.</p><p>Eventualele servicii opționale contra cost vor avea prețul total, durata, caracteristicile și condițiile comunicate înainte de comandă. Nu vor fi activate fără acceptare expresă.</p><p>Anunțurile promovate vor fi identificate vizibil. Plata promovării nu garantează vânzarea și nu exonerează autorul de respectarea regulilor.</p><p>Criteriile principale care influențează ordinea ofertelor și efectul eventualelor promovări vor fi explicate în interfața de afișare a anunțurilor, potrivit funcționării reale.</p><h4>16. Date personale</h4><p>Modul de prelucrare a datelor personale este descris separat în Politica de Confidențialitate a Platformei. Utilizarea cookie-urilor și a tehnologiilor similare este explicată în informarea dedicată.</p><p>Acceptarea termenilor nu reprezintă consimțământ general pentru marketing sau pentru orice utilizare a datelor. Atunci când este necesar, consimțământul se solicită separat.</p><p>Utilizatorii nu trebuie să publice CNP-uri, copii ale actelor de identitate, date complete de card sau alte informații care nu sunt necesare prezentării ofertei.</p><p>Solicitările privind datele personale pot fi transmise la <strong><a href="mailto:office.casadeldaniel@aol.com">office.casadeldaniel@aol.com</a></strong>.</p><h4>17. Disponibilitate și răspundere</h4><p>Operatorul depune eforturi rezonabile pentru funcționarea și securitatea Platformei. Pot exista întreruperi pentru mentenanță, incidente tehnice sau cauze externe.</p><p>Nu se garantează disponibilitatea neîntreruptă, vânzarea bunurilor, un anumit număr de vizualizări ori comportamentul altor utilizatori.</p><p>Autorul răspunde pentru propriul anunț și pentru obligațiile asumate în tranzacție. Operatorul răspunde pentru propriile fapte și obligații potrivit legii.</p><p>Nicio clauză nu exclude răspunderea care nu poate fi limitată legal și nu restrânge drepturile obligatorii ale consumatorilor.</p><h4>18. Închiderea contului</h4><p>Utilizatorul poate solicita închiderea contului prin funcția disponibilă sau prin e-mail la <strong><a href="mailto:office.casadeldaniel@aol.com">office.casadeldaniel@aol.com</a></strong>. Pentru prevenirea solicitărilor neautorizate, Operatorul poate verifica în mod proporțional identitatea solicitantului.</p><p>Anunțurile active vor fi retrase la închiderea contului. Datele vor fi șterse sau păstrate limitat, în condițiile Politicii de confidențialitate și ale legii.</p><p>Închiderea contului nu anulează obligațiile din tranzacțiile deja încheiate și nu presupune ștergerea imediată a tuturor evidențelor necesare legal.</p><h4>19. Modificarea termenilor</h4><p>Termenii pot fi actualizați pentru modificări legislative, de securitate sau de funcționalitate.</p><p>Modificările relevante vor fi comunicate înainte de aplicare, cu un preaviz rezonabil, exceptând situațiile care impun intervenția imediată. Comunicarea va indica data aplicării.</p><p>Modificările nu produc efecte retroactive. Acceptarea expresă va fi solicitată când este necesară. Utilizatorul care nu acceptă noile condiții poate înceta utilizarea și solicita închiderea contului.</p><h4>20. Reclamații, lege aplicabilă și litigii</h4><p>Reclamațiile privind Platforma pot fi transmise la <strong><a href="mailto:office.casadeldaniel@aol.com">office.casadeldaniel@aol.com</a></strong>, cu descrierea situației și dovezile relevante.</p><p>Neînțelegerile dintre cumpărător și vânzător se soluționează între aceștia și, după caz, prin autorități sau instanțele abilitate. Operatorul poate analiza conduita utilizatorilor pentru aplicarea regulilor Platformei, fără a decide obligatoriu asupra litigiului.</p><p>Termenii sunt guvernați de legea română, fără înlăturarea protecției obligatorii de care consumatorul beneficiază potrivit legii aplicabile.</p><p>În funcție de obiectul sesizării, utilizatorul se poate adresa ANPC, ANSPDCP, ANCOM sau altor autorități competente. ANCOM supraveghează respectarea obligațiilor privind serviciile digitale, fără a înlocui instanțele în soluționarea litigiilor dintre utilizatori.</p><p>Accesul la autorități sau instanțele competente nu este condiționat de parcurgerea prealabilă a unei proceduri amiabile.</p></article>`;

@@ -1,0 +1,3249 @@
+{
+  "snapshot_date": "2026-09-14",
+  "project_id": "bhqpixyiojthpfqnyhsh",
+  "tables": [
+    {
+      "name": "public.profiles",
+      "rls_enabled": true,
+      "rows": 4,
+      "columns": [
+        {
+          "name": "id",
+          "data_type": "uuid",
+          "format": "uuid",
+          "options": [
+            "updatable"
+          ]
+        },
+        {
+          "name": "display_name",
+          "data_type": "text",
+          "format": "text",
+          "options": [
+            "updatable"
+          ],
+          "default_value": "'Membru'::text",
+          "check": "char_length(display_name) >= 2 AND char_length(display_name) <= 60"
+        },
+        {
+          "name": "avatar_path",
+          "data_type": "text",
+          "format": "text",
+          "options": [
+            "nullable",
+            "updatable"
+          ]
+        },
+        {
+          "name": "bio",
+          "data_type": "text",
+          "format": "text",
+          "options": [
+            "nullable",
+            "updatable"
+          ],
+          "check": "bio IS NULL OR char_length(bio) <= 500"
+        },
+        {
+          "name": "location",
+          "data_type": "text",
+          "format": "text",
+          "options": [
+            "nullable",
+            "updatable"
+          ],
+          "check": "location IS NULL OR char_length(location) <= 120"
+        },
+        {
+          "name": "created_at",
+          "data_type": "timestamp with time zone",
+          "format": "timestamptz",
+          "options": [
+            "updatable"
+          ],
+          "default_value": "now()"
+        },
+        {
+          "name": "updated_at",
+          "data_type": "timestamp with time zone",
+          "format": "timestamptz",
+          "options": [
+            "updatable"
+          ],
+          "default_value": "now()"
+        },
+        {
+          "name": "contact_incognito",
+          "data_type": "boolean",
+          "format": "bool",
+          "options": [
+            "updatable"
+          ],
+          "default_value": "false",
+          "comment": "When true, direct phone and WhatsApp contact fields are hidden from other users."
+        },
+        {
+          "name": "terms_accepted_at",
+          "data_type": "timestamp with time zone",
+          "format": "timestamptz",
+          "options": [
+            "nullable",
+            "updatable"
+          ],
+          "comment": "Timestamp when the user expressly accepted the Terms of Use."
+        },
+        {
+          "name": "terms_version",
+          "data_type": "text",
+          "format": "text",
+          "options": [
+            "nullable",
+            "updatable"
+          ],
+          "comment": "Version of the Terms of Use accepted by the user."
+        },
+        {
+          "name": "privacy_acknowledged_at",
+          "data_type": "timestamp with time zone",
+          "format": "timestamptz",
+          "options": [
+            "nullable",
+            "updatable"
+          ],
+          "comment": "Timestamp when the user confirmed having read the Privacy Policy."
+        },
+        {
+          "name": "privacy_version",
+          "data_type": "text",
+          "format": "text",
+          "options": [
+            "nullable",
+            "updatable"
+          ],
+          "comment": "Version of the Privacy Policy acknowledged by the user."
+        }
+      ],
+      "primary_keys": [
+        "id"
+      ],
+      "foreign_key_constraints": [
+        {
+          "name": "messages_sender_id_fkey",
+          "source_table": "public.messages",
+          "source_columns": [
+            "sender_id"
+          ],
+          "target_table": "public.profiles",
+          "target_columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "profiles_id_fkey",
+          "source_table": "public.profiles",
+          "source_columns": [
+            "id"
+          ],
+          "target_table": "auth.users",
+          "target_columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "user_flags_user_id_fkey",
+          "source_table": "public.user_flags",
+          "source_columns": [
+            "user_id"
+          ],
+          "target_table": "public.profiles",
+          "target_columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "listings_seller_id_fkey",
+          "source_table": "public.listings",
+          "source_columns": [
+            "seller_id"
+          ],
+          "target_table": "public.profiles",
+          "target_columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "listing_approvals_reviewed_by_fkey",
+          "source_table": "public.listing_approvals",
+          "source_columns": [
+            "reviewed_by"
+          ],
+          "target_table": "public.profiles",
+          "target_columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "favorites_user_id_fkey",
+          "source_table": "public.favorites",
+          "source_columns": [
+            "user_id"
+          ],
+          "target_table": "public.profiles",
+          "target_columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "conversations_buyer_id_fkey",
+          "source_table": "public.conversations",
+          "source_columns": [
+            "buyer_id"
+          ],
+          "target_table": "public.profiles",
+          "target_columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "conversations_seller_id_fkey",
+          "source_table": "public.conversations",
+          "source_columns": [
+            "seller_id"
+          ],
+          "target_table": "public.profiles",
+          "target_columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "reports_reporter_id_fkey",
+          "source_table": "public.reports",
+          "source_columns": [
+            "reporter_id"
+          ],
+          "target_table": "public.profiles",
+          "target_columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "moderation_notes_user_id_fkey",
+          "source_table": "public.moderation_notes",
+          "source_columns": [
+            "user_id"
+          ],
+          "target_table": "public.profiles",
+          "target_columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "moderation_notes_moderator_id_fkey",
+          "source_table": "public.moderation_notes",
+          "source_columns": [
+            "moderator_id"
+          ],
+          "target_table": "public.profiles",
+          "target_columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "listing_contacts_seller_id_fkey",
+          "source_table": "public.listing_contacts",
+          "source_columns": [
+            "seller_id"
+          ],
+          "target_table": "public.profiles",
+          "target_columns": [
+            "id"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "public.user_flags",
+      "rls_enabled": true,
+      "rows": 4,
+      "columns": [
+        {
+          "name": "user_id",
+          "data_type": "uuid",
+          "format": "uuid",
+          "options": [
+            "updatable"
+          ]
+        },
+        {
+          "name": "suspended",
+          "data_type": "boolean",
+          "format": "bool",
+          "options": [
+            "updatable"
+          ],
+          "default_value": "false"
+        },
+        {
+          "name": "verified",
+          "data_type": "boolean",
+          "format": "bool",
+          "options": [
+            "updatable"
+          ],
+          "default_value": "false"
+        },
+        {
+          "name": "updated_at",
+          "data_type": "timestamp with time zone",
+          "format": "timestamptz",
+          "options": [
+            "updatable"
+          ],
+          "default_value": "now()"
+        },
+        {
+          "name": "suspended_until",
+          "data_type": "timestamp with time zone",
+          "format": "timestamptz",
+          "options": [
+            "nullable",
+            "updatable"
+          ]
+        },
+        {
+          "name": "suspension_reason",
+          "data_type": "text",
+          "format": "text",
+          "options": [
+            "nullable",
+            "updatable"
+          ]
+        },
+        {
+          "name": "suspended_by",
+          "data_type": "uuid",
+          "format": "uuid",
+          "options": [
+            "nullable",
+            "updatable"
+          ]
+        }
+      ],
+      "primary_keys": [
+        "user_id"
+      ],
+      "foreign_key_constraints": [
+        {
+          "name": "user_flags_user_id_fkey",
+          "source_table": "public.user_flags",
+          "source_columns": [
+            "user_id"
+          ],
+          "target_table": "public.profiles",
+          "target_columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "user_flags_suspended_by_fkey",
+          "source_table": "public.user_flags",
+          "source_columns": [
+            "suspended_by"
+          ],
+          "target_table": "auth.users",
+          "target_columns": [
+            "id"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "public.categories",
+      "rls_enabled": true,
+      "rows": 12,
+      "columns": [
+        {
+          "name": "id",
+          "data_type": "uuid",
+          "format": "uuid",
+          "options": [
+            "updatable"
+          ],
+          "default_value": "gen_random_uuid()"
+        },
+        {
+          "name": "slug",
+          "data_type": "text",
+          "format": "text",
+          "options": [
+            "updatable",
+            "unique"
+          ],
+          "check": "slug ~ '^[a-z0-9-]+$'::text"
+        },
+        {
+          "name": "name",
+          "data_type": "text",
+          "format": "text",
+          "options": [
+            "updatable",
+            "unique"
+          ]
+        },
+        {
+          "name": "icon",
+          "data_type": "text",
+          "format": "text",
+          "options": [
+            "nullable",
+            "updatable"
+          ]
+        },
+        {
+          "name": "sort_order",
+          "data_type": "integer",
+          "format": "int4",
+          "options": [
+            "updatable"
+          ],
+          "default_value": "0"
+        },
+        {
+          "name": "active",
+          "data_type": "boolean",
+          "format": "bool",
+          "options": [
+            "updatable"
+          ],
+          "default_value": "true"
+        }
+      ],
+      "primary_keys": [
+        "id"
+      ],
+      "foreign_key_constraints": [
+        {
+          "name": "listings_category_id_fkey",
+          "source_table": "public.listings",
+          "source_columns": [
+            "category_id"
+          ],
+          "target_table": "public.categories",
+          "target_columns": [
+            "id"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "public.listings",
+      "rls_enabled": true,
+      "rows": 9,
+      "columns": [
+        {
+          "name": "id",
+          "data_type": "uuid",
+          "format": "uuid",
+          "options": [
+            "updatable"
+          ],
+          "default_value": "gen_random_uuid()"
+        },
+        {
+          "name": "seller_id",
+          "data_type": "uuid",
+          "format": "uuid",
+          "options": [
+            "updatable"
+          ]
+        },
+        {
+          "name": "category_id",
+          "data_type": "uuid",
+          "format": "uuid",
+          "options": [
+            "updatable"
+          ]
+        },
+        {
+          "name": "title",
+          "data_type": "text",
+          "format": "text",
+          "options": [
+            "updatable"
+          ],
+          "check": "char_length(title) >= 4 AND char_length(title) <= 120"
+        },
+        {
+          "name": "description",
+          "data_type": "text",
+          "format": "text",
+          "options": [
+            "updatable"
+          ],
+          "check": "char_length(description) >= 10 AND char_length(description) <= 5000"
+        },
+        {
+          "name": "price",
+          "data_type": "numeric",
+          "format": "numeric",
+          "options": [
+            "updatable"
+          ],
+          "default_value": "0",
+          "check": "price >= 0::numeric"
+        },
+        {
+          "name": "currency",
+          "data_type": "text",
+          "format": "text",
+          "options": [
+            "updatable"
+          ],
+          "default_value": "'RON'::text",
+          "check": "currency = ANY (ARRAY['RON'::text, 'EUR'::text])"
+        },
+        {
+          "name": "condition",
+          "data_type": "text",
+          "format": "text",
+          "options": [
+            "updatable"
+          ],
+          "default_value": "'used'::text",
+          "check": "condition = ANY (ARRAY['new'::text, 'like_new'::text, 'used'::text, 'damaged'::text, 'service'::text, 'not_applicable'::text])"
+        },
+        {
+          "name": "location",
+          "data_type": "text",
+          "format": "text",
+          "options": [
+            "updatable"
+          ],
+          "default_value": "'București'::text",
+          "check": "char_length(location) >= 2 AND char_length(location) <= 120"
+        },
+        {
+          "name": "negotiable",
+          "data_type": "boolean",
+          "format": "bool",
+          "options": [
+            "updatable"
+          ],
+          "default_value": "false"
+        },
+        {
+          "name": "state",
+          "data_type": "text",
+          "format": "text",
+          "options": [
+            "updatable"
+          ],
+          "default_value": "'active'::text",
+          "check": "state = ANY (ARRAY['active'::text, 'sold'::text, 'archived'::text])"
+        },
+        {
+          "name": "created_at",
+          "data_type": "timestamp with time zone",
+          "format": "timestamptz",
+          "options": [
+            "updatable"
+          ],
+          "default_value": "now()"
+        },
+        {
+          "name": "updated_at",
+          "data_type": "timestamp with time zone",
+          "format": "timestamptz",
+          "options": [
+            "updatable"
+          ],
+          "default_value": "now()"
+        }
+      ],
+      "primary_keys": [
+        "id"
+      ],
+      "foreign_key_constraints": [
+        {
+          "name": "listing_images_listing_id_fkey",
+          "source_table": "public.listing_images",
+          "source_columns": [
+            "listing_id"
+          ],
+          "target_table": "public.listings",
+          "target_columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "listings_category_id_fkey",
+          "source_table": "public.listings",
+          "source_columns": [
+            "category_id"
+          ],
+          "target_table": "public.categories",
+          "target_columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "listings_seller_id_fkey",
+          "source_table": "public.listings",
+          "source_columns": [
+            "seller_id"
+          ],
+          "target_table": "public.profiles",
+          "target_columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "moderation_notes_listing_id_fkey",
+          "source_table": "public.moderation_notes",
+          "source_columns": [
+            "listing_id"
+          ],
+          "target_table": "public.listings",
+          "target_columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "reports_listing_id_fkey",
+          "source_table": "public.reports",
+          "source_columns": [
+            "listing_id"
+          ],
+          "target_table": "public.listings",
+          "target_columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "conversations_listing_id_fkey",
+          "source_table": "public.conversations",
+          "source_columns": [
+            "listing_id"
+          ],
+          "target_table": "public.listings",
+          "target_columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "favorites_listing_id_fkey",
+          "source_table": "public.favorites",
+          "source_columns": [
+            "listing_id"
+          ],
+          "target_table": "public.listings",
+          "target_columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "listing_approvals_listing_id_fkey",
+          "source_table": "public.listing_approvals",
+          "source_columns": [
+            "listing_id"
+          ],
+          "target_table": "public.listings",
+          "target_columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "listing_contacts_listing_id_fkey",
+          "source_table": "public.listing_contacts",
+          "source_columns": [
+            "listing_id"
+          ],
+          "target_table": "public.listings",
+          "target_columns": [
+            "id"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "public.listing_approvals",
+      "rls_enabled": true,
+      "rows": 9,
+      "columns": [
+        {
+          "name": "listing_id",
+          "data_type": "uuid",
+          "format": "uuid",
+          "options": [
+            "updatable"
+          ]
+        },
+        {
+          "name": "status",
+          "data_type": "text",
+          "format": "text",
+          "options": [
+            "updatable"
+          ],
+          "default_value": "'pending'::text",
+          "check": "status = ANY (ARRAY['pending'::text, 'approved'::text, 'rejected'::text])"
+        },
+        {
+          "name": "reviewed_by",
+          "data_type": "uuid",
+          "format": "uuid",
+          "options": [
+            "nullable",
+            "updatable"
+          ]
+        },
+        {
+          "name": "reviewed_at",
+          "data_type": "timestamp with time zone",
+          "format": "timestamptz",
+          "options": [
+            "nullable",
+            "updatable"
+          ]
+        },
+        {
+          "name": "updated_at",
+          "data_type": "timestamp with time zone",
+          "format": "timestamptz",
+          "options": [
+            "updatable"
+          ],
+          "default_value": "now()"
+        }
+      ],
+      "primary_keys": [
+        "listing_id"
+      ],
+      "foreign_key_constraints": [
+        {
+          "name": "listing_approvals_listing_id_fkey",
+          "source_table": "public.listing_approvals",
+          "source_columns": [
+            "listing_id"
+          ],
+          "target_table": "public.listings",
+          "target_columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "listing_approvals_reviewed_by_fkey",
+          "source_table": "public.listing_approvals",
+          "source_columns": [
+            "reviewed_by"
+          ],
+          "target_table": "public.profiles",
+          "target_columns": [
+            "id"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "public.listing_images",
+      "rls_enabled": true,
+      "rows": 24,
+      "columns": [
+        {
+          "name": "id",
+          "data_type": "uuid",
+          "format": "uuid",
+          "options": [
+            "updatable"
+          ],
+          "default_value": "gen_random_uuid()"
+        },
+        {
+          "name": "listing_id",
+          "data_type": "uuid",
+          "format": "uuid",
+          "options": [
+            "updatable"
+          ]
+        },
+        {
+          "name": "storage_path",
+          "data_type": "text",
+          "format": "text",
+          "options": [
+            "updatable",
+            "unique"
+          ]
+        },
+        {
+          "name": "sort_order",
+          "data_type": "integer",
+          "format": "int4",
+          "options": [
+            "updatable"
+          ],
+          "default_value": "0",
+          "check": "sort_order >= 0 AND sort_order <= 20"
+        },
+        {
+          "name": "created_at",
+          "data_type": "timestamp with time zone",
+          "format": "timestamptz",
+          "options": [
+            "updatable"
+          ],
+          "default_value": "now()"
+        }
+      ],
+      "primary_keys": [
+        "id"
+      ],
+      "foreign_key_constraints": [
+        {
+          "name": "listing_images_listing_id_fkey",
+          "source_table": "public.listing_images",
+          "source_columns": [
+            "listing_id"
+          ],
+          "target_table": "public.listings",
+          "target_columns": [
+            "id"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "public.favorites",
+      "rls_enabled": true,
+      "rows": 1,
+      "columns": [
+        {
+          "name": "user_id",
+          "data_type": "uuid",
+          "format": "uuid",
+          "options": [
+            "updatable"
+          ]
+        },
+        {
+          "name": "listing_id",
+          "data_type": "uuid",
+          "format": "uuid",
+          "options": [
+            "updatable"
+          ]
+        },
+        {
+          "name": "created_at",
+          "data_type": "timestamp with time zone",
+          "format": "timestamptz",
+          "options": [
+            "updatable"
+          ],
+          "default_value": "now()"
+        }
+      ],
+      "primary_keys": [
+        "user_id",
+        "listing_id"
+      ],
+      "foreign_key_constraints": [
+        {
+          "name": "favorites_user_id_fkey",
+          "source_table": "public.favorites",
+          "source_columns": [
+            "user_id"
+          ],
+          "target_table": "public.profiles",
+          "target_columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "favorites_listing_id_fkey",
+          "source_table": "public.favorites",
+          "source_columns": [
+            "listing_id"
+          ],
+          "target_table": "public.listings",
+          "target_columns": [
+            "id"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "public.conversations",
+      "rls_enabled": true,
+      "rows": 1,
+      "columns": [
+        {
+          "name": "id",
+          "data_type": "uuid",
+          "format": "uuid",
+          "options": [
+            "updatable"
+          ],
+          "default_value": "gen_random_uuid()"
+        },
+        {
+          "name": "listing_id",
+          "data_type": "uuid",
+          "format": "uuid",
+          "options": [
+            "updatable"
+          ]
+        },
+        {
+          "name": "buyer_id",
+          "data_type": "uuid",
+          "format": "uuid",
+          "options": [
+            "updatable"
+          ]
+        },
+        {
+          "name": "seller_id",
+          "data_type": "uuid",
+          "format": "uuid",
+          "options": [
+            "updatable"
+          ]
+        },
+        {
+          "name": "created_at",
+          "data_type": "timestamp with time zone",
+          "format": "timestamptz",
+          "options": [
+            "updatable"
+          ],
+          "default_value": "now()"
+        },
+        {
+          "name": "updated_at",
+          "data_type": "timestamp with time zone",
+          "format": "timestamptz",
+          "options": [
+            "updatable"
+          ],
+          "default_value": "now()"
+        }
+      ],
+      "primary_keys": [
+        "id"
+      ],
+      "foreign_key_constraints": [
+        {
+          "name": "conversations_seller_id_fkey",
+          "source_table": "public.conversations",
+          "source_columns": [
+            "seller_id"
+          ],
+          "target_table": "public.profiles",
+          "target_columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "conversations_listing_id_fkey",
+          "source_table": "public.conversations",
+          "source_columns": [
+            "listing_id"
+          ],
+          "target_table": "public.listings",
+          "target_columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "conversations_buyer_id_fkey",
+          "source_table": "public.conversations",
+          "source_columns": [
+            "buyer_id"
+          ],
+          "target_table": "public.profiles",
+          "target_columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "messages_conversation_id_fkey",
+          "source_table": "public.messages",
+          "source_columns": [
+            "conversation_id"
+          ],
+          "target_table": "public.conversations",
+          "target_columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "conversation_hidden_conversation_id_fkey",
+          "source_table": "public.conversation_hidden",
+          "source_columns": [
+            "conversation_id"
+          ],
+          "target_table": "public.conversations",
+          "target_columns": [
+            "id"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "public.messages",
+      "rls_enabled": true,
+      "rows": 3,
+      "columns": [
+        {
+          "name": "id",
+          "data_type": "uuid",
+          "format": "uuid",
+          "options": [
+            "updatable"
+          ],
+          "default_value": "gen_random_uuid()"
+        },
+        {
+          "name": "conversation_id",
+          "data_type": "uuid",
+          "format": "uuid",
+          "options": [
+            "updatable"
+          ]
+        },
+        {
+          "name": "sender_id",
+          "data_type": "uuid",
+          "format": "uuid",
+          "options": [
+            "updatable"
+          ]
+        },
+        {
+          "name": "body",
+          "data_type": "text",
+          "format": "text",
+          "options": [
+            "updatable"
+          ],
+          "check": "char_length(body) >= 1 AND char_length(body) <= 2000"
+        },
+        {
+          "name": "created_at",
+          "data_type": "timestamp with time zone",
+          "format": "timestamptz",
+          "options": [
+            "updatable"
+          ],
+          "default_value": "now()"
+        }
+      ],
+      "primary_keys": [
+        "id"
+      ],
+      "foreign_key_constraints": [
+        {
+          "name": "messages_conversation_id_fkey",
+          "source_table": "public.messages",
+          "source_columns": [
+            "conversation_id"
+          ],
+          "target_table": "public.conversations",
+          "target_columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "messages_sender_id_fkey",
+          "source_table": "public.messages",
+          "source_columns": [
+            "sender_id"
+          ],
+          "target_table": "public.profiles",
+          "target_columns": [
+            "id"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "public.reports",
+      "rls_enabled": true,
+      "rows": 0,
+      "columns": [
+        {
+          "name": "id",
+          "data_type": "uuid",
+          "format": "uuid",
+          "options": [
+            "updatable"
+          ],
+          "default_value": "gen_random_uuid()"
+        },
+        {
+          "name": "reporter_id",
+          "data_type": "uuid",
+          "format": "uuid",
+          "options": [
+            "updatable"
+          ]
+        },
+        {
+          "name": "listing_id",
+          "data_type": "uuid",
+          "format": "uuid",
+          "options": [
+            "updatable"
+          ]
+        },
+        {
+          "name": "reason",
+          "data_type": "text",
+          "format": "text",
+          "options": [
+            "updatable"
+          ],
+          "check": "reason = ANY (ARRAY['fraud'::text, 'illegal'::text, 'counterfeit'::text, 'spam'::text, 'misleading'::text, 'inappropriate'::text, 'other'::text])"
+        },
+        {
+          "name": "details",
+          "data_type": "text",
+          "format": "text",
+          "options": [
+            "nullable",
+            "updatable"
+          ],
+          "check": "details IS NULL OR char_length(details) <= 1000"
+        },
+        {
+          "name": "status",
+          "data_type": "text",
+          "format": "text",
+          "options": [
+            "updatable"
+          ],
+          "default_value": "'open'::text",
+          "check": "status = ANY (ARRAY['open'::text, 'reviewing'::text, 'resolved'::text, 'dismissed'::text])"
+        },
+        {
+          "name": "created_at",
+          "data_type": "timestamp with time zone",
+          "format": "timestamptz",
+          "options": [
+            "updatable"
+          ],
+          "default_value": "now()"
+        },
+        {
+          "name": "updated_at",
+          "data_type": "timestamp with time zone",
+          "format": "timestamptz",
+          "options": [
+            "updatable"
+          ],
+          "default_value": "now()"
+        }
+      ],
+      "primary_keys": [
+        "id"
+      ],
+      "foreign_key_constraints": [
+        {
+          "name": "reports_listing_id_fkey",
+          "source_table": "public.reports",
+          "source_columns": [
+            "listing_id"
+          ],
+          "target_table": "public.listings",
+          "target_columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "reports_reporter_id_fkey",
+          "source_table": "public.reports",
+          "source_columns": [
+            "reporter_id"
+          ],
+          "target_table": "public.profiles",
+          "target_columns": [
+            "id"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "public.moderation_notes",
+      "rls_enabled": true,
+      "rows": 0,
+      "columns": [
+        {
+          "name": "id",
+          "data_type": "uuid",
+          "format": "uuid",
+          "options": [
+            "updatable"
+          ],
+          "default_value": "gen_random_uuid()"
+        },
+        {
+          "name": "listing_id",
+          "data_type": "uuid",
+          "format": "uuid",
+          "options": [
+            "nullable",
+            "updatable"
+          ]
+        },
+        {
+          "name": "user_id",
+          "data_type": "uuid",
+          "format": "uuid",
+          "options": [
+            "nullable",
+            "updatable"
+          ]
+        },
+        {
+          "name": "moderator_id",
+          "data_type": "uuid",
+          "format": "uuid",
+          "options": [
+            "updatable"
+          ]
+        },
+        {
+          "name": "note",
+          "data_type": "text",
+          "format": "text",
+          "options": [
+            "updatable"
+          ],
+          "check": "char_length(note) >= 1 AND char_length(note) <= 2000"
+        },
+        {
+          "name": "created_at",
+          "data_type": "timestamp with time zone",
+          "format": "timestamptz",
+          "options": [
+            "updatable"
+          ],
+          "default_value": "now()"
+        }
+      ],
+      "primary_keys": [
+        "id"
+      ],
+      "foreign_key_constraints": [
+        {
+          "name": "moderation_notes_moderator_id_fkey",
+          "source_table": "public.moderation_notes",
+          "source_columns": [
+            "moderator_id"
+          ],
+          "target_table": "public.profiles",
+          "target_columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "moderation_notes_user_id_fkey",
+          "source_table": "public.moderation_notes",
+          "source_columns": [
+            "user_id"
+          ],
+          "target_table": "public.profiles",
+          "target_columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "moderation_notes_listing_id_fkey",
+          "source_table": "public.moderation_notes",
+          "source_columns": [
+            "listing_id"
+          ],
+          "target_table": "public.listings",
+          "target_columns": [
+            "id"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "public.marketplace_settings",
+      "rls_enabled": true,
+      "rows": 1,
+      "columns": [
+        {
+          "name": "id",
+          "data_type": "boolean",
+          "format": "bool",
+          "options": [
+            "updatable"
+          ],
+          "default_value": "true",
+          "check": "id = true"
+        },
+        {
+          "name": "moderation_required",
+          "data_type": "boolean",
+          "format": "bool",
+          "options": [
+            "updatable"
+          ],
+          "default_value": "false"
+        },
+        {
+          "name": "updated_at",
+          "data_type": "timestamp with time zone",
+          "format": "timestamptz",
+          "options": [
+            "updatable"
+          ],
+          "default_value": "now()"
+        }
+      ],
+      "primary_keys": [
+        "id"
+      ]
+    },
+    {
+      "name": "public.listing_contacts",
+      "rls_enabled": true,
+      "rows": 9,
+      "columns": [
+        {
+          "name": "listing_id",
+          "data_type": "uuid",
+          "format": "uuid",
+          "options": [
+            "updatable"
+          ]
+        },
+        {
+          "name": "seller_id",
+          "data_type": "uuid",
+          "format": "uuid",
+          "options": [
+            "updatable"
+          ]
+        },
+        {
+          "name": "phone",
+          "data_type": "text",
+          "format": "text",
+          "options": [
+            "nullable",
+            "updatable"
+          ],
+          "check": "phone IS NULL OR char_length(phone) >= 6 AND char_length(phone) <= 30"
+        },
+        {
+          "name": "whatsapp",
+          "data_type": "text",
+          "format": "text",
+          "options": [
+            "nullable",
+            "updatable"
+          ],
+          "check": "whatsapp IS NULL OR char_length(whatsapp) >= 6 AND char_length(whatsapp) <= 30"
+        },
+        {
+          "name": "updated_at",
+          "data_type": "timestamp with time zone",
+          "format": "timestamptz",
+          "options": [
+            "updatable"
+          ],
+          "default_value": "now()"
+        }
+      ],
+      "primary_keys": [
+        "listing_id"
+      ],
+      "foreign_key_constraints": [
+        {
+          "name": "listing_contacts_listing_id_fkey",
+          "source_table": "public.listing_contacts",
+          "source_columns": [
+            "listing_id"
+          ],
+          "target_table": "public.listings",
+          "target_columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "listing_contacts_seller_id_fkey",
+          "source_table": "public.listing_contacts",
+          "source_columns": [
+            "seller_id"
+          ],
+          "target_table": "public.profiles",
+          "target_columns": [
+            "id"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "public.site_release_chunks",
+      "rls_enabled": true,
+      "rows": 14,
+      "columns": [
+        {
+          "name": "release_id",
+          "data_type": "text",
+          "format": "text",
+          "options": [
+            "updatable"
+          ]
+        },
+        {
+          "name": "seq",
+          "data_type": "integer",
+          "format": "int4",
+          "options": [
+            "updatable"
+          ]
+        },
+        {
+          "name": "data",
+          "data_type": "text",
+          "format": "text",
+          "options": [
+            "updatable"
+          ]
+        },
+        {
+          "name": "created_at",
+          "data_type": "timestamp with time zone",
+          "format": "timestamptz",
+          "options": [
+            "updatable"
+          ],
+          "default_value": "now()"
+        }
+      ],
+      "primary_keys": [
+        "release_id",
+        "seq"
+      ]
+    },
+    {
+      "name": "public.newsletter_editors",
+      "rls_enabled": true,
+      "rows": 1,
+      "columns": [
+        {
+          "name": "email",
+          "data_type": "text",
+          "format": "text",
+          "options": [
+            "updatable"
+          ],
+          "check": "email = lower(btrim(email))"
+        },
+        {
+          "name": "added_by",
+          "data_type": "uuid",
+          "format": "uuid",
+          "options": [
+            "nullable",
+            "updatable"
+          ]
+        },
+        {
+          "name": "created_at",
+          "data_type": "timestamp with time zone",
+          "format": "timestamptz",
+          "options": [
+            "updatable"
+          ],
+          "default_value": "now()"
+        }
+      ],
+      "primary_keys": [
+        "email"
+      ],
+      "foreign_key_constraints": [
+        {
+          "name": "newsletter_editors_added_by_fkey",
+          "source_table": "public.newsletter_editors",
+          "source_columns": [
+            "added_by"
+          ],
+          "target_table": "auth.users",
+          "target_columns": [
+            "id"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "public.blog_posts",
+      "rls_enabled": true,
+      "rows": 3,
+      "columns": [
+        {
+          "name": "id",
+          "data_type": "uuid",
+          "format": "uuid",
+          "options": [
+            "updatable"
+          ],
+          "default_value": "gen_random_uuid()"
+        },
+        {
+          "name": "author_id",
+          "data_type": "uuid",
+          "format": "uuid",
+          "options": [
+            "nullable",
+            "updatable"
+          ]
+        },
+        {
+          "name": "author_name",
+          "data_type": "text",
+          "format": "text",
+          "options": [
+            "nullable",
+            "updatable"
+          ]
+        },
+        {
+          "name": "title",
+          "data_type": "text",
+          "format": "text",
+          "options": [
+            "updatable"
+          ],
+          "check": "char_length(title) >= 3 AND char_length(title) <= 180"
+        },
+        {
+          "name": "slug",
+          "data_type": "text",
+          "format": "text",
+          "options": [
+            "updatable",
+            "unique"
+          ],
+          "check": "char_length(slug) >= 3 AND char_length(slug) <= 220"
+        },
+        {
+          "name": "excerpt",
+          "data_type": "text",
+          "format": "text",
+          "options": [
+            "nullable",
+            "updatable"
+          ]
+        },
+        {
+          "name": "body",
+          "data_type": "text",
+          "format": "text",
+          "options": [
+            "updatable"
+          ],
+          "check": "char_length(body) >= 10"
+        },
+        {
+          "name": "image_path",
+          "data_type": "text",
+          "format": "text",
+          "options": [
+            "nullable",
+            "updatable"
+          ]
+        },
+        {
+          "name": "status",
+          "data_type": "text",
+          "format": "text",
+          "options": [
+            "updatable"
+          ],
+          "default_value": "'draft'::text",
+          "check": "status = ANY (ARRAY['draft'::text, 'published'::text])"
+        },
+        {
+          "name": "published_at",
+          "data_type": "timestamp with time zone",
+          "format": "timestamptz",
+          "options": [
+            "nullable",
+            "updatable"
+          ]
+        },
+        {
+          "name": "created_at",
+          "data_type": "timestamp with time zone",
+          "format": "timestamptz",
+          "options": [
+            "updatable"
+          ],
+          "default_value": "now()"
+        },
+        {
+          "name": "updated_at",
+          "data_type": "timestamp with time zone",
+          "format": "timestamptz",
+          "options": [
+            "updatable"
+          ],
+          "default_value": "now()"
+        }
+      ],
+      "primary_keys": [
+        "id"
+      ],
+      "foreign_key_constraints": [
+        {
+          "name": "blog_comments_post_id_fkey",
+          "source_table": "public.blog_comments",
+          "source_columns": [
+            "post_id"
+          ],
+          "target_table": "public.blog_posts",
+          "target_columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "blog_posts_author_id_fkey",
+          "source_table": "public.blog_posts",
+          "source_columns": [
+            "author_id"
+          ],
+          "target_table": "auth.users",
+          "target_columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "blog_post_likes_post_id_fkey",
+          "source_table": "public.blog_post_likes",
+          "source_columns": [
+            "post_id"
+          ],
+          "target_table": "public.blog_posts",
+          "target_columns": [
+            "id"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "public.blog_post_likes",
+      "rls_enabled": true,
+      "rows": 3,
+      "columns": [
+        {
+          "name": "post_id",
+          "data_type": "uuid",
+          "format": "uuid",
+          "options": [
+            "updatable"
+          ]
+        },
+        {
+          "name": "user_id",
+          "data_type": "uuid",
+          "format": "uuid",
+          "options": [
+            "updatable"
+          ]
+        },
+        {
+          "name": "created_at",
+          "data_type": "timestamp with time zone",
+          "format": "timestamptz",
+          "options": [
+            "updatable"
+          ],
+          "default_value": "now()"
+        }
+      ],
+      "primary_keys": [
+        "post_id",
+        "user_id"
+      ],
+      "foreign_key_constraints": [
+        {
+          "name": "blog_post_likes_post_id_fkey",
+          "source_table": "public.blog_post_likes",
+          "source_columns": [
+            "post_id"
+          ],
+          "target_table": "public.blog_posts",
+          "target_columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "blog_post_likes_user_id_fkey",
+          "source_table": "public.blog_post_likes",
+          "source_columns": [
+            "user_id"
+          ],
+          "target_table": "auth.users",
+          "target_columns": [
+            "id"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "public.blog_comments",
+      "rls_enabled": true,
+      "rows": 1,
+      "columns": [
+        {
+          "name": "id",
+          "data_type": "uuid",
+          "format": "uuid",
+          "options": [
+            "updatable"
+          ],
+          "default_value": "gen_random_uuid()"
+        },
+        {
+          "name": "post_id",
+          "data_type": "uuid",
+          "format": "uuid",
+          "options": [
+            "updatable"
+          ]
+        },
+        {
+          "name": "user_id",
+          "data_type": "uuid",
+          "format": "uuid",
+          "options": [
+            "updatable"
+          ]
+        },
+        {
+          "name": "body",
+          "data_type": "text",
+          "format": "text",
+          "options": [
+            "updatable"
+          ],
+          "check": "char_length(TRIM(BOTH FROM body)) >= 1 AND char_length(TRIM(BOTH FROM body)) <= 1000"
+        },
+        {
+          "name": "created_at",
+          "data_type": "timestamp with time zone",
+          "format": "timestamptz",
+          "options": [
+            "updatable"
+          ],
+          "default_value": "now()"
+        },
+        {
+          "name": "updated_at",
+          "data_type": "timestamp with time zone",
+          "format": "timestamptz",
+          "options": [
+            "updatable"
+          ],
+          "default_value": "now()"
+        },
+        {
+          "name": "parent_id",
+          "data_type": "uuid",
+          "format": "uuid",
+          "options": [
+            "nullable",
+            "updatable"
+          ]
+        }
+      ],
+      "primary_keys": [
+        "id"
+      ],
+      "foreign_key_constraints": [
+        {
+          "name": "blog_comments_post_id_fkey",
+          "source_table": "public.blog_comments",
+          "source_columns": [
+            "post_id"
+          ],
+          "target_table": "public.blog_posts",
+          "target_columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "blog_comments_user_id_fkey",
+          "source_table": "public.blog_comments",
+          "source_columns": [
+            "user_id"
+          ],
+          "target_table": "auth.users",
+          "target_columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "blog_comments_parent_id_fkey",
+          "source_table": "public.blog_comments",
+          "source_columns": [
+            "parent_id"
+          ],
+          "target_table": "public.blog_comments",
+          "target_columns": [
+            "id"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "public.user_ratings",
+      "rls_enabled": true,
+      "rows": 4,
+      "comment": "One 1-5 star rating per reviewer for a seller; self-ratings are forbidden.",
+      "columns": [
+        {
+          "name": "reviewer_id",
+          "data_type": "uuid",
+          "format": "uuid",
+          "options": [
+            "updatable"
+          ]
+        },
+        {
+          "name": "seller_id",
+          "data_type": "uuid",
+          "format": "uuid",
+          "options": [
+            "updatable"
+          ]
+        },
+        {
+          "name": "rating",
+          "data_type": "smallint",
+          "format": "int2",
+          "options": [
+            "updatable"
+          ],
+          "check": "rating >= 1 AND rating <= 5"
+        },
+        {
+          "name": "created_at",
+          "data_type": "timestamp with time zone",
+          "format": "timestamptz",
+          "options": [
+            "updatable"
+          ],
+          "default_value": "now()"
+        },
+        {
+          "name": "updated_at",
+          "data_type": "timestamp with time zone",
+          "format": "timestamptz",
+          "options": [
+            "updatable"
+          ],
+          "default_value": "now()"
+        }
+      ],
+      "primary_keys": [
+        "reviewer_id",
+        "seller_id"
+      ],
+      "foreign_key_constraints": [
+        {
+          "name": "user_ratings_reviewer_id_fkey",
+          "source_table": "public.user_ratings",
+          "source_columns": [
+            "reviewer_id"
+          ],
+          "target_table": "auth.users",
+          "target_columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "user_ratings_seller_id_fkey",
+          "source_table": "public.user_ratings",
+          "source_columns": [
+            "seller_id"
+          ],
+          "target_table": "auth.users",
+          "target_columns": [
+            "id"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "public.conversation_hidden",
+      "rls_enabled": true,
+      "rows": 2,
+      "columns": [
+        {
+          "name": "conversation_id",
+          "data_type": "uuid",
+          "format": "uuid",
+          "options": [
+            "updatable"
+          ]
+        },
+        {
+          "name": "user_id",
+          "data_type": "uuid",
+          "format": "uuid",
+          "options": [
+            "updatable"
+          ]
+        },
+        {
+          "name": "hidden_at",
+          "data_type": "timestamp with time zone",
+          "format": "timestamptz",
+          "options": [
+            "updatable"
+          ],
+          "default_value": "now()"
+        }
+      ],
+      "primary_keys": [
+        "conversation_id",
+        "user_id"
+      ],
+      "foreign_key_constraints": [
+        {
+          "name": "conversation_hidden_conversation_id_fkey",
+          "source_table": "public.conversation_hidden",
+          "source_columns": [
+            "conversation_id"
+          ],
+          "target_table": "public.conversations",
+          "target_columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "conversation_hidden_user_id_fkey",
+          "source_table": "public.conversation_hidden",
+          "source_columns": [
+            "user_id"
+          ],
+          "target_table": "auth.users",
+          "target_columns": [
+            "id"
+          ]
+        }
+      ]
+    }
+  ],
+  "rls_policies": [
+    {
+      "schemaname": "public",
+      "tablename": "blog_comments",
+      "policyname": "blog_comments_auth_insert",
+      "permissive": "PERMISSIVE",
+      "roles": "{authenticated}",
+      "cmd": "INSERT",
+      "qual": null,
+      "with_check": "((user_id = auth.uid()) AND (EXISTS ( SELECT 1\n   FROM blog_posts p\n  WHERE ((p.id = blog_comments.post_id) AND (p.status = 'published'::text)))) AND (NOT (EXISTS ( SELECT 1\n   FROM user_flags f\n  WHERE ((f.user_id = auth.uid()) AND (f.suspended = true) AND ((f.suspended_until IS NULL) OR (f.suspended_until > now())))))))"
+    },
+    {
+      "schemaname": "public",
+      "tablename": "blog_comments",
+      "policyname": "blog_comments_owner_delete",
+      "permissive": "PERMISSIVE",
+      "roles": "{authenticated}",
+      "cmd": "DELETE",
+      "qual": "((user_id = auth.uid()) OR is_admin())",
+      "with_check": null
+    },
+    {
+      "schemaname": "public",
+      "tablename": "blog_comments",
+      "policyname": "blog_comments_public_read",
+      "permissive": "PERMISSIVE",
+      "roles": "{anon,authenticated}",
+      "cmd": "SELECT",
+      "qual": "(EXISTS ( SELECT 1\n   FROM blog_posts p\n  WHERE ((p.id = blog_comments.post_id) AND (p.status = 'published'::text))))",
+      "with_check": null
+    },
+    {
+      "schemaname": "public",
+      "tablename": "blog_post_likes",
+      "policyname": "blog_likes_own_delete",
+      "permissive": "PERMISSIVE",
+      "roles": "{authenticated}",
+      "cmd": "DELETE",
+      "qual": "((user_id = auth.uid()) OR is_admin())",
+      "with_check": null
+    },
+    {
+      "schemaname": "public",
+      "tablename": "blog_post_likes",
+      "policyname": "blog_likes_own_insert",
+      "permissive": "PERMISSIVE",
+      "roles": "{authenticated}",
+      "cmd": "INSERT",
+      "qual": null,
+      "with_check": "((user_id = auth.uid()) AND (EXISTS ( SELECT 1\n   FROM blog_posts p\n  WHERE ((p.id = blog_post_likes.post_id) AND (p.status = 'published'::text)))) AND (NOT (EXISTS ( SELECT 1\n   FROM user_flags f\n  WHERE ((f.user_id = auth.uid()) AND (f.suspended = true) AND ((f.suspended_until IS NULL) OR (f.suspended_until > now())))))))"
+    },
+    {
+      "schemaname": "public",
+      "tablename": "blog_post_likes",
+      "policyname": "blog_likes_own_read",
+      "permissive": "PERMISSIVE",
+      "roles": "{authenticated}",
+      "cmd": "SELECT",
+      "qual": "((user_id = auth.uid()) OR is_admin())",
+      "with_check": null
+    },
+    {
+      "schemaname": "public",
+      "tablename": "blog_posts",
+      "policyname": "blog_posts_delete",
+      "permissive": "PERMISSIVE",
+      "roles": "{public}",
+      "cmd": "DELETE",
+      "qual": "(is_admin() OR (is_newsletter_editor() AND (author_id = auth.uid())))",
+      "with_check": null
+    },
+    {
+      "schemaname": "public",
+      "tablename": "blog_posts",
+      "policyname": "blog_posts_insert",
+      "permissive": "PERMISSIVE",
+      "roles": "{public}",
+      "cmd": "INSERT",
+      "qual": null,
+      "with_check": "((is_admin() OR is_newsletter_editor()) AND (author_id = auth.uid()) AND (NOT is_user_suspended(auth.uid())))"
+    },
+    {
+      "schemaname": "public",
+      "tablename": "blog_posts",
+      "policyname": "blog_posts_read",
+      "permissive": "PERMISSIVE",
+      "roles": "{public}",
+      "cmd": "SELECT",
+      "qual": "((status = 'published'::text) OR is_admin() OR (is_newsletter_editor() AND (author_id = auth.uid())))",
+      "with_check": null
+    },
+    {
+      "schemaname": "public",
+      "tablename": "blog_posts",
+      "policyname": "blog_posts_update",
+      "permissive": "PERMISSIVE",
+      "roles": "{public}",
+      "cmd": "UPDATE",
+      "qual": "(is_admin() OR (is_newsletter_editor() AND (author_id = auth.uid())))",
+      "with_check": "(is_admin() OR (is_newsletter_editor() AND (author_id = auth.uid())))"
+    },
+    {
+      "schemaname": "public",
+      "tablename": "categories",
+      "policyname": "categories_admin_delete",
+      "permissive": "PERMISSIVE",
+      "roles": "{authenticated}",
+      "cmd": "DELETE",
+      "qual": "( SELECT is_admin() AS is_admin)",
+      "with_check": null
+    },
+    {
+      "schemaname": "public",
+      "tablename": "categories",
+      "policyname": "categories_admin_insert",
+      "permissive": "PERMISSIVE",
+      "roles": "{authenticated}",
+      "cmd": "INSERT",
+      "qual": null,
+      "with_check": "( SELECT is_admin() AS is_admin)"
+    },
+    {
+      "schemaname": "public",
+      "tablename": "categories",
+      "policyname": "categories_admin_update",
+      "permissive": "PERMISSIVE",
+      "roles": "{authenticated}",
+      "cmd": "UPDATE",
+      "qual": "( SELECT is_admin() AS is_admin)",
+      "with_check": "( SELECT is_admin() AS is_admin)"
+    },
+    {
+      "schemaname": "public",
+      "tablename": "categories",
+      "policyname": "categories_public_read",
+      "permissive": "PERMISSIVE",
+      "roles": "{anon,authenticated}",
+      "cmd": "SELECT",
+      "qual": "((active = true) OR ( SELECT is_admin() AS is_admin))",
+      "with_check": null
+    },
+    {
+      "schemaname": "public",
+      "tablename": "conversation_hidden",
+      "policyname": "conversation_hidden_own_delete",
+      "permissive": "PERMISSIVE",
+      "roles": "{authenticated}",
+      "cmd": "DELETE",
+      "qual": "(user_id = ( SELECT auth.uid() AS uid))",
+      "with_check": null
+    },
+    {
+      "schemaname": "public",
+      "tablename": "conversation_hidden",
+      "policyname": "conversation_hidden_own_insert",
+      "permissive": "PERMISSIVE",
+      "roles": "{authenticated}",
+      "cmd": "INSERT",
+      "qual": null,
+      "with_check": "((user_id = ( SELECT auth.uid() AS uid)) AND (EXISTS ( SELECT 1\n   FROM conversations c\n  WHERE ((c.id = conversation_hidden.conversation_id) AND ((c.buyer_id = ( SELECT auth.uid() AS uid)) OR (c.seller_id = ( SELECT auth.uid() AS uid)))))))"
+    },
+    {
+      "schemaname": "public",
+      "tablename": "conversation_hidden",
+      "policyname": "conversation_hidden_own_select",
+      "permissive": "PERMISSIVE",
+      "roles": "{authenticated}",
+      "cmd": "SELECT",
+      "qual": "((user_id = ( SELECT auth.uid() AS uid)) AND (EXISTS ( SELECT 1\n   FROM conversations c\n  WHERE ((c.id = conversation_hidden.conversation_id) AND ((c.buyer_id = ( SELECT auth.uid() AS uid)) OR (c.seller_id = ( SELECT auth.uid() AS uid)))))))",
+      "with_check": null
+    },
+    {
+      "schemaname": "public",
+      "tablename": "conversation_hidden",
+      "policyname": "conversation_hidden_own_update",
+      "permissive": "PERMISSIVE",
+      "roles": "{authenticated}",
+      "cmd": "UPDATE",
+      "qual": "(user_id = ( SELECT auth.uid() AS uid))",
+      "with_check": "((user_id = ( SELECT auth.uid() AS uid)) AND (EXISTS ( SELECT 1\n   FROM conversations c\n  WHERE ((c.id = conversation_hidden.conversation_id) AND ((c.buyer_id = ( SELECT auth.uid() AS uid)) OR (c.seller_id = ( SELECT auth.uid() AS uid)))))))"
+    },
+    {
+      "schemaname": "public",
+      "tablename": "conversations",
+      "policyname": "conversations_buyer_insert",
+      "permissive": "PERMISSIVE",
+      "roles": "{public}",
+      "cmd": "INSERT",
+      "qual": null,
+      "with_check": "((buyer_id = auth.uid()) AND (buyer_id <> seller_id) AND (NOT is_user_suspended(auth.uid())) AND (EXISTS ( SELECT 1\n   FROM listings l\n  WHERE ((l.id = conversations.listing_id) AND (l.seller_id = conversations.seller_id)))))"
+    },
+    {
+      "schemaname": "public",
+      "tablename": "conversations",
+      "policyname": "conversations_participant_read",
+      "permissive": "PERMISSIVE",
+      "roles": "{authenticated}",
+      "cmd": "SELECT",
+      "qual": "((buyer_id = ( SELECT auth.uid() AS uid)) OR (seller_id = ( SELECT auth.uid() AS uid)) OR ( SELECT is_admin() AS is_admin))",
+      "with_check": null
+    },
+    {
+      "schemaname": "public",
+      "tablename": "favorites",
+      "policyname": "favorites_owner_delete",
+      "permissive": "PERMISSIVE",
+      "roles": "{public}",
+      "cmd": "DELETE",
+      "qual": "((user_id = auth.uid()) AND (NOT is_user_suspended(auth.uid())))",
+      "with_check": null
+    },
+    {
+      "schemaname": "public",
+      "tablename": "favorites",
+      "policyname": "favorites_owner_insert",
+      "permissive": "PERMISSIVE",
+      "roles": "{public}",
+      "cmd": "INSERT",
+      "qual": null,
+      "with_check": "((user_id = auth.uid()) AND (NOT is_user_suspended(auth.uid())))"
+    },
+    {
+      "schemaname": "public",
+      "tablename": "favorites",
+      "policyname": "favorites_owner_read",
+      "permissive": "PERMISSIVE",
+      "roles": "{authenticated}",
+      "cmd": "SELECT",
+      "qual": "(user_id = ( SELECT auth.uid() AS uid))",
+      "with_check": null
+    },
+    {
+      "schemaname": "public",
+      "tablename": "listing_approvals",
+      "policyname": "approvals_admin_update",
+      "permissive": "PERMISSIVE",
+      "roles": "{authenticated}",
+      "cmd": "UPDATE",
+      "qual": "( SELECT is_admin() AS is_admin)",
+      "with_check": "( SELECT is_admin() AS is_admin)"
+    },
+    {
+      "schemaname": "public",
+      "tablename": "listing_approvals",
+      "policyname": "approvals_read",
+      "permissive": "PERMISSIVE",
+      "roles": "{anon,authenticated}",
+      "cmd": "SELECT",
+      "qual": "true",
+      "with_check": null
+    },
+    {
+      "schemaname": "public",
+      "tablename": "listing_contacts",
+      "policyname": "listing_contacts_authenticated_read",
+      "permissive": "PERMISSIVE",
+      "roles": "{authenticated}",
+      "cmd": "SELECT",
+      "qual": "((seller_id = ( SELECT auth.uid() AS uid)) OR ( SELECT is_admin() AS is_admin) OR ((EXISTS ( SELECT 1\n   FROM listings l\n  WHERE ((l.id = listing_contacts.listing_id) AND (l.state = 'active'::text)))) AND (NOT (EXISTS ( SELECT 1\n   FROM profiles p\n  WHERE ((p.id = listing_contacts.seller_id) AND (COALESCE(p.contact_incognito, false) = true)))))))",
+      "with_check": null
+    },
+    {
+      "schemaname": "public",
+      "tablename": "listing_contacts",
+      "policyname": "listing_contacts_owner_delete",
+      "permissive": "PERMISSIVE",
+      "roles": "{authenticated}",
+      "cmd": "DELETE",
+      "qual": "((seller_id = ( SELECT auth.uid() AS uid)) OR ( SELECT is_admin() AS is_admin))",
+      "with_check": null
+    },
+    {
+      "schemaname": "public",
+      "tablename": "listing_contacts",
+      "policyname": "listing_contacts_owner_insert",
+      "permissive": "PERMISSIVE",
+      "roles": "{public}",
+      "cmd": "INSERT",
+      "qual": null,
+      "with_check": "((seller_id = auth.uid()) AND (NOT is_user_suspended(auth.uid())) AND (EXISTS ( SELECT 1\n   FROM listings l\n  WHERE ((l.id = listing_contacts.listing_id) AND (l.seller_id = auth.uid())))))"
+    },
+    {
+      "schemaname": "public",
+      "tablename": "listing_contacts",
+      "policyname": "listing_contacts_owner_update",
+      "permissive": "PERMISSIVE",
+      "roles": "{public}",
+      "cmd": "UPDATE",
+      "qual": "(((seller_id = auth.uid()) AND (NOT is_user_suspended(auth.uid()))) OR is_admin())",
+      "with_check": "(((seller_id = auth.uid()) AND (NOT is_user_suspended(auth.uid()))) OR is_admin())"
+    },
+    {
+      "schemaname": "public",
+      "tablename": "listing_images",
+      "policyname": "listing_images_owner_delete",
+      "permissive": "PERMISSIVE",
+      "roles": "{authenticated}",
+      "cmd": "DELETE",
+      "qual": "(EXISTS ( SELECT 1\n   FROM listings l\n  WHERE ((l.id = listing_images.listing_id) AND ((l.seller_id = ( SELECT auth.uid() AS uid)) OR ( SELECT is_admin() AS is_admin)))))",
+      "with_check": null
+    },
+    {
+      "schemaname": "public",
+      "tablename": "listing_images",
+      "policyname": "listing_images_owner_insert",
+      "permissive": "PERMISSIVE",
+      "roles": "{public}",
+      "cmd": "INSERT",
+      "qual": null,
+      "with_check": "((NOT is_user_suspended(auth.uid())) AND (EXISTS ( SELECT 1\n   FROM listings l\n  WHERE ((l.id = listing_images.listing_id) AND (l.seller_id = auth.uid())))))"
+    },
+    {
+      "schemaname": "public",
+      "tablename": "listing_images",
+      "policyname": "listing_images_owner_update",
+      "permissive": "PERMISSIVE",
+      "roles": "{public}",
+      "cmd": "UPDATE",
+      "qual": "(EXISTS ( SELECT 1\n   FROM listings l\n  WHERE ((l.id = listing_images.listing_id) AND (((l.seller_id = auth.uid()) AND (NOT is_user_suspended(auth.uid()))) OR is_admin()))))",
+      "with_check": "(EXISTS ( SELECT 1\n   FROM listings l\n  WHERE ((l.id = listing_images.listing_id) AND (((l.seller_id = auth.uid()) AND (NOT is_user_suspended(auth.uid()))) OR is_admin()))))"
+    },
+    {
+      "schemaname": "public",
+      "tablename": "listing_images",
+      "policyname": "listing_images_visible_read",
+      "permissive": "PERMISSIVE",
+      "roles": "{anon,authenticated}",
+      "cmd": "SELECT",
+      "qual": "(EXISTS ( SELECT 1\n   FROM listings l\n  WHERE (l.id = listing_images.listing_id)))",
+      "with_check": null
+    },
+    {
+      "schemaname": "public",
+      "tablename": "listings",
+      "policyname": "listings_owner_delete",
+      "permissive": "PERMISSIVE",
+      "roles": "{authenticated}",
+      "cmd": "DELETE",
+      "qual": "((seller_id = ( SELECT auth.uid() AS uid)) OR ( SELECT is_admin() AS is_admin))",
+      "with_check": null
+    },
+    {
+      "schemaname": "public",
+      "tablename": "listings",
+      "policyname": "listings_owner_insert",
+      "permissive": "PERMISSIVE",
+      "roles": "{public}",
+      "cmd": "INSERT",
+      "qual": null,
+      "with_check": "((seller_id = auth.uid()) AND (state = 'active'::text) AND (NOT is_user_suspended(auth.uid())))"
+    },
+    {
+      "schemaname": "public",
+      "tablename": "listings",
+      "policyname": "listings_owner_update",
+      "permissive": "PERMISSIVE",
+      "roles": "{public}",
+      "cmd": "UPDATE",
+      "qual": "(((seller_id = auth.uid()) AND (NOT is_user_suspended(auth.uid()))) OR is_admin())",
+      "with_check": "(((seller_id = auth.uid()) AND (NOT is_user_suspended(auth.uid()))) OR is_admin())"
+    },
+    {
+      "schemaname": "public",
+      "tablename": "listings",
+      "policyname": "listings_public_or_owner_read",
+      "permissive": "PERMISSIVE",
+      "roles": "{public}",
+      "cmd": "SELECT",
+      "qual": "(is_admin() OR (seller_id = auth.uid()) OR ((state = 'active'::text) AND (EXISTS ( SELECT 1\n   FROM listing_approvals a\n  WHERE ((a.listing_id = listings.id) AND (a.status = 'approved'::text)))) AND (NOT is_user_suspended(seller_id))))",
+      "with_check": null
+    },
+    {
+      "schemaname": "public",
+      "tablename": "marketplace_settings",
+      "policyname": "marketplace_settings_admin_update",
+      "permissive": "PERMISSIVE",
+      "roles": "{authenticated}",
+      "cmd": "UPDATE",
+      "qual": "( SELECT is_admin() AS is_admin)",
+      "with_check": "( SELECT is_admin() AS is_admin)"
+    },
+    {
+      "schemaname": "public",
+      "tablename": "marketplace_settings",
+      "policyname": "marketplace_settings_public_read",
+      "permissive": "PERMISSIVE",
+      "roles": "{anon,authenticated}",
+      "cmd": "SELECT",
+      "qual": "true",
+      "with_check": null
+    },
+    {
+      "schemaname": "public",
+      "tablename": "messages",
+      "policyname": "messages_participant_insert",
+      "permissive": "PERMISSIVE",
+      "roles": "{public}",
+      "cmd": "INSERT",
+      "qual": null,
+      "with_check": "((sender_id = auth.uid()) AND (NOT is_user_suspended(auth.uid())) AND (EXISTS ( SELECT 1\n   FROM conversations c\n  WHERE ((c.id = messages.conversation_id) AND ((c.buyer_id = auth.uid()) OR (c.seller_id = auth.uid()))))))"
+    },
+    {
+      "schemaname": "public",
+      "tablename": "messages",
+      "policyname": "messages_participant_read",
+      "permissive": "PERMISSIVE",
+      "roles": "{authenticated}",
+      "cmd": "SELECT",
+      "qual": "(EXISTS ( SELECT 1\n   FROM conversations c\n  WHERE ((c.id = messages.conversation_id) AND ((c.buyer_id = ( SELECT auth.uid() AS uid)) OR (c.seller_id = ( SELECT auth.uid() AS uid)) OR ( SELECT is_admin() AS is_admin)))))",
+      "with_check": null
+    },
+    {
+      "schemaname": "public",
+      "tablename": "moderation_notes",
+      "policyname": "moderation_notes_admin_all",
+      "permissive": "PERMISSIVE",
+      "roles": "{authenticated}",
+      "cmd": "ALL",
+      "qual": "( SELECT is_admin() AS is_admin)",
+      "with_check": "( SELECT is_admin() AS is_admin)"
+    },
+    {
+      "schemaname": "public",
+      "tablename": "newsletter_editors",
+      "policyname": "newsletter_editors_admin_delete",
+      "permissive": "PERMISSIVE",
+      "roles": "{public}",
+      "cmd": "DELETE",
+      "qual": "is_admin()",
+      "with_check": null
+    },
+    {
+      "schemaname": "public",
+      "tablename": "newsletter_editors",
+      "policyname": "newsletter_editors_admin_insert",
+      "permissive": "PERMISSIVE",
+      "roles": "{public}",
+      "cmd": "INSERT",
+      "qual": null,
+      "with_check": "is_admin()"
+    },
+    {
+      "schemaname": "public",
+      "tablename": "newsletter_editors",
+      "policyname": "newsletter_editors_admin_update",
+      "permissive": "PERMISSIVE",
+      "roles": "{public}",
+      "cmd": "UPDATE",
+      "qual": "is_admin()",
+      "with_check": "is_admin()"
+    },
+    {
+      "schemaname": "public",
+      "tablename": "newsletter_editors",
+      "policyname": "newsletter_editors_read",
+      "permissive": "PERMISSIVE",
+      "roles": "{public}",
+      "cmd": "SELECT",
+      "qual": "(is_admin() OR (email = lower(COALESCE((auth.jwt() ->> 'email'::text), ''::text))))",
+      "with_check": null
+    },
+    {
+      "schemaname": "public",
+      "tablename": "profiles",
+      "policyname": "profiles_owner_update",
+      "permissive": "PERMISSIVE",
+      "roles": "{authenticated}",
+      "cmd": "UPDATE",
+      "qual": "((( SELECT auth.uid() AS uid) = id) OR ( SELECT is_admin() AS is_admin))",
+      "with_check": "((( SELECT auth.uid() AS uid) = id) OR ( SELECT is_admin() AS is_admin))"
+    },
+    {
+      "schemaname": "public",
+      "tablename": "profiles",
+      "policyname": "profiles_public_read",
+      "permissive": "PERMISSIVE",
+      "roles": "{anon,authenticated}",
+      "cmd": "SELECT",
+      "qual": "true",
+      "with_check": null
+    },
+    {
+      "schemaname": "public",
+      "tablename": "reports",
+      "policyname": "reports_admin_update",
+      "permissive": "PERMISSIVE",
+      "roles": "{authenticated}",
+      "cmd": "UPDATE",
+      "qual": "( SELECT is_admin() AS is_admin)",
+      "with_check": "( SELECT is_admin() AS is_admin)"
+    },
+    {
+      "schemaname": "public",
+      "tablename": "reports",
+      "policyname": "reports_owner_insert",
+      "permissive": "PERMISSIVE",
+      "roles": "{authenticated}",
+      "cmd": "INSERT",
+      "qual": null,
+      "with_check": "((reporter_id = ( SELECT auth.uid() AS uid)) AND (EXISTS ( SELECT 1\n   FROM listings l\n  WHERE ((l.id = reports.listing_id) AND (l.seller_id <> ( SELECT auth.uid() AS uid))))))"
+    },
+    {
+      "schemaname": "public",
+      "tablename": "reports",
+      "policyname": "reports_owner_read",
+      "permissive": "PERMISSIVE",
+      "roles": "{authenticated}",
+      "cmd": "SELECT",
+      "qual": "((reporter_id = ( SELECT auth.uid() AS uid)) OR ( SELECT is_admin() AS is_admin))",
+      "with_check": null
+    },
+    {
+      "schemaname": "public",
+      "tablename": "site_release_chunks",
+      "policyname": "site_release_chunks_public_read",
+      "permissive": "PERMISSIVE",
+      "roles": "{anon,authenticated}",
+      "cmd": "SELECT",
+      "qual": "(release_id = ANY (ARRAY['current'::text, 'rebrand_v2'::text]))",
+      "with_check": null
+    },
+    {
+      "schemaname": "public",
+      "tablename": "user_flags",
+      "policyname": "user_flags_admin_insert",
+      "permissive": "PERMISSIVE",
+      "roles": "{authenticated}",
+      "cmd": "INSERT",
+      "qual": null,
+      "with_check": "( SELECT is_admin() AS is_admin)"
+    },
+    {
+      "schemaname": "public",
+      "tablename": "user_flags",
+      "policyname": "user_flags_admin_update",
+      "permissive": "PERMISSIVE",
+      "roles": "{authenticated}",
+      "cmd": "UPDATE",
+      "qual": "( SELECT is_admin() AS is_admin)",
+      "with_check": "( SELECT is_admin() AS is_admin)"
+    },
+    {
+      "schemaname": "public",
+      "tablename": "user_flags",
+      "policyname": "user_flags_public_read",
+      "permissive": "PERMISSIVE",
+      "roles": "{anon,authenticated}",
+      "cmd": "SELECT",
+      "qual": "true",
+      "with_check": null
+    },
+    {
+      "schemaname": "public",
+      "tablename": "user_ratings",
+      "policyname": "user_ratings_delete_own",
+      "permissive": "PERMISSIVE",
+      "roles": "{authenticated}",
+      "cmd": "DELETE",
+      "qual": "(auth.uid() = reviewer_id)",
+      "with_check": null
+    },
+    {
+      "schemaname": "public",
+      "tablename": "user_ratings",
+      "policyname": "user_ratings_insert_own",
+      "permissive": "PERMISSIVE",
+      "roles": "{authenticated}",
+      "cmd": "INSERT",
+      "qual": null,
+      "with_check": "((auth.uid() = reviewer_id) AND (reviewer_id <> seller_id))"
+    },
+    {
+      "schemaname": "public",
+      "tablename": "user_ratings",
+      "policyname": "user_ratings_select_own",
+      "permissive": "PERMISSIVE",
+      "roles": "{authenticated}",
+      "cmd": "SELECT",
+      "qual": "(auth.uid() = reviewer_id)",
+      "with_check": null
+    },
+    {
+      "schemaname": "public",
+      "tablename": "user_ratings",
+      "policyname": "user_ratings_update_own",
+      "permissive": "PERMISSIVE",
+      "roles": "{authenticated}",
+      "cmd": "UPDATE",
+      "qual": "(auth.uid() = reviewer_id)",
+      "with_check": "((auth.uid() = reviewer_id) AND (reviewer_id <> seller_id))"
+    }
+  ],
+  "views": [
+    {
+      "schemaname": "public",
+      "viewname": "blog_post_comment_counts",
+      "definition": " SELECT post_id,\n    count(*) AS comments_count\n   FROM blog_comments\n  GROUP BY post_id;"
+    },
+    {
+      "schemaname": "public",
+      "viewname": "blog_post_like_counts",
+      "definition": " SELECT post_id,\n    count(*) AS likes_count\n   FROM blog_post_likes\n  GROUP BY post_id;"
+    },
+    {
+      "schemaname": "public",
+      "viewname": "seller_rating_stats",
+      "definition": " SELECT seller_id,\n    round(avg(rating), 2) AS average_rating,\n    (count(*))::integer AS review_count\n   FROM user_ratings\n  GROUP BY seller_id;"
+    }
+  ],
+  "database_functions": [
+    {
+      "schema_name": "private",
+      "proname": "create_listing_approval",
+      "arguments": "",
+      "security_definer": true,
+      "definition": "CREATE OR REPLACE FUNCTION private.create_listing_approval()\n RETURNS trigger\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO ''\nAS $function$\ndeclare\n  needs_moderation boolean;\nbegin\n  select moderation_required into needs_moderation from public.marketplace_settings where id = true;\n  insert into public.listing_approvals(listing_id, status, reviewed_at)\n  values (new.id, case when coalesce(needs_moderation,false) then 'pending' else 'approved' end,\n          case when coalesce(needs_moderation,false) then null else now() end);\n  return new;\nend;\n$function$\n"
+    },
+    {
+      "schema_name": "private",
+      "proname": "enforce_active_listing_limit",
+      "arguments": "",
+      "security_definer": true,
+      "definition": "CREATE OR REPLACE FUNCTION private.enforce_active_listing_limit()\n RETURNS trigger\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'public', 'pg_temp'\nAS $function$\ndeclare\n  active_count integer;\nbegin\n  if new.state = 'active' then\n    perform pg_advisory_xact_lock(hashtextextended(new.seller_id::text, 0));\n\n    if tg_op = 'UPDATE'\n       and old.state = 'active'\n       and new.state = 'active'\n       and old.seller_id = new.seller_id then\n      return new;\n    end if;\n\n    select count(*)\n      into active_count\n      from public.listings\n     where seller_id = new.seller_id\n       and state = 'active'\n       and (tg_op = 'INSERT' or id <> new.id);\n\n    if active_count >= 10 then\n      raise exception using\n        errcode = 'P0001',\n        message = 'ACTIVE_LISTING_LIMIT_REACHED';\n    end if;\n  end if;\n\n  return new;\nend;\n$function$\n"
+    },
+    {
+      "schema_name": "private",
+      "proname": "handle_new_user",
+      "arguments": "",
+      "security_definer": true,
+      "definition": "CREATE OR REPLACE FUNCTION private.handle_new_user()\n RETURNS trigger\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO ''\nAS $function$\nbegin\n  insert into public.profiles (id, display_name)\n  values (\n    new.id,\n    left(coalesce(nullif(new.raw_user_meta_data ->> 'display_name',''), split_part(coalesce(new.email,'Membru'), '@', 1), 'Membru'), 60)\n  );\n  insert into public.user_flags (user_id) values (new.id);\n  return new;\nend;\n$function$\n"
+    },
+    {
+      "schema_name": "private",
+      "proname": "limit_listing_images",
+      "arguments": "",
+      "security_definer": false,
+      "definition": "CREATE OR REPLACE FUNCTION private.limit_listing_images()\n RETURNS trigger\n LANGUAGE plpgsql\n SET search_path TO ''\nAS $function$\nbegin\n  if (select count(*) from public.listing_images where listing_id = new.listing_id) >= 8 then\n    raise exception 'Maximum 8 images per listing';\n  end if;\n  return new;\nend;\n$function$\n"
+    },
+    {
+      "schema_name": "private",
+      "proname": "reset_approval_on_image_change",
+      "arguments": "",
+      "security_definer": true,
+      "definition": "CREATE OR REPLACE FUNCTION private.reset_approval_on_image_change()\n RETURNS trigger\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO ''\nAS $function$\ndeclare\n  target_listing uuid;\n  needs_moderation boolean;\nbegin\n  target_listing := coalesce(new.listing_id, old.listing_id);\n  select moderation_required into needs_moderation from public.marketplace_settings where id = true;\n  update public.listing_approvals\n    set status = case when coalesce(needs_moderation,false) then 'pending' else 'approved' end,\n        reviewed_by = null,\n        reviewed_at = case when coalesce(needs_moderation,false) then null else now() end,\n        updated_at = now()\n    where listing_id = target_listing;\n  return coalesce(new, old);\nend;\n$function$\n"
+    },
+    {
+      "schema_name": "private",
+      "proname": "reset_listing_approval",
+      "arguments": "",
+      "security_definer": true,
+      "definition": "CREATE OR REPLACE FUNCTION private.reset_listing_approval()\n RETURNS trigger\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO ''\nAS $function$\ndeclare\n  needs_moderation boolean;\nbegin\n  if row(old.title, old.description, old.price, old.currency, old.category_id, old.condition, old.location)\n     is distinct from\n     row(new.title, new.description, new.price, new.currency, new.category_id, new.condition, new.location) then\n    select moderation_required into needs_moderation from public.marketplace_settings where id = true;\n    update public.listing_approvals\n      set status = case when coalesce(needs_moderation,false) then 'pending' else 'approved' end,\n          reviewed_by = null,\n          reviewed_at = case when coalesce(needs_moderation,false) then null else now() end,\n          updated_at = now()\n      where listing_id = new.id;\n  end if;\n  return new;\nend;\n$function$\n"
+    },
+    {
+      "schema_name": "private",
+      "proname": "reveal_conversation_on_new_message",
+      "arguments": "",
+      "security_definer": true,
+      "definition": "CREATE OR REPLACE FUNCTION private.reveal_conversation_on_new_message()\n RETURNS trigger\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'public', 'pg_temp'\nAS $function$\nbegin\n  delete from public.conversation_hidden\n  where conversation_id = new.conversation_id;\n  return new;\nend;\n$function$\n"
+    },
+    {
+      "schema_name": "private",
+      "proname": "set_updated_at",
+      "arguments": "",
+      "security_definer": false,
+      "definition": "CREATE OR REPLACE FUNCTION private.set_updated_at()\n RETURNS trigger\n LANGUAGE plpgsql\n SET search_path TO ''\nAS $function$\nbegin\n  new.updated_at = now();\n  return new;\nend;\n$function$\n"
+    },
+    {
+      "schema_name": "private",
+      "proname": "touch_conversation_on_message",
+      "arguments": "",
+      "security_definer": true,
+      "definition": "CREATE OR REPLACE FUNCTION private.touch_conversation_on_message()\n RETURNS trigger\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO ''\nAS $function$\nbegin\n  update public.conversations set updated_at = now() where id = new.conversation_id;\n  return new;\nend;\n$function$\n"
+    },
+    {
+      "schema_name": "public",
+      "proname": "blog_posts_touch",
+      "arguments": "",
+      "security_definer": false,
+      "definition": "CREATE OR REPLACE FUNCTION public.blog_posts_touch()\n RETURNS trigger\n LANGUAGE plpgsql\n SET search_path TO ''\nAS $function$\nbegin\n  new.updated_at := now();\n  if new.status = 'published' and new.published_at is null then\n    new.published_at := now();\n  end if;\n  return new;\nend;\n$function$\n"
+    },
+    {
+      "schema_name": "public",
+      "proname": "is_admin",
+      "arguments": "",
+      "security_definer": false,
+      "definition": "CREATE OR REPLACE FUNCTION public.is_admin()\n RETURNS boolean\n LANGUAGE sql\n STABLE\n SET search_path TO ''\nAS $function$\n  select coalesce((auth.jwt() -> 'app_metadata' ->> 'role') = 'admin', false);\n$function$\n"
+    },
+    {
+      "schema_name": "public",
+      "proname": "is_newsletter_editor",
+      "arguments": "",
+      "security_definer": true,
+      "definition": "CREATE OR REPLACE FUNCTION public.is_newsletter_editor()\n RETURNS boolean\n LANGUAGE sql\n STABLE SECURITY DEFINER\n SET search_path TO ''\nAS $function$\n  select coalesce(\n    public.is_admin()\n    or (\n      not public.is_user_suspended(auth.uid())\n      and exists(\n        select 1 from public.newsletter_editors e\n        where e.email = lower(coalesce(auth.jwt() ->> 'email',''))\n      )\n    ), false\n  );\n$function$\n"
+    },
+    {
+      "schema_name": "public",
+      "proname": "is_user_suspended",
+      "arguments": "target_user uuid",
+      "security_definer": true,
+      "definition": "CREATE OR REPLACE FUNCTION public.is_user_suspended(target_user uuid DEFAULT auth.uid())\n RETURNS boolean\n LANGUAGE sql\n STABLE SECURITY DEFINER\n SET search_path TO ''\nAS $function$\n  select exists(\n    select 1\n    from public.user_flags f\n    where f.user_id = target_user\n      and f.suspended = true\n      and (f.suspended_until is null or f.suspended_until > now())\n  );\n$function$\n"
+    },
+    {
+      "schema_name": "public",
+      "proname": "validate_blog_comment_parent",
+      "arguments": "",
+      "security_definer": true,
+      "definition": "CREATE OR REPLACE FUNCTION public.validate_blog_comment_parent()\n RETURNS trigger\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$\ndeclare\n  parent_post uuid;\nbegin\n  if new.parent_id is null then\n    return new;\n  end if;\n  if new.parent_id = new.id then\n    raise exception 'A comment cannot reply to itself';\n  end if;\n  select post_id into parent_post from public.blog_comments where id = new.parent_id;\n  if parent_post is null then\n    raise exception 'Parent comment not found';\n  end if;\n  if parent_post <> new.post_id then\n    raise exception 'Parent comment belongs to another post';\n  end if;\n  return new;\nend;\n$function$\n"
+    }
+  ],
+  "triggers": [
+    {
+      "table_schema": "public",
+      "table_name": "blog_comments",
+      "trigger_name": "trg_validate_blog_comment_parent",
+      "action_timing": "BEFORE",
+      "event_manipulation": "INSERT",
+      "action_statement": "EXECUTE FUNCTION validate_blog_comment_parent()"
+    },
+    {
+      "table_schema": "public",
+      "table_name": "blog_comments",
+      "trigger_name": "trg_validate_blog_comment_parent",
+      "action_timing": "BEFORE",
+      "event_manipulation": "UPDATE",
+      "action_statement": "EXECUTE FUNCTION validate_blog_comment_parent()"
+    },
+    {
+      "table_schema": "public",
+      "table_name": "blog_posts",
+      "trigger_name": "blog_posts_touch_trg",
+      "action_timing": "BEFORE",
+      "event_manipulation": "INSERT",
+      "action_statement": "EXECUTE FUNCTION blog_posts_touch()"
+    },
+    {
+      "table_schema": "public",
+      "table_name": "blog_posts",
+      "trigger_name": "blog_posts_touch_trg",
+      "action_timing": "BEFORE",
+      "event_manipulation": "UPDATE",
+      "action_statement": "EXECUTE FUNCTION blog_posts_touch()"
+    },
+    {
+      "table_schema": "public",
+      "table_name": "conversations",
+      "trigger_name": "conversations_updated_at",
+      "action_timing": "BEFORE",
+      "event_manipulation": "UPDATE",
+      "action_statement": "EXECUTE FUNCTION private.set_updated_at()"
+    },
+    {
+      "table_schema": "public",
+      "table_name": "listing_approvals",
+      "trigger_name": "listing_approvals_updated_at",
+      "action_timing": "BEFORE",
+      "event_manipulation": "UPDATE",
+      "action_statement": "EXECUTE FUNCTION private.set_updated_at()"
+    },
+    {
+      "table_schema": "public",
+      "table_name": "listing_images",
+      "trigger_name": "before_listing_image_insert",
+      "action_timing": "BEFORE",
+      "event_manipulation": "INSERT",
+      "action_statement": "EXECUTE FUNCTION private.limit_listing_images()"
+    },
+    {
+      "table_schema": "public",
+      "table_name": "listing_images",
+      "trigger_name": "on_listing_image_added",
+      "action_timing": "AFTER",
+      "event_manipulation": "INSERT",
+      "action_statement": "EXECUTE FUNCTION private.reset_approval_on_image_change()"
+    },
+    {
+      "table_schema": "public",
+      "table_name": "listing_images",
+      "trigger_name": "on_listing_image_removed",
+      "action_timing": "AFTER",
+      "event_manipulation": "DELETE",
+      "action_statement": "EXECUTE FUNCTION private.reset_approval_on_image_change()"
+    },
+    {
+      "table_schema": "public",
+      "table_name": "listings",
+      "trigger_name": "enforce_active_listing_limit",
+      "action_timing": "BEFORE",
+      "event_manipulation": "INSERT",
+      "action_statement": "EXECUTE FUNCTION private.enforce_active_listing_limit()"
+    },
+    {
+      "table_schema": "public",
+      "table_name": "listings",
+      "trigger_name": "enforce_active_listing_limit",
+      "action_timing": "BEFORE",
+      "event_manipulation": "UPDATE",
+      "action_statement": "EXECUTE FUNCTION private.enforce_active_listing_limit()"
+    },
+    {
+      "table_schema": "public",
+      "table_name": "listings",
+      "trigger_name": "listings_updated_at",
+      "action_timing": "BEFORE",
+      "event_manipulation": "UPDATE",
+      "action_statement": "EXECUTE FUNCTION private.set_updated_at()"
+    },
+    {
+      "table_schema": "public",
+      "table_name": "listings",
+      "trigger_name": "on_listing_content_changed",
+      "action_timing": "AFTER",
+      "event_manipulation": "UPDATE",
+      "action_statement": "EXECUTE FUNCTION private.reset_listing_approval()"
+    },
+    {
+      "table_schema": "public",
+      "table_name": "listings",
+      "trigger_name": "on_listing_created",
+      "action_timing": "AFTER",
+      "event_manipulation": "INSERT",
+      "action_statement": "EXECUTE FUNCTION private.create_listing_approval()"
+    },
+    {
+      "table_schema": "public",
+      "table_name": "messages",
+      "trigger_name": "on_message_created",
+      "action_timing": "AFTER",
+      "event_manipulation": "INSERT",
+      "action_statement": "EXECUTE FUNCTION private.touch_conversation_on_message()"
+    },
+    {
+      "table_schema": "public",
+      "table_name": "messages",
+      "trigger_name": "reveal_conversation_on_new_message",
+      "action_timing": "AFTER",
+      "event_manipulation": "INSERT",
+      "action_statement": "EXECUTE FUNCTION private.reveal_conversation_on_new_message()"
+    },
+    {
+      "table_schema": "public",
+      "table_name": "profiles",
+      "trigger_name": "profiles_updated_at",
+      "action_timing": "BEFORE",
+      "event_manipulation": "UPDATE",
+      "action_statement": "EXECUTE FUNCTION private.set_updated_at()"
+    },
+    {
+      "table_schema": "public",
+      "table_name": "reports",
+      "trigger_name": "reports_updated_at",
+      "action_timing": "BEFORE",
+      "event_manipulation": "UPDATE",
+      "action_statement": "EXECUTE FUNCTION private.set_updated_at()"
+    },
+    {
+      "table_schema": "public",
+      "table_name": "user_flags",
+      "trigger_name": "user_flags_updated_at",
+      "action_timing": "BEFORE",
+      "event_manipulation": "UPDATE",
+      "action_statement": "EXECUTE FUNCTION private.set_updated_at()"
+    },
+    {
+      "table_schema": "public",
+      "table_name": "user_ratings",
+      "trigger_name": "user_ratings_updated_at",
+      "action_timing": "BEFORE",
+      "event_manipulation": "UPDATE",
+      "action_statement": "EXECUTE FUNCTION private.set_updated_at()"
+    }
+  ],
+  "indexes": [
+    {
+      "schemaname": "public",
+      "tablename": "blog_comments",
+      "indexname": "blog_comments_parent_id_idx",
+      "indexdef": "CREATE INDEX blog_comments_parent_id_idx ON public.blog_comments USING btree (parent_id)"
+    },
+    {
+      "schemaname": "public",
+      "tablename": "blog_comments",
+      "indexname": "blog_comments_pkey",
+      "indexdef": "CREATE UNIQUE INDEX blog_comments_pkey ON public.blog_comments USING btree (id)"
+    },
+    {
+      "schemaname": "public",
+      "tablename": "blog_comments",
+      "indexname": "blog_comments_post_created_idx",
+      "indexdef": "CREATE INDEX blog_comments_post_created_idx ON public.blog_comments USING btree (post_id, created_at DESC)"
+    },
+    {
+      "schemaname": "public",
+      "tablename": "blog_comments",
+      "indexname": "blog_comments_post_parent_idx",
+      "indexdef": "CREATE INDEX blog_comments_post_parent_idx ON public.blog_comments USING btree (post_id, parent_id, created_at)"
+    },
+    {
+      "schemaname": "public",
+      "tablename": "blog_post_likes",
+      "indexname": "blog_post_likes_pkey",
+      "indexdef": "CREATE UNIQUE INDEX blog_post_likes_pkey ON public.blog_post_likes USING btree (post_id, user_id)"
+    },
+    {
+      "schemaname": "public",
+      "tablename": "blog_post_likes",
+      "indexname": "blog_post_likes_post_idx",
+      "indexdef": "CREATE INDEX blog_post_likes_post_idx ON public.blog_post_likes USING btree (post_id)"
+    },
+    {
+      "schemaname": "public",
+      "tablename": "blog_posts",
+      "indexname": "blog_posts_author_idx",
+      "indexdef": "CREATE INDEX blog_posts_author_idx ON public.blog_posts USING btree (author_id, created_at DESC)"
+    },
+    {
+      "schemaname": "public",
+      "tablename": "blog_posts",
+      "indexname": "blog_posts_pkey",
+      "indexdef": "CREATE UNIQUE INDEX blog_posts_pkey ON public.blog_posts USING btree (id)"
+    },
+    {
+      "schemaname": "public",
+      "tablename": "blog_posts",
+      "indexname": "blog_posts_public_idx",
+      "indexdef": "CREATE INDEX blog_posts_public_idx ON public.blog_posts USING btree (status, published_at DESC)"
+    },
+    {
+      "schemaname": "public",
+      "tablename": "blog_posts",
+      "indexname": "blog_posts_slug_key",
+      "indexdef": "CREATE UNIQUE INDEX blog_posts_slug_key ON public.blog_posts USING btree (slug)"
+    },
+    {
+      "schemaname": "public",
+      "tablename": "categories",
+      "indexname": "categories_name_key",
+      "indexdef": "CREATE UNIQUE INDEX categories_name_key ON public.categories USING btree (name)"
+    },
+    {
+      "schemaname": "public",
+      "tablename": "categories",
+      "indexname": "categories_pkey",
+      "indexdef": "CREATE UNIQUE INDEX categories_pkey ON public.categories USING btree (id)"
+    },
+    {
+      "schemaname": "public",
+      "tablename": "categories",
+      "indexname": "categories_slug_key",
+      "indexdef": "CREATE UNIQUE INDEX categories_slug_key ON public.categories USING btree (slug)"
+    },
+    {
+      "schemaname": "public",
+      "tablename": "conversation_hidden",
+      "indexname": "conversation_hidden_pkey",
+      "indexdef": "CREATE UNIQUE INDEX conversation_hidden_pkey ON public.conversation_hidden USING btree (conversation_id, user_id)"
+    },
+    {
+      "schemaname": "public",
+      "tablename": "conversations",
+      "indexname": "conversations_buyer_idx",
+      "indexdef": "CREATE INDEX conversations_buyer_idx ON public.conversations USING btree (buyer_id, updated_at DESC)"
+    },
+    {
+      "schemaname": "public",
+      "tablename": "conversations",
+      "indexname": "conversations_listing_id_buyer_id_seller_id_key",
+      "indexdef": "CREATE UNIQUE INDEX conversations_listing_id_buyer_id_seller_id_key ON public.conversations USING btree (listing_id, buyer_id, seller_id)"
+    },
+    {
+      "schemaname": "public",
+      "tablename": "conversations",
+      "indexname": "conversations_pkey",
+      "indexdef": "CREATE UNIQUE INDEX conversations_pkey ON public.conversations USING btree (id)"
+    },
+    {
+      "schemaname": "public",
+      "tablename": "conversations",
+      "indexname": "conversations_seller_idx",
+      "indexdef": "CREATE INDEX conversations_seller_idx ON public.conversations USING btree (seller_id, updated_at DESC)"
+    },
+    {
+      "schemaname": "public",
+      "tablename": "favorites",
+      "indexname": "favorites_listing_idx",
+      "indexdef": "CREATE INDEX favorites_listing_idx ON public.favorites USING btree (listing_id)"
+    },
+    {
+      "schemaname": "public",
+      "tablename": "favorites",
+      "indexname": "favorites_pkey",
+      "indexdef": "CREATE UNIQUE INDEX favorites_pkey ON public.favorites USING btree (user_id, listing_id)"
+    },
+    {
+      "schemaname": "public",
+      "tablename": "listing_approvals",
+      "indexname": "listing_approvals_pkey",
+      "indexdef": "CREATE UNIQUE INDEX listing_approvals_pkey ON public.listing_approvals USING btree (listing_id)"
+    },
+    {
+      "schemaname": "public",
+      "tablename": "listing_approvals",
+      "indexname": "listing_approvals_reviewed_by_idx",
+      "indexdef": "CREATE INDEX listing_approvals_reviewed_by_idx ON public.listing_approvals USING btree (reviewed_by)"
+    },
+    {
+      "schemaname": "public",
+      "tablename": "listing_approvals",
+      "indexname": "listing_approvals_status_idx",
+      "indexdef": "CREATE INDEX listing_approvals_status_idx ON public.listing_approvals USING btree (status, updated_at DESC)"
+    },
+    {
+      "schemaname": "public",
+      "tablename": "listing_contacts",
+      "indexname": "listing_contacts_pkey",
+      "indexdef": "CREATE UNIQUE INDEX listing_contacts_pkey ON public.listing_contacts USING btree (listing_id)"
+    },
+    {
+      "schemaname": "public",
+      "tablename": "listing_contacts",
+      "indexname": "listing_contacts_seller_idx",
+      "indexdef": "CREATE INDEX listing_contacts_seller_idx ON public.listing_contacts USING btree (seller_id)"
+    },
+    {
+      "schemaname": "public",
+      "tablename": "listing_images",
+      "indexname": "listing_images_listing_idx",
+      "indexdef": "CREATE INDEX listing_images_listing_idx ON public.listing_images USING btree (listing_id, sort_order)"
+    },
+    {
+      "schemaname": "public",
+      "tablename": "listing_images",
+      "indexname": "listing_images_pkey",
+      "indexdef": "CREATE UNIQUE INDEX listing_images_pkey ON public.listing_images USING btree (id)"
+    },
+    {
+      "schemaname": "public",
+      "tablename": "listing_images",
+      "indexname": "listing_images_storage_path_key",
+      "indexdef": "CREATE UNIQUE INDEX listing_images_storage_path_key ON public.listing_images USING btree (storage_path)"
+    },
+    {
+      "schemaname": "public",
+      "tablename": "listings",
+      "indexname": "listings_category_idx",
+      "indexdef": "CREATE INDEX listings_category_idx ON public.listings USING btree (category_id, created_at DESC)"
+    },
+    {
+      "schemaname": "public",
+      "tablename": "listings",
+      "indexname": "listings_created_idx",
+      "indexdef": "CREATE INDEX listings_created_idx ON public.listings USING btree (created_at DESC)"
+    },
+    {
+      "schemaname": "public",
+      "tablename": "listings",
+      "indexname": "listings_pkey",
+      "indexdef": "CREATE UNIQUE INDEX listings_pkey ON public.listings USING btree (id)"
+    },
+    {
+      "schemaname": "public",
+      "tablename": "listings",
+      "indexname": "listings_seller_idx",
+      "indexdef": "CREATE INDEX listings_seller_idx ON public.listings USING btree (seller_id, created_at DESC)"
+    },
+    {
+      "schemaname": "public",
+      "tablename": "marketplace_settings",
+      "indexname": "marketplace_settings_pkey",
+      "indexdef": "CREATE UNIQUE INDEX marketplace_settings_pkey ON public.marketplace_settings USING btree (id)"
+    },
+    {
+      "schemaname": "public",
+      "tablename": "messages",
+      "indexname": "messages_conversation_idx",
+      "indexdef": "CREATE INDEX messages_conversation_idx ON public.messages USING btree (conversation_id, created_at)"
+    },
+    {
+      "schemaname": "public",
+      "tablename": "messages",
+      "indexname": "messages_pkey",
+      "indexdef": "CREATE UNIQUE INDEX messages_pkey ON public.messages USING btree (id)"
+    },
+    {
+      "schemaname": "public",
+      "tablename": "messages",
+      "indexname": "messages_sender_idx",
+      "indexdef": "CREATE INDEX messages_sender_idx ON public.messages USING btree (sender_id)"
+    },
+    {
+      "schemaname": "public",
+      "tablename": "moderation_notes",
+      "indexname": "moderation_notes_listing_idx",
+      "indexdef": "CREATE INDEX moderation_notes_listing_idx ON public.moderation_notes USING btree (listing_id)"
+    },
+    {
+      "schemaname": "public",
+      "tablename": "moderation_notes",
+      "indexname": "moderation_notes_moderator_idx",
+      "indexdef": "CREATE INDEX moderation_notes_moderator_idx ON public.moderation_notes USING btree (moderator_id)"
+    },
+    {
+      "schemaname": "public",
+      "tablename": "moderation_notes",
+      "indexname": "moderation_notes_pkey",
+      "indexdef": "CREATE UNIQUE INDEX moderation_notes_pkey ON public.moderation_notes USING btree (id)"
+    },
+    {
+      "schemaname": "public",
+      "tablename": "moderation_notes",
+      "indexname": "moderation_notes_user_idx",
+      "indexdef": "CREATE INDEX moderation_notes_user_idx ON public.moderation_notes USING btree (user_id)"
+    },
+    {
+      "schemaname": "public",
+      "tablename": "newsletter_editors",
+      "indexname": "newsletter_editors_pkey",
+      "indexdef": "CREATE UNIQUE INDEX newsletter_editors_pkey ON public.newsletter_editors USING btree (email)"
+    },
+    {
+      "schemaname": "public",
+      "tablename": "profiles",
+      "indexname": "profiles_pkey",
+      "indexdef": "CREATE UNIQUE INDEX profiles_pkey ON public.profiles USING btree (id)"
+    },
+    {
+      "schemaname": "public",
+      "tablename": "reports",
+      "indexname": "reports_listing_idx",
+      "indexdef": "CREATE INDEX reports_listing_idx ON public.reports USING btree (listing_id)"
+    },
+    {
+      "schemaname": "public",
+      "tablename": "reports",
+      "indexname": "reports_one_per_user_listing",
+      "indexdef": "CREATE UNIQUE INDEX reports_one_per_user_listing ON public.reports USING btree (reporter_id, listing_id)"
+    },
+    {
+      "schemaname": "public",
+      "tablename": "reports",
+      "indexname": "reports_pkey",
+      "indexdef": "CREATE UNIQUE INDEX reports_pkey ON public.reports USING btree (id)"
+    },
+    {
+      "schemaname": "public",
+      "tablename": "reports",
+      "indexname": "reports_reporter_idx",
+      "indexdef": "CREATE INDEX reports_reporter_idx ON public.reports USING btree (reporter_id)"
+    },
+    {
+      "schemaname": "public",
+      "tablename": "reports",
+      "indexname": "reports_reporter_listing_idx",
+      "indexdef": "CREATE INDEX reports_reporter_listing_idx ON public.reports USING btree (reporter_id, listing_id)"
+    },
+    {
+      "schemaname": "public",
+      "tablename": "reports",
+      "indexname": "reports_status_idx",
+      "indexdef": "CREATE INDEX reports_status_idx ON public.reports USING btree (status, created_at DESC)"
+    },
+    {
+      "schemaname": "public",
+      "tablename": "site_release_chunks",
+      "indexname": "site_release_chunks_pkey",
+      "indexdef": "CREATE UNIQUE INDEX site_release_chunks_pkey ON public.site_release_chunks USING btree (release_id, seq)"
+    },
+    {
+      "schemaname": "public",
+      "tablename": "user_flags",
+      "indexname": "user_flags_pkey",
+      "indexdef": "CREATE UNIQUE INDEX user_flags_pkey ON public.user_flags USING btree (user_id)"
+    },
+    {
+      "schemaname": "public",
+      "tablename": "user_ratings",
+      "indexname": "user_ratings_pkey",
+      "indexdef": "CREATE UNIQUE INDEX user_ratings_pkey ON public.user_ratings USING btree (reviewer_id, seller_id)"
+    },
+    {
+      "schemaname": "public",
+      "tablename": "user_ratings",
+      "indexname": "user_ratings_seller_idx",
+      "indexdef": "CREATE INDEX user_ratings_seller_idx ON public.user_ratings USING btree (seller_id)"
+    }
+  ],
+  "storage_buckets": [
+    {
+      "id": "blog-images",
+      "name": "blog-images",
+      "public": true,
+      "file_size_limit": 6291456,
+      "allowed_mime_types": [
+        "image/jpeg",
+        "image/png",
+        "image/webp"
+      ]
+    },
+    {
+      "id": "listing-images",
+      "name": "listing-images",
+      "public": true,
+      "file_size_limit": 6291456,
+      "allowed_mime_types": [
+        "image/jpeg",
+        "image/png",
+        "image/webp"
+      ]
+    },
+    {
+      "id": "profile-avatars",
+      "name": "profile-avatars",
+      "public": true,
+      "file_size_limit": 3145728,
+      "allowed_mime_types": [
+        "image/jpeg",
+        "image/png",
+        "image/webp"
+      ]
+    }
+  ],
+  "row_counts": [
+    {
+      "table_name": "blog_comments",
+      "rows": 1
+    },
+    {
+      "table_name": "blog_post_likes",
+      "rows": 3
+    },
+    {
+      "table_name": "blog_posts",
+      "rows": 3
+    },
+    {
+      "table_name": "categories",
+      "rows": 12
+    },
+    {
+      "table_name": "conversation_hidden",
+      "rows": 2
+    },
+    {
+      "table_name": "conversations",
+      "rows": 1
+    },
+    {
+      "table_name": "favorites",
+      "rows": 1
+    },
+    {
+      "table_name": "listing_approvals",
+      "rows": 9
+    },
+    {
+      "table_name": "listing_contacts",
+      "rows": 9
+    },
+    {
+      "table_name": "listing_images",
+      "rows": 24
+    },
+    {
+      "table_name": "listings",
+      "rows": 9
+    },
+    {
+      "table_name": "marketplace_settings",
+      "rows": 1
+    },
+    {
+      "table_name": "messages",
+      "rows": 3
+    },
+    {
+      "table_name": "moderation_notes",
+      "rows": 0
+    },
+    {
+      "table_name": "newsletter_editors",
+      "rows": 1
+    },
+    {
+      "table_name": "profiles",
+      "rows": 4
+    },
+    {
+      "table_name": "reports",
+      "rows": 0
+    },
+    {
+      "table_name": "site_release_chunks",
+      "rows": 14
+    },
+    {
+      "table_name": "user_flags",
+      "rows": 4
+    },
+    {
+      "table_name": "user_ratings",
+      "rows": 4
+    }
+  ]
+}
