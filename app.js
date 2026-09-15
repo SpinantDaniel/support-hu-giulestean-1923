@@ -1441,21 +1441,31 @@ async function hideConversationForMe(conversationId){
 
 async function renderMessages(root){
   const ownFilter=`buyer_id.eq.${state.user.id},seller_id.eq.${state.user.id}`;
-  const [convRes,hiddenRes]=await Promise.all([
-    db.from('conversations')
-      .select('id,listing_id,buyer_id,seller_id,updated_at')
-      .or(ownFilter)
-      .order('updated_at',{ascending:false}),
-    db.from('conversation_hidden')
-      .select('conversation_id')
-      .eq('user_id',state.user.id)
-  ]);
+  const {data:rows,error}=await db.from('conversations')
+    .select(`
+      id,
+      listing_id,
+      buyer_id,
+      seller_id,
+      updated_at,
+      messages(id,sender_id,body,created_at),
+      conversation_hidden(hidden_at)
+    `)
+    .or(ownFilter)
+    .order('created_at',{referencedTable:'messages',ascending:false})
+    .limit(1,{referencedTable:'messages'});
 
-  if(convRes.error)throw convRes.error;
-  if(hiddenRes.error)throw hiddenRes.error;
+  if(error)throw error;
 
-  const hidden=new Set((hiddenRes.data||[]).map(row=>row.conversation_id));
-  const convs=(convRes.data||[]).filter(c=>!hidden.has(c.id));
+  const convs=(rows||[])
+    .map(c=>{
+      const last=Array.isArray(c.messages)?c.messages[0]:null;
+      const hiddenAt=Array.isArray(c.conversation_hidden)?c.conversation_hidden[0]?.hidden_at:null;
+      const activityAt=last?.created_at||c.updated_at;
+      return {...c,last,hiddenAt,activityAt};
+    })
+    .filter(c=>!c.hiddenAt||new Date(c.activityAt).getTime()>new Date(c.hiddenAt).getTime())
+    .sort((a,b)=>new Date(b.activityAt).getTime()-new Date(a.activityAt).getTime());
 
   if(!convs.length){
     root.innerHTML='<div class="empty compact"><b>N-ai conversații.</b><span>Mesajele pornite din anunțuri vor apărea aici.</span></div>';
@@ -1463,25 +1473,14 @@ async function renderMessages(root){
   }
 
   const lmap=Object.fromEntries(state.listings.map(l=>[l.id,l]));
-  const cards=[];
-
-  for(const c of convs){
-    const {data:msgs}=await db.from('messages')
-      .select('id,sender_id,body,created_at')
-      .eq('conversation_id',c.id)
-      .order('created_at',{ascending:true})
-      .limit(40);
-
-    const last=msgs?.[msgs.length-1];
-    cards.push(`<div class="conversation-card-wrap">
+  const cards=convs.map(c=>`<div class="conversation-card-wrap">
       <button class="conversation-card" data-conv="${c.id}" data-listing="${c.listing_id}" data-other="${c.buyer_id===state.user.id?c.seller_id:c.buyer_id}">
         <b>${esc(lmap[c.listing_id]?.title||'Anunț')}</b>
-        <span>${esc(last?.body||'Conversație nouă')}</span>
-        <small>${last?since(last.created_at):''}</small>
+        <span>${esc(c.last?.body||'Conversație nouă')}</span>
+        <small>${c.last?since(c.last.created_at):''}</small>
       </button>
       <button type="button" class="conversation-delete" data-delete-conv="${c.id}" aria-label="Șterge conversația" title="Șterge conversația">×</button>
     </div>`);
-  }
 
   root.innerHTML=`<div class="conversation-list">${cards.join('')}</div><div class="thread" id="threadPane"><div class="thread-placeholder">Alege o conversație.</div></div>`;
 
@@ -1514,6 +1513,15 @@ async function openThread(button){
     const {error}=await db.from('messages').insert({conversation_id:id,sender_id:state.user.id,body});
     if(error)return toast(error.message,'error');
     input.value='';
+
+    const preview=button.querySelector('span');
+    const timestamp=button.querySelector('small');
+    if(preview)preview.textContent=body;
+    if(timestamp)timestamp.textContent='acum';
+    const wrap=button.closest('.conversation-card-wrap');
+    const list=wrap?.parentElement;
+    if(wrap&&list)list.prepend(wrap);
+
     await openThread(button);
   };
 
