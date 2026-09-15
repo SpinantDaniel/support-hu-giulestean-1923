@@ -2,7 +2,7 @@ const CACHE_NAME='hub-giulestean-v5.32';
 const OFFLINE_URL='/offline';
 const PRECACHE=[
   OFFLINE_URL,
-  '/site.webmanifest',
+  '/manifest.json?v=5.32',
   '/icon-192.png',
   '/icon-512.png',
   '/favicon-32x32.png'
