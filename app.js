@@ -1185,9 +1185,21 @@ async function publishListing(e){
       if(!current||current.seller_id!==state.user.id)throw new Error('Anunțul nu îți aparține.');
     }else{
       btn.textContent='Se pregătește anunțul…';
-      const r=await db.from('listings').insert({...row,seller_id:state.user.id}).select('id').single();if(r.error)throw r.error;listingId=r.data.id;
-      const contact={listing_id:listingId,seller_id:state.user.id,phone:String(fd.get('phone')||'').trim()||null,whatsapp:String(fd.get('whatsapp')||'').trim()||null};
-      const rc=await db.from('listing_contacts').insert(contact);if(rc.error)throw rc.error;
+      const created=await db.rpc('create_my_listing_atomic',{
+        p_category_id:row.category_id,
+        p_title:row.title,
+        p_description:row.description,
+        p_price:row.price,
+        p_currency:row.currency,
+        p_condition:row.condition,
+        p_location:row.location,
+        p_negotiable:row.negotiable,
+        p_phone:String(fd.get('phone')||'').trim()||null,
+        p_whatsapp:String(fd.get('whatsapp')||'').trim()||null
+      });
+      if(created.error)throw created.error;
+      listingId=created.data;
+      if(!listingId)throw new Error('Anunțul nu a putut fi inițializat.');
     }
 
     const pathByKey=new Map();
