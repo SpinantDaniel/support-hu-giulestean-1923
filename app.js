@@ -605,7 +605,7 @@ function cardHtml(l){
   return `<article class="listing-card" data-id="${l.id}">
     <button class="fav ${state.favorites.has(l.id)?'active':''}" data-fav="${l.id}" aria-label="Favorite">${state.favorites.has(l.id)?'♥':'♡'}</button>
     <button class="listing-share" data-share-listing="${l.id}" aria-label="Distribuie anunțul">↗</button>
-    <div class="listing-image ${image?'has-photo':''}" ${image?`style="--listing-photo:url(\'${esc(image)}\')"`:''}><span class="badge">${esc(conditionLabels[l.condition]||l.condition)}</span>${image?`<img src="${esc(image)}" alt="${esc(l.title)}" loading="lazy" onerror="this.hidden=true;this.parentElement.classList.remove('has-photo')">`:`<span class="placeholder-icon">${icons[cat?.slug]||'◈'}</span>`}${own?'<span class="owner-badge">Al tău</span>':''}</div>
+    <div class="listing-image ${image?'has-photo':''}" ${image?`style="--listing-photo:url(\'${esc(image)}\')"`:''}><span class="badge">${esc(conditionLabels[l.condition]||l.condition)}</span>${image?`<img src="${esc(image)}" alt="${esc(l.title)}" loading="lazy" data-listing-image>`:`<span class="placeholder-icon">${icons[cat?.slug]||'◈'}</span>`}${own?'<span class="owner-badge">Al tău</span>':''}</div>
     <div class="listing-body"><h3 class="listing-title">${esc(l.title)}</h3><div class="price">${money(l.price,l.currency)}</div><div class="listing-meta"><span>${esc(l.location)}</span><span>${since(l.created_at)}</span></div></div>
   </article>`;
 }
@@ -614,6 +614,13 @@ function bindListingCards(root=document){
   qsa('[data-fav]',root).forEach(b=>b.onclick=async e=>{e.stopPropagation();await toggleFavorite(b.dataset.fav);});
   qsa('[data-share-listing]',root).forEach(b=>b.onclick=async e=>{e.stopPropagation();await shareListing(b.dataset.shareListing);});
   qsa('.listing-card',root).forEach(c=>c.onclick=()=>openDetail(c.dataset.id));
+  qsa('img[data-listing-image]',$('#listingGrid')).forEach(img=>{
+    img.addEventListener('error',()=>{
+      img.hidden=true;
+      img.parentElement?.classList.remove('has-photo');
+    },{once:true});
+  });
+
 }
 
 async function toggleFavorite(listingId){
