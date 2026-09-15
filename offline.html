@@ -11,14 +11,14 @@
     main{max-width:560px;background:#fff;border:1px solid #e3d9db;border-radius:18px;padding:32px;box-shadow:0 16px 50px rgba(50,20,28,.08)}
     h1{margin:0 0 12px;color:#6f1530;font-size:clamp(28px,7vw,42px)}
     p{line-height:1.6;margin:0 0 20px}
-    button{border:0;border-radius:999px;background:#6f1530;color:#fff;padding:12px 20px;font:inherit;font-weight:700;cursor:pointer}
+    .retry{display:inline-block;border-radius:999px;background:#6f1530;color:#fff;padding:12px 20px;font:inherit;font-weight:700;text-decoration:none}
   </style>
 </head>
 <body>
   <main>
     <h1>Ești offline.</h1>
     <p>HUB Giuleștean nu poate încărca date noi fără conexiune la internet. Verifică rețeaua și încearcă din nou.</p>
-    <button type="button" onclick="location.reload()">Încearcă din nou</button>
+    <a href="/" class="retry">Încearcă din nou</a>
   </main>
 </body>
 </html>
