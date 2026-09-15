@@ -432,13 +432,38 @@ async function init(){
   });
 }
 
+async function loadMyUserFlag(){
+  const rpc=await db.rpc('get_my_user_flag_private');
+  if(!rpc.error){
+    const row=Array.isArray(rpc.data)?rpc.data[0]:rpc.data;
+    return {data:row||null,error:null};
+  }
+
+  // During the v5.27 cutover the RPC does not exist until the committed
+  // migration is applied. Fall back only for that pre-migration state.
+  const code=String(rpc.error?.code||'');
+  const message=String(rpc.error?.message||'').toLowerCase();
+  const missingRpc=code==='PGRST202'||code==='42883'||message.includes('get_my_user_flag_private');
+  if(!missingRpc)return rpc;
+
+  return db.from('user_flags')
+    .select('suspended,suspended_until,suspension_reason,verified')
+    .eq('user_id',state.user.id)
+    .maybeSingle();
+}
+
 async function applySession(session){
   state.session=session;state.user=session?.user||null;state.profile=null;state.userFlag=null;state.adminRole='none';
   if(state.user){
     const [profileRes,flagRes]=await Promise.all([
-      db.from('profiles').select('*').eq('id',state.user.id).maybeSingle(),
-      db.from('user_flags').select('suspended,suspended_until,suspension_reason,verified').eq('user_id',state.user.id).maybeSingle()
+      db.from('profiles')
+        .select('id,display_name,avatar_path,bio,location,created_at,contact_incognito')
+        .eq('id',state.user.id)
+        .maybeSingle(),
+      loadMyUserFlag()
     ]);
+    if(profileRes.error)console.warn('profile load',profileRes.error);
+    if(flagRes.error)console.warn('private user flag load',flagRes.error);
     state.profile=profileRes.data||null;state.userFlag=flagRes.data||null;
     await loadAdminAccessRole(session);
   }
@@ -1326,7 +1351,11 @@ async function saveProfile(e){
     }
 
     const patch={display_name:display,location:String(fd.get('location')||'').trim()||null,bio:String(fd.get('bio')||'').trim()||null,avatar_path:nextAvatar,contact_incognito:fd.get('contact_incognito')==='on'};
-    const {data,error}=await db.from('profiles').update(patch).eq('id',state.user.id).select('*').single();
+    const {data,error}=await db.from('profiles')
+      .update(patch)
+      .eq('id',state.user.id)
+      .select('id,display_name,avatar_path,bio,location,created_at,contact_incognito')
+      .single();
     if(error)throw error;
     state.profile=data;
 
