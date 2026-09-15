@@ -1204,38 +1204,47 @@ async function publishListing(e){
         newlyUploadedPaths.push(path);
         const provisionalSortOrder=imageItems.findIndex(x=>x.key===item.key);
         if(provisionalSortOrder<0||provisionalSortOrder>20)throw new Error('Ordinea fotografiilor este invalidă. Reîncarcă pagina și încearcă din nou.');
-        const ri=await db.from('listing_images').insert({listing_id:listingId,storage_path:path,sort_order:provisionalSortOrder});
-        if(ri.error)throw ri.error;
+        if(!editing){
+          const ri=await db.from('listing_images').insert({listing_id:listingId,storage_path:path,sort_order:provisionalSortOrder});
+          if(ri.error)throw ri.error;
+        }
         pathByKey.set(item.key,path);
         btn.textContent=`Se încarcă imaginile… ${index+1}/${newItems.length}`;
       }
     }
 
-    // For edits, update the listing only after new files have been optimized and uploaded.
-    if(editing){
-      btn.textContent='Se salvează modificările…';
-      const r=await db.from('listings').update({...row,state:'active',updated_at:new Date().toISOString()}).eq('id',listingId).eq('seller_id',state.user.id).select('id').single();if(r.error)throw r.error;
-      const contactPatch={phone:String(fd.get('phone')||'').trim()||null,whatsapp:String(fd.get('whatsapp')||'').trim()||null};
-      const rc=await db.from('listing_contacts').update(contactPatch).eq('listing_id',listingId).eq('seller_id',state.user.id);if(rc.error)throw rc.error;
-    }
-
     const finalPaths=imageItems.map(item=>pathByKey.get(item.key)).filter(Boolean);
 
     if(editing){
+      btn.textContent='Se salvează modificările…';
       const originalPaths=[...listingImageEditor.originalPaths];
+      const rpc=await db.rpc('update_my_listing_atomic',{
+        p_listing_id:listingId,
+        p_category_id:row.category_id,
+        p_title:row.title,
+        p_description:row.description,
+        p_price:row.price,
+        p_currency:row.currency,
+        p_condition:row.condition,
+        p_location:row.location,
+        p_negotiable:row.negotiable,
+        p_phone:String(fd.get('phone')||'').trim()||null,
+        p_whatsapp:String(fd.get('whatsapp')||'').trim()||null,
+        p_image_paths:finalPaths
+      });
+      if(rpc.error)throw rpc.error;
+
       const keep=new Set(finalPaths);
       const removed=originalPaths.filter(path=>!keep.has(path));
       if(removed.length){
-        const rd=await db.from('listing_images').delete().eq('listing_id',listingId).in('storage_path',removed);
-        if(rd.error)throw rd.error;
         const cleanup=await imageService.delete(db,'listing-images',removed,{ownerId:state.user.id,retries:2});
         if(!cleanup.ok)console.warn('storage image cleanup queued',cleanup.error);
       }
-    }
-
-    for(let i=0;i<finalPaths.length;i++){
-      const ru=await db.from('listing_images').update({sort_order:i}).eq('listing_id',listingId).eq('storage_path',finalPaths[i]);
-      if(ru.error)throw ru.error;
+    }else{
+      for(let i=0;i<finalPaths.length;i++){
+        const ru=await db.from('listing_images').update({sort_order:i}).eq('listing_id',listingId).eq('storage_path',finalPaths[i]);
+        if(ru.error)throw ru.error;
+      }
     }
 
     const returnToAccount=state.editReturnToAccount;
@@ -1293,18 +1302,23 @@ async function deleteListing(id,fromDetail=false){
   if(!confirm('Ștergi definitiv acest anunț și fotografiile lui?'))return;
   const l=state.listings.find(x=>x.id===id);if(!l||l.seller_id!==state.user?.id)return toast('Poți șterge doar propriul anunț.','error');
   try{
-    const {data:imgs}=await db.from('listing_images').select('storage_path').eq('listing_id',id);
-    const paths=(imgs||[]).map(x=>x.storage_path).filter(Boolean);
-    const {data,error}=await db.from('listings').delete().eq('id',id).eq('seller_id',state.user.id).select('id');
-    if(error)throw error;if(!data?.length)throw new Error('Anunțul nu a fost șters. Reîncarcă pagina și încearcă din nou.');
-    let cleanupOk=true;
-    if(paths.length){
-      const cleanup=await imageService.delete(db,'listing-images',paths,{ownerId:state.user.id,retries:2});
-      cleanupOk=cleanup.ok;
-      if(!cleanup.ok)console.warn('listing storage cleanup queued',cleanup.error);
-    }
-    if(fromDetail)closeDialog('detailModal');await loadListings();renderListings();if($('#accountModal').open)await renderAccount();
-    toast(cleanupOk?'Anunț șters definitiv.':'Anunț șters. Curățarea fotografiilor va fi reîncercată automat.');
+    const session=(await db.auth.getSession()).data.session;
+    if(!session?.access_token)throw new Error('Sesiunea a expirat. Intră din nou în cont.');
+    const response=await fetch(`${SUPABASE_URL}/functions/v1/delete-listing-v2`,{
+      method:'POST',
+      headers:{
+        'Content-Type':'application/json',
+        'apikey':SUPABASE_PUBLISHABLE_KEY,
+        'Authorization':`Bearer ${session.access_token}`
+      },
+      body:JSON.stringify({listing_id:id})
+    });
+    const result=await response.json().catch(()=>({}));
+    if(!response.ok)throw new Error(result.error||'Anunțul nu a putut fi șters.');
+    if(fromDetail)closeDialog('detailModal');
+    await loadListings();renderListings();
+    if($('#accountModal').open)await renderAccount();
+    toast('Anunț șters definitiv.');
   }catch(err){console.error(err);toast(err.message||'Anunțul nu a putut fi șters.','error');}
 }
 
@@ -1387,7 +1401,7 @@ async function deleteAccount(e){
   const btn=$('#deleteAccountConfirmBtn');setBusy(btn,true,'Se șterge…');
   try{
     const session=(await db.auth.getSession()).data.session;if(!session?.access_token)throw new Error('Sesiunea a expirat. Intră din nou în cont.');
-    const response=await fetch(`${SUPABASE_URL}/functions/v1/delete-account`,{method:'POST',headers:{'Content-Type':'application/json','apikey':SUPABASE_PUBLISHABLE_KEY,'Authorization':`Bearer ${session.access_token}`}});
+    const response=await fetch(`${SUPABASE_URL}/functions/v1/delete-account-v2`,{method:'POST',headers:{'Content-Type':'application/json','apikey':SUPABASE_PUBLISHABLE_KEY,'Authorization':`Bearer ${session.access_token}`}});
     const result=await response.json().catch(()=>({}));if(!response.ok)throw new Error(result.error||'Contul nu a putut fi șters.');
     await db.auth.signOut({scope:'local'});state.session=null;state.user=null;state.profile=null;state.favorites.clear();closeDialog('deleteAccountModal');closeDialog('accountModal');updateAccountButtons();await loadListings();renderListings();toast('Contul și datele asociate au fost șterse definitiv.');
   }catch(err){console.error(err);toast(err.message||'Contul nu a putut fi șters.','error');}finally{setBusy(btn,false);}
