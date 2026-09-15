@@ -1,4 +1,11 @@
 (()=>{
+  if('serviceWorker' in navigator){
+    window.addEventListener('load',()=>{
+      navigator.serviceWorker.register('/service-worker.js',{scope:'/'})
+        .catch(error=>console.warn('Service worker registration failed:',error));
+    });
+  }
+
   const isStandalone =
     window.matchMedia?.('(display-mode: standalone)').matches ||
     window.navigator.standalone === true;
