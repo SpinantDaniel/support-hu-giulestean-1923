@@ -36,14 +36,20 @@
 }
 
 
-/* v5.42 — homepage featured media setting */
-.media-settings-card{max-width:760px}
+/* v5.46 — Hub Media Giulestean settings */
+.media-settings-card{max-width:860px}
 .media-settings-copy{
   margin:-4px 0 18px;
   color:var(--muted);
   font-size:12px;
   line-height:1.55;
 }
+.media-url-grid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:12px;
+}
+.media-url-grid label:last-child{grid-column:1/-1}
 .media-settings-actions{justify-content:flex-start}
 .media-settings-status{
   display:block;
@@ -54,3 +60,8 @@
 }
 .media-settings-status.success{color:var(--green)}
 .media-settings-status.error{color:var(--red)}
+@media(max-width:700px){
+  .media-url-grid{grid-template-columns:1fr}
+  .media-url-grid label:last-child{grid-column:auto}
+  .media-settings-actions{display:flex;flex-wrap:wrap}
+}
