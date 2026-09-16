@@ -34,3 +34,40 @@ button:disabled{opacity:.6;cursor:not-allowed}.muted{color:var(--muted);font-siz
 .auth-turnstile p[data-status="ok"]{font-weight:800}
 .auth-turnstile p[data-status="error"]{font-weight:800;text-decoration:underline}
 #passwordResetForm .muted{line-height:1.55}
+
+
+/* v5.38 — login logo + strict login/signup field separation */
+.auth-login-logo{
+  display:none;
+  min-height:118px;
+  align-items:center;
+  justify-content:center;
+  margin:0 0 8px;
+  padding:4px 0 0;
+  user-select:none;
+  pointer-events:none;
+}
+.auth-login-logo img{
+  display:block;
+  width:112px;
+  height:auto;
+  object-fit:contain;
+  filter:drop-shadow(0 12px 18px rgba(75,16,34,.22));
+  transform-origin:50% 55%;
+  animation:authLogoFloat 3.4s ease-in-out infinite;
+}
+#authForm.auth-mode-login #authLoginLogo{display:flex!important}
+#authForm.auth-mode-login #displayNameField{display:none!important}
+#authForm.auth-mode-signup #authLoginLogo{display:none!important}
+#authForm.auth-mode-signup #displayNameField{display:block!important}
+@keyframes authLogoFloat{
+  0%,100%{transform:translateY(0) rotate(-1deg) scale(1)}
+  50%{transform:translateY(-7px) rotate(1deg) scale(1.025)}
+}
+@media(max-width:650px){
+  .auth-login-logo{min-height:108px;margin:0 0 5px;padding-top:2px}
+  .auth-login-logo img{width:102px}
+}
+@media(prefers-reduced-motion:reduce){
+  .auth-login-logo img{animation:none}
+}
