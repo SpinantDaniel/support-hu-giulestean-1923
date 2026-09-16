@@ -978,6 +978,8 @@ function updateAuthMode(){
   $('#authTitle').textContent=signup?'Creează cont':'Intră în cont';
   $('#authSubmit').textContent=signup?'Creează cont':'Intră în cont';
   $('#displayNameField').hidden=!signup;
+  const loginLogo=$('#authLoginLogo');
+  if(loginLogo)loginLogo.hidden=signup;
   $('#forgotPasswordRow').hidden=signup;
   $('#authNotice').textContent=signup
     ?'După creare trebuie să confirmi adresa de email înainte de prima autentificare.'
