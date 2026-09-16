@@ -484,7 +484,6 @@ function renderComments(profiles){
     return;
   }
 
-  const admin=state.session?.user?.app_metadata?.role==='admin';
   const byId=new Map(state.articleComments.map(c=>[c.id,c]));
   const children=new Map();
 
@@ -505,7 +504,8 @@ function renderComments(profiles){
   const renderNode=(c,depth=0)=>{
     const p=profiles.get(c.user_id)||{display_name:'Membru'};
     const avatar=avatarUrl(p.avatar_path);
-    const canDelete=state.session?.user&&(state.session.user.id===c.user_id||admin);
+    const canDelete=!!state.session?.user&&state.session.user.id===c.user_id;
+    const canReport=!!state.session?.user&&state.session.user.id!==c.user_id;
     const canReply=!!state.session?.user;
     const replies=children.get(c.id)||[];
 
@@ -518,6 +518,7 @@ function renderComments(profiles){
           <div class="comment-actions">
             ${canReply?`<button class="comment-reply" data-reply-comment="${c.id}" data-reply-name="${esc(p.display_name||'Membru')}">Răspunde</button>`:''}
             ${canDelete?`<button class="comment-delete" data-delete-comment="${c.id}">Șterge</button>`:''}
+            ${canReport?`<button class="comment-report" data-report-comment="${c.id}">Raportează</button>`:''}
           </div>
           <div class="reply-slot" data-reply-slot="${c.id}"></div>
         </div>
@@ -528,16 +529,44 @@ function renderComments(profiles){
 
   root.innerHTML=roots.map(c=>renderNode(c,0)).join('');
 
-  $$('[data-delete-comment]').forEach(b=>b.onclick=()=>deleteComment(b.dataset.deleteComment));
-  $$('[data-reply-comment]').forEach(b=>b.onclick=()=>openReplyForm(b.dataset.replyComment,b.dataset.replyName));
+  $('[data-delete-comment]').forEach(b=>b.onclick=()=>deleteComment(b.dataset.deleteComment));
+  $('[data-report-comment]').forEach(b=>b.onclick=()=>reportComment(b.dataset.reportComment));
+  $('[data-reply-comment]').forEach(b=>b.onclick=()=>openReplyForm(b.dataset.replyComment,b.dataset.replyName));
 }
 
 async function deleteComment(id){
+  if(!state.session?.user)return needAccount('șterge comentariul');
+  const comment=state.articleComments.find(c=>c.id===id);
+  if(!comment||comment.user_id!==state.session.user.id){
+    alert('Poți șterge doar propriul comentariu.');
+    return;
+  }
   if(!confirm('Ștergi acest comentariu?'))return;
-  const {error}=await db.from('blog_comments').delete().eq('id',id);
+  const {error}=await db.from('blog_comments').delete().eq('id',id).eq('user_id',state.session.user.id);
   if(error){console.error(error);alert('Comentariul nu a putut fi șters.');return;}
   await refreshCommentCount(state.article.id);
   await loadComments(state.article.id);
+}
+
+async function reportComment(id){
+  if(!state.session?.user)return needAccount('raporta');
+  const comment=state.articleComments.find(c=>c.id===id);
+  if(!comment||comment.user_id===state.session.user.id)return alert('Nu îți poți raporta propriul comentariu.');
+  const reason=prompt('Motivul raportării (ex. insultă, spam, conținut nepotrivit):','conținut nepotrivit');
+  if(!reason)return;
+  const clean=String(reason).trim().slice(0,80);
+  if(!clean)return;
+  const {error}=await db.from('blog_comment_reports').insert({
+    reporter_id:state.session.user.id,
+    comment_id:id,
+    reason:clean
+  });
+  if(error){
+    if(error.code==='23505')return alert('Ai raportat deja acest comentariu.');
+    console.error(error);
+    return alert('Raportarea nu a putut fi trimisă.');
+  }
+  alert('Comentariul a fost raportat administratorului.');
 }
 
 init();
