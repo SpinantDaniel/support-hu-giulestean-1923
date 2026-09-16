@@ -17,3 +17,20 @@
     transform:translateY(-1px);
   }
 }
+
+
+/* v5.33 — keep mobile admin navigation at intrinsic height */
+@media(max-width:950px){
+  .admin-shell{
+    align-content:start;
+  }
+  .sidebar{
+    align-items:center;
+  }
+  .sidebar button{
+    align-self:center;
+    min-height:44px;
+    display:flex;
+    align-items:center;
+  }
+}
