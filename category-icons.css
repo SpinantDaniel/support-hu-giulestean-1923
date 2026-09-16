@@ -1,4 +1,4 @@
-/* Batch 1 — animated category icons */
+/* Batch 1 + 2 — animated category icons */
 .category .category-modern-icon{
   width:52px;
   height:52px;
@@ -53,6 +53,39 @@
 .cat-anim-phone{animation:catVibratePhone 2.5s ease-in-out infinite}
 .cat-anim-fashion{animation:catSwingFashion 3.5s ease-in-out infinite}
 .cat-anim-home{animation:catGrowHome 3.8s ease-in-out infinite}
+
+@keyframes catTools{
+  0%,100%{transform:translateY(0) rotate(-1deg)}
+  50%{transform:translateY(-4px) rotate(2deg)}
+}
+@keyframes catTravel{
+  0%,100%{transform:translate(-2px,0) rotate(-.5deg)}
+  50%{transform:translate(3px,-3px) rotate(.8deg)}
+}
+@keyframes catRealEstate{
+  0%,100%{transform:translateY(0) rotate(0)}
+  50%{transform:translateY(-4px) rotate(-1.4deg)}
+}
+@keyframes catJobs{
+  0%,100%{transform:translateY(0) scale(1)}
+  50%{transform:translateY(-5px) scale(1.025)}
+}
+@keyframes catHeart{
+  0%,38%,100%{transform:translateY(0) scale(1)}
+  44%{transform:translateY(-2px) scale(1.06)}
+  50%{transform:translateY(0) scale(1)}
+  56%{transform:translateY(-1px) scale(1.035)}
+}
+@keyframes catMisc{
+  0%,100%{transform:translateY(0) rotate(-1deg)}
+  50%{transform:translateY(-4px) rotate(1.8deg)}
+}
+.cat-anim-tools{animation:catTools 3.7s ease-in-out infinite .08s}
+.cat-anim-travel{animation:catTravel 3.9s ease-in-out infinite .2s}
+.cat-anim-realestate{animation:catRealEstate 4.1s ease-in-out infinite .15s}
+.cat-anim-jobs{animation:catJobs 3.65s ease-in-out infinite .26s}
+.cat-anim-heart{animation:catHeart 3.2s ease-in-out infinite .1s}
+.cat-anim-misc{animation:catMisc 4.05s ease-in-out infinite .3s}
 @media(max-width:650px){
   .category .category-modern-icon{
     width:46px;
