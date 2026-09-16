@@ -15,7 +15,7 @@
 
   <meta name="robots" content="noindex,nofollow">
   <title>Panou administrare — Support Hub Giuleștean 1923</title>
-  <link rel="stylesheet" href="/admin.css?v=5.33">
+  <link rel="stylesheet" href="/admin.css?v=5.42">
   <link rel="stylesheet" href="/brand.css?v=5.16">
   <link rel="stylesheet" href="/dynamics.css?v=5.24">
 </head>
@@ -45,6 +45,20 @@
         <div class="panel" data-panel="overview" data-admin-only>
           <div class="panel-head"><div><span class="eyebrow">ADMIN FULL</span><h1>Control central</h1></div><button class="ghost" id="refreshDashboard">Reîmprospătează</button></div>
           <div class="stats" id="stats"></div>
+          <div class="section-card media-settings-card" id="featuredMediaAdminCard">
+            <h2>Casetă media Homepage</h2>
+            <p class="media-settings-copy">Adaugă URL-ul unui video YouTube. Dacă URL-ul este gol, pe Homepage apare automat fundalul vișiniu cu logo-ul HUB.</p>
+            <form id="featuredMediaSettingsForm">
+              <label>URL YouTube
+                <input name="youtube_url" type="url" maxlength="500" placeholder="https://www.youtube.com/watch?v=...">
+              </label>
+              <div class="form-actions media-settings-actions">
+                <button type="button" class="ghost" id="clearFeaturedMedia">Elimină video</button>
+                <button class="primary" id="saveFeaturedMedia">Salvează video</button>
+              </div>
+              <small class="media-settings-status" id="featuredMediaAdminStatus">Se încarcă setarea…</small>
+            </form>
+          </div>
           <div class="section-card"><h2>Utilizatori raportați</h2><div id="reportedPreview"></div></div>
         </div>
 
@@ -105,5 +119,6 @@
   <script src="/parallax.js"></script>
   <script src="/pwa-refresh.js?v=5.32"></script>
   <script src="/admin.js?v=5.28"></script>
+  <script src="/featured-media.js?v=1.0"></script>
 </body>
 </html>
