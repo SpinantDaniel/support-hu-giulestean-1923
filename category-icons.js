@@ -7,7 +7,13 @@
     'Electronice':{src:'/assets/category-icons/electronice.webp',cls:'cat-anim-tech'},
     'Telefoane':{src:'/assets/category-icons/telefoane.webp',cls:'cat-anim-phone'},
     'Haine & Încălțăminte':{src:'/assets/category-icons/haine-incaltaminte.webp',cls:'cat-anim-fashion'},
-    'Casă & Grădină':{src:'/assets/category-icons/casa-gradina.webp',cls:'cat-anim-home'}
+    'Casă & Grădină':{src:'/assets/category-icons/casa-gradina.webp',cls:'cat-anim-home'},
+    'Servicii':{src:'/assets/category-icons/servicii.webp',cls:'cat-anim-tools'},
+    'Bilete & Deplasări':{src:'/assets/category-icons/bilete-deplasari.webp',cls:'cat-anim-travel'},
+    'Imobiliare':{src:'/assets/category-icons/imobiliare.webp',cls:'cat-anim-realestate'},
+    'Joburi':{src:'/assets/category-icons/joburi.webp',cls:'cat-anim-jobs'},
+    'Donez / Caut':{src:'/assets/category-icons/donez-caut.webp',cls:'cat-anim-heart'},
+    'Diverse':{src:'/assets/category-icons/diverse.webp',cls:'cat-anim-misc'}
   };
 
   function applyCategoryIcons(){
