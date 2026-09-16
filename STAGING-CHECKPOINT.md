@@ -45,3 +45,5 @@ Do not apply that baseline to the production Supabase project.
 Staging branch initialized on 2026-09-16.
 
 Rollback note 2026-09-16: reverted the newsletter header experiment. Active staging UI keeps only the validated mobile logo dropdown on the marketplace homepage.
+
+Rollback 2026-09-16 14:48: reverted cross-page dropdown experiment after Admin/Blog regression. Restored last verified functional staging checkpoint.
