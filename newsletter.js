@@ -1,5 +1,10 @@
-const SUPABASE_URL='https://bhqpixyiojthpfqnyhsh.supabase.co';
-const SUPABASE_PUBLISHABLE_KEY='sb_publishable_U2IRhs6K85S43ZRqKK5U8Q_HSknWMNY';
+const IS_VERCEL_BRANCH_PREVIEW=location.hostname.endsWith('.vercel.app')&&location.hostname.includes('-git-');
+const PROD_SUPABASE_URL='https://bhqpixyiojthpfqnyhsh.supabase.co';
+const PROD_SUPABASE_PUBLISHABLE_KEY='sb_publishable_U2IRhs6K85S43ZRqKK5U8Q_HSknWMNY';
+const TEST_SUPABASE_URL='https://llgzzqgdhpibsgnpnsnf.supabase.co';
+const TEST_SUPABASE_PUBLISHABLE_KEY='sb_publishable_F7WYX-gO8aUbAkKa3rdU8w_eOecS0kL';
+const SUPABASE_URL=IS_VERCEL_BRANCH_PREVIEW?TEST_SUPABASE_URL:PROD_SUPABASE_URL;
+const SUPABASE_PUBLISHABLE_KEY=IS_VERCEL_BRANCH_PREVIEW?TEST_SUPABASE_PUBLISHABLE_KEY:PROD_SUPABASE_PUBLISHABLE_KEY;
 const db=window.supabase.createClient(SUPABASE_URL,SUPABASE_PUBLISHABLE_KEY,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:false}});
 const $=s=>document.querySelector(s);
 const $$=(s,root=document)=>[...root.querySelectorAll(s)];
