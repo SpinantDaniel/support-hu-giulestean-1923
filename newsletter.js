@@ -524,9 +524,9 @@ function renderComments(profiles){
 
   root.innerHTML=roots.map(c=>renderNode(c,0)).join('');
 
-  $('[data-delete-comment]').forEach(b=>b.onclick=()=>deleteComment(b.dataset.deleteComment));
-  $('[data-report-comment]').forEach(b=>b.onclick=()=>reportComment(b.dataset.reportComment));
-  $('[data-reply-comment]').forEach(b=>b.onclick=()=>openReplyForm(b.dataset.replyComment,b.dataset.replyName));
+  $$('[data-delete-comment]').forEach(b=>b.onclick=()=>deleteComment(b.dataset.deleteComment));
+  $$('[data-report-comment]').forEach(b=>b.onclick=()=>reportComment(b.dataset.reportComment));
+  $$('[data-reply-comment]').forEach(b=>b.onclick=()=>openReplyForm(b.dataset.replyComment,b.dataset.replyName));
 }
 
 async function deleteComment(id){
