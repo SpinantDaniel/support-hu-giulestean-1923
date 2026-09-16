@@ -19,19 +19,27 @@
   <meta property="og:description" content="Anunțuri între oameni din comunitate. Fără comision." />
   <title>Support Hub Giuleștean 1923 — Anunțuri între rapidiști</title>
   
-  <link rel="stylesheet" href="/styles.css?v=5.38">
+  <link rel="stylesheet" href="/styles.css?v=5.39">
   <link rel="stylesheet" href="/brand.css?v=5.16">
   <link rel="stylesheet" href="/dynamics.css?v=5.24">
 </head>
 <body>
   <div class="top-strip">Platformă independentă a comunității • fără afiliere oficială • tranzacțiile se stabilesc direct între utilizatori</div>
   <header class="site-header">
-    <a class="brand-lockup" href="#" aria-label="Support Hub Giuleștean 1923">
+    <a class="brand-lockup" id="mobileHeaderMenuTrigger" href="/" aria-label="Support Hub Giuleștean 1923" aria-haspopup="true" aria-expanded="false" aria-controls="mobileHeaderMenu">
       <img class="brand-lockup-logo" src="/brand-logo.jpg" alt="Support Hub Giuleștean 1923">
       <span class="brand-lockup-copy"><strong>SUPPORT HUB</strong><span>GIULEȘTEAN 1923</span></span>
     </a>
     <nav class="desktop-nav"><a href="#anunturi">Anunțuri</a><a href="#categorii">Categorii</a><a href="/newsletter.html">Noutăți</a><a href="#siguranta">Siguranță</a></nav>
     <div class="header-actions"><button class="ghost" id="loginBtn">Intră în cont</button><button class="primary" data-open-sell>Publică Anunț</button></div>
+    <nav class="mobile-header-menu" id="mobileHeaderMenu" aria-label="Navigare mobilă" aria-hidden="true">
+      <div class="mobile-header-menu-label">NAVIGARE</div>
+      <a href="/" data-mobile-header-link><span>Acasă</span><i>↗</i></a>
+      <a href="#anunturi" data-mobile-header-link><span>Anunțuri</span><i>↓</i></a>
+      <a href="#categorii" data-mobile-header-link><span>Categorii</span><i>↓</i></a>
+      <a href="/newsletter.html" data-mobile-header-link><span>Noutăți</span><i>↗</i></a>
+      <a href="#siguranta" data-mobile-header-link><span>Siguranță</span><i>↓</i></a>
+    </nav>
   </header>
 
   <main>
@@ -211,6 +219,6 @@
   <script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" async defer></script>
 <script src="/parallax.js"></script>
   <script src="/pwa-refresh.js?v=5.32"></script>
-<script src="/app.js?v=5.38"></script>
+<script src="/app.js?v=5.39"></script>
 </body>
 </html>
