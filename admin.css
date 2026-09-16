@@ -65,3 +65,20 @@
   .media-url-grid label:last-child{grid-column:auto}
   .media-settings-actions{display:flex;flex-wrap:wrap}
 }
+
+
+/* v5.47 — report moderation */
+.report-group{display:grid;gap:10px;margin-bottom:22px}
+.report-group h2{margin:4px 0 2px;font-size:16px}
+.report-row{align-items:start}
+.report-comment-quote{
+  margin:8px 0 0;
+  padding:9px 11px;
+  border-left:3px solid var(--wine);
+  border-radius:7px;
+  background:#faf5f7;
+  color:#4e464a;
+  font-size:11px;
+  line-height:1.45;
+  white-space:pre-wrap;
+}
