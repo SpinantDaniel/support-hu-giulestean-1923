@@ -977,7 +977,15 @@ function updateAuthMode(){
   const signup=state.authMode==='signup';
   $('#authTitle').textContent=signup?'Creează cont':'Intră în cont';
   $('#authSubmit').textContent=signup?'Creează cont':'Intră în cont';
-  $('#displayNameField').hidden=!signup;
+  const authForm=$('#authForm');
+  if(authForm){
+    authForm.classList.toggle('auth-mode-login',!signup);
+    authForm.classList.toggle('auth-mode-signup',signup);
+  }
+  const displayNameField=$('#displayNameField');
+  if(displayNameField)displayNameField.hidden=!signup;
+  const displayNameInput=$('#displayNameField input');
+  if(displayNameInput)displayNameInput.required=signup;
   const loginLogo=$('#authLoginLogo');
   if(loginLogo)loginLogo.hidden=signup;
   $('#forgotPasswordRow').hidden=signup;
