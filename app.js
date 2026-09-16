@@ -1563,8 +1563,49 @@ function bindCloseButtons(root=document){qsa('[data-close]',root).forEach(b=>b.o
   if(id==='authModal')resetAuthCaptcha();
   closeDialog(id);
 });}
+function setMobileHeaderMenu(open){
+  const menu=$('#mobileHeaderMenu'),trigger=$('#mobileHeaderMenuTrigger');
+  if(!menu||!trigger)return;
+  const shouldOpen=!!open&&window.matchMedia('(max-width:900px)').matches;
+  menu.classList.toggle('is-open',shouldOpen);
+  menu.setAttribute('aria-hidden',shouldOpen?'false':'true');
+  trigger.setAttribute('aria-expanded',shouldOpen?'true':'false');
+}
+
+function bindMobileHeaderMenu(){
+  const trigger=$('#mobileHeaderMenuTrigger'),menu=$('#mobileHeaderMenu');
+  if(!trigger||!menu)return;
+
+  trigger.addEventListener('click',e=>{
+    if(!window.matchMedia('(max-width:900px)').matches)return;
+    e.preventDefault();
+    e.stopPropagation();
+    setMobileHeaderMenu(!menu.classList.contains('is-open'));
+  });
+
+  qsa('[data-mobile-header-link]',menu).forEach(link=>link.addEventListener('click',()=>setMobileHeaderMenu(false)));
+
+  document.addEventListener('pointerdown',e=>{
+    if(!menu.classList.contains('is-open'))return;
+    if(menu.contains(e.target)||trigger.contains(e.target))return;
+    setMobileHeaderMenu(false);
+  },{passive:true});
+
+  document.addEventListener('keydown',e=>{
+    if(e.key==='Escape'&&menu.classList.contains('is-open')){
+      setMobileHeaderMenu(false);
+      trigger.focus();
+    }
+  });
+
+  window.addEventListener('resize',()=>{
+    if(!window.matchMedia('(max-width:900px)').matches)setMobileHeaderMenu(false);
+  },{passive:true});
+}
+
 function bindStaticEvents(){
   bindCloseButtons();
+  bindMobileHeaderMenu();
   qsa('[data-open-sell]').forEach(b=>b.onclick=openSell);
   $('#loginBtn').onclick=()=>state.user?openAccount():openAuth('login');$('#mobileAccount').onclick=$('#loginBtn').onclick;
   qsa('[data-auth-mode]').forEach(b=>b.onclick=()=>{state.authMode=b.dataset.authMode;updateAuthMode();renderAuthTurnstile();resetAuthCaptcha();});
