@@ -2,7 +2,7 @@ const SUPABASE_URL='https://bhqpixyiojthpfqnyhsh.supabase.co';
 const SUPABASE_PUBLISHABLE_KEY='sb_publishable_U2IRhs6K85S43ZRqKK5U8Q_HSknWMNY';
 const db=window.supabase.createClient(SUPABASE_URL,SUPABASE_PUBLISHABLE_KEY,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});
 const $=(s,el=document)=>el.querySelector(s);const $$=(s,el=document)=>[...el.querySelectorAll(s)];
-const state={session:null,user:null,profile:null,role:'none',dashboard:null,posts:[],editors:[],activeTab:'overview'};
+const state={session:null,user:null,profile:null,role:'none',dashboard:null,commentReports:[],posts:[],editors:[],activeTab:'overview'};
 const esc=(v='')=>String(v).replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt',"'":'&#039;','"':'&quot;'}[c]));
 const fmt=d=>d?new Intl.DateTimeFormat('ro-RO',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'}).format(new Date(d)):'—';
 const imageUrl=path=>path?imageService.getPublicUrl(db,'blog-images',path):'';
@@ -51,6 +51,7 @@ async function edge(name,payload={},allowRefresh=true){
   return data;
 }
 async function adminAction(action,payload={}){return edge('admin-api',{action,...payload});}
+async function commentModerationAction(action,payload={}){return edge('admin-comment-moderation',{action,...payload});}
 
 function revealAdminShell(){
   const gate=$('#gate'),app=$('#adminApp'),badge=$('#roleBadge');
@@ -123,9 +124,19 @@ function showTab(tab){state.activeTab=tab;$$('[data-panel]').forEach(p=>p.hidden
 
 async function loadDashboard(){
   if(state.role!=='admin')return;const btn=$('#refreshDashboard');setBusy(btn,true,'Se încarcă…');
-  try{state.dashboard=await adminAction('dashboard');renderOverview();renderUsers();renderReports();renderListings();}catch(e){console.error(e);toast(e.message,'error');}finally{setBusy(btn,false);}
+  try{
+    state.dashboard=await adminAction('dashboard');
+    try{
+      const commentRes=await commentModerationAction('dashboard');
+      state.commentReports=commentRes.comment_reports||[];
+    }catch(commentError){
+      console.warn('comment moderation dashboard',commentError);
+      state.commentReports=[];
+    }
+    renderOverview();renderUsers();renderReports();renderListings();
+  }catch(e){console.error(e);toast(e.message,'error');}finally{setBusy(btn,false);}
 }
-function renderOverview(){const d=state.dashboard;if(!d)return;const suspended=d.users.filter(u=>u.suspended).length,openReports=d.reports.filter(r=>r.status!=='resolved').length;$('#stats').innerHTML=`<div class="stat"><b>${d.users.length}</b><span>Utilizatori</span></div><div class="stat"><b>${d.listings.length}</b><span>Anunțuri</span></div><div class="stat"><b>${openReports}</b><span>Raportări deschise</span></div><div class="stat"><b>${suspended}</b><span>Suspendați</span></div>`;const rows=d.reported_users.slice(0,6);$('#reportedPreview').innerHTML=rows.length?rows.map(userRowHtml).join(''):'<div class="empty">Nu există utilizatori raportați.</div>';bindUserActions($('#reportedPreview'));}
+function renderOverview(){const d=state.dashboard;if(!d)return;const suspended=d.users.filter(u=>u.suspended).length,openReports=d.reports.filter(r=>r.status!=='resolved').length+state.commentReports.filter(r=>r.status!=='resolved').length;$('#stats').innerHTML=`<div class="stat"><b>${d.users.length}</b><span>Utilizatori</span></div><div class="stat"><b>${d.listings.length}</b><span>Anunțuri</span></div><div class="stat"><b>${openReports}</b><span>Raportări deschise</span></div><div class="stat"><b>${suspended}</b><span>Suspendați</span></div>`;const rows=d.reported_users.slice(0,6);$('#reportedPreview').innerHTML=rows.length?rows.map(userRowHtml).join(''):'<div class="empty">Nu există utilizatori raportați.</div>';bindUserActions($('#reportedPreview'));}
 function userRowHtml(u){const until=u.suspended?`Suspendat până la ${fmt(u.suspended_until)}`:'Activ';return `<div class="admin-row" data-user-row="${u.id}"><div class="main"><b>${esc(u.display_name)} ${u.verified?'<span class="tag green">Verificat</span>':''}</b><span>${esc(u.email||'fără email')} · ${u.listings_count} anunțuri · ${u.reports_count} raportări</span><small>${u.suspended?`<span class="tag red">${esc(until)}</span> ${esc(u.suspension_reason||'')}`:`<span class="tag green">${until}</span>`}</small></div><div class="actions">${u.role==='admin'?'<span class="tag wine">Admin</span>':u.suspended?`<button class="success" data-unsuspend="${u.id}">Deblochează</button>`:`<select class="duration" data-duration="${u.id}"><option value="24">1 zi</option><option value="72">3 zile</option><option value="168" selected>7 zile</option><option value="720">30 zile</option></select><button class="danger" data-suspend="${u.id}">Suspendă</button>`}${u.role!=='admin'?`<button class="ghost" data-verify="${u.id}" data-value="${u.verified?'0':'1'}">${u.verified?'Retrage verificarea':'Marchează verificat'}</button><button class="danger admin-delete-user" data-delete-user="${u.id}" data-delete-user-name="${esc(u.display_name)}" data-delete-user-email="${esc(u.email||'')}">Șterge user</button>`:''}</div></div>`;}
 function renderUsers(){const d=state.dashboard;if(!d)return;const q=($('#userSearch')?.value||'').trim().toLowerCase();const rows=d.users.filter(u=>!q||`${u.display_name} ${u.email}`.toLowerCase().includes(q));$('#usersList').innerHTML=rows.length?rows.map(userRowHtml).join(''):'<div class="empty">Niciun utilizator găsit.</div>';bindUserActions($('#usersList'));}
 function bindUserActions(root){$$('[data-suspend]',root).forEach(b=>b.onclick=()=>suspendUser(b.dataset.suspend,root));$$('[data-unsuspend]',root).forEach(b=>b.onclick=()=>unsuspendUser(b.dataset.unsuspend));$$('[data-verify]',root).forEach(b=>b.onclick=()=>verifyUser(b.dataset.verify,b.dataset.value==='1'));$$('[data-delete-user]',root).forEach(b=>b.onclick=()=>deleteUserFromAdmin(b));}
@@ -161,8 +172,76 @@ Scrie ȘTERGE pentru confirmare:`,'');
 }
 
 
-function renderReports(){const d=state.dashboard;if(!d)return;const rows=d.reports.filter(r=>r.status!=='resolved');$('#reportsList').innerHTML=rows.length?rows.map(r=>`<div class="admin-row"><div class="main"><b>${esc(r.listing_title)}</b><span>${esc(r.seller_name)} · ${esc(r.seller_email||'')} · motiv: ${esc(r.reason)}</span><small>${fmt(r.created_at)}${r.details?` · ${esc(r.details)}`:''}</small></div><div class="actions"><button class="ghost" data-resolve="${r.id}">Rezolvă</button>${r.listing_id?`<button class="danger" data-admin-delete="${r.listing_id}">Șterge anunțul</button>`:''}${r.seller_id?`<select class="duration" data-duration="${r.seller_id}"><option value="24">1 zi</option><option value="72">3 zile</option><option value="168" selected>7 zile</option><option value="720">30 zile</option></select><button class="danger" data-suspend="${r.seller_id}">Suspendă user</button>`:''}</div></div>`).join(''):'<div class="empty">Nu există raportări deschise.</div>';$$('[data-resolve]',$('#reportsList')).forEach(b=>b.onclick=()=>resolveReport(b.dataset.resolve));$$('[data-admin-delete]',$('#reportsList')).forEach(b=>b.onclick=()=>adminDeleteListing(b.dataset.adminDelete));$$('[data-suspend]',$('#reportsList')).forEach(b=>b.onclick=()=>suspendUser(b.dataset.suspend,$('#reportsList')));}
+function renderReports(){
+  const d=state.dashboard;
+  if(!d)return;
+
+  const listingRows=d.reports.filter(r=>r.status!=='resolved');
+  const commentRows=state.commentReports.filter(r=>r.status!=='resolved');
+
+  const listingHtml=listingRows.length
+    ?listingRows.map(r=>`<div class="admin-row report-row">
+        <div class="main">
+          <b><span class="tag wine">Anunț</span> ${esc(r.listing_title)}</b>
+          <span>${esc(r.seller_name)} · ${esc(r.seller_email||'')} · motiv: ${esc(r.reason)}</span>
+          <small>${fmt(r.created_at)}${r.details?` · ${esc(r.details)}`:''}</small>
+        </div>
+        <div class="actions">
+          <button class="ghost" data-resolve="${r.id}">Rezolvă</button>
+          ${r.seller_id?`<button class="ghost" data-admin-message="${r.seller_id}" data-admin-message-context="Raportare anunț: ${esc(r.listing_title)}">Mesaj user</button>`:''}
+          ${r.listing_id?`<button class="danger" data-admin-delete="${r.listing_id}">Șterge anunțul</button>`:''}
+          ${r.seller_id?`<select class="duration" data-duration="${r.seller_id}"><option value="24">1 zi</option><option value="72">3 zile</option><option value="168" selected>7 zile</option><option value="720">30 zile</option></select><button class="danger" data-suspend="${r.seller_id}">Suspendă user</button>`:''}
+        </div>
+      </div>`).join('')
+    :'<div class="empty">Nu există raportări de anunțuri deschise.</div>';
+
+  const commentHtml=commentRows.length
+    ?commentRows.map(r=>`<div class="admin-row report-row report-comment-row">
+        <div class="main">
+          <b><span class="tag wine">Comentariu</span> ${esc(r.post_title||'Articol')}</b>
+          <span>${esc(r.reported_user_name||'Membru')} · ${esc(r.reported_user_email||'')} · motiv: ${esc(r.reason)}</span>
+          <blockquote class="report-comment-quote">“${esc(r.comment_body||'Comentariu indisponibil')}”</blockquote>
+          <small>${fmt(r.created_at)}</small>
+        </div>
+        <div class="actions">
+          <button class="ghost" data-resolve-comment-report="${r.id}">Rezolvă</button>
+          ${r.reported_user_id?`<button class="ghost" data-admin-message="${r.reported_user_id}" data-admin-message-context="Raportare comentariu: ${esc(r.post_title||'Articol')}">Mesaj user</button>`:''}
+          <button class="danger" data-delete-reported-comment="${r.id}">Șterge comentariul</button>
+          ${r.reported_user_id?`<select class="duration" data-duration="${r.reported_user_id}"><option value="24">1 zi</option><option value="72">3 zile</option><option value="168" selected>7 zile</option><option value="720">30 zile</option></select><button class="danger" data-suspend="${r.reported_user_id}">Suspendă user</button>`:''}
+        </div>
+      </div>`).join('')
+    :'<div class="empty">Nu există raportări de comentarii deschise.</div>';
+
+  $('#reportsList').innerHTML=`<div class="report-group"><h2>Raportări anunțuri</h2>${listingHtml}</div><div class="report-group"><h2>Raportări comentarii</h2>${commentHtml}</div>`;
+
+  $$('[data-resolve]',$('#reportsList')).forEach(b=>b.onclick=()=>resolveReport(b.dataset.resolve));
+  $$('[data-admin-delete]',$('#reportsList')).forEach(b=>b.onclick=()=>adminDeleteListing(b.dataset.adminDelete));
+  $$('[data-suspend]',$('#reportsList')).forEach(b=>b.onclick=()=>suspendUser(b.dataset.suspend,$('#reportsList')));
+  $$('[data-resolve-comment-report]',$('#reportsList')).forEach(b=>b.onclick=()=>resolveCommentReport(b.dataset.resolveCommentReport));
+  $$('[data-delete-reported-comment]',$('#reportsList')).forEach(b=>b.onclick=()=>deleteReportedComment(b.dataset.deleteReportedComment));
+  $$('[data-admin-message]',$('#reportsList')).forEach(b=>b.onclick=()=>sendAdminMessage(b.dataset.adminMessage,b.dataset.adminMessageContext||'Moderare'));
+}
 async function resolveReport(id){try{await adminAction('resolve_report',{report_id:id});toast('Raportare închisă.','success');await loadDashboard();}catch(e){toast(e.message,'error');}}
+async function resolveCommentReport(id){try{await commentModerationAction('resolve_comment_report',{report_id:id});toast('Raportarea comentariului a fost închisă.','success');await loadDashboard();}catch(e){toast(e.message,'error');}}
+async function deleteReportedComment(id){
+  if(!confirm('Ștergi definitiv comentariul raportat?'))return;
+  try{
+    await commentModerationAction('delete_reported_comment',{report_id:id});
+    toast('Comentariul raportat a fost șters.','success');
+    await loadDashboard();
+  }catch(e){toast(e.message,'error');}
+}
+async function sendAdminMessage(userId,context='Moderare'){
+  if(!userId)return;
+  const body=prompt('Mesaj pentru utilizator (avertisment / informare):','');
+  if(body===null)return;
+  const clean=String(body).trim();
+  if(!clean)return toast('Mesajul este gol.','error');
+  try{
+    await commentModerationAction('send_admin_message',{user_id:userId,body:clean,context});
+    toast('Mesaj administrativ trimis.','success');
+  }catch(e){toast(e.message,'error');}
+}
 
 function listingRowHtml(l){return `<div class="admin-row"><div class="main"><b>${esc(l.title)} ${l.reports_count?`<span class="tag red">${l.reports_count} raportări</span>`:''}</b><span>${esc(l.seller_name)} · ${esc(l.seller_email||'')} · ${esc(l.state)}</span><small>${fmt(l.created_at)}</small></div><div class="actions"><button class="danger" data-admin-delete="${l.id}">Șterge anunțul</button></div></div>`;}
 function renderListings(){const d=state.dashboard;if(!d)return;const q=($('#listingSearch')?.value||'').trim().toLowerCase();const rows=d.listings.filter(l=>!q||`${l.title} ${l.seller_name} ${l.seller_email}`.toLowerCase().includes(q));$('#adminListings').innerHTML=rows.length?rows.map(listingRowHtml).join(''):'<div class="empty">Niciun anunț găsit.</div>';$$('[data-admin-delete]',$('#adminListings')).forEach(b=>b.onclick=()=>adminDeleteListing(b.dataset.adminDelete));}
