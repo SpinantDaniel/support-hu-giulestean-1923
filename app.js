@@ -8,6 +8,17 @@ const TURNSTILE_SITE_KEY = String(AUTH_CONFIG.turnstileSiteKey || '').trim();
 const TERMS_VERSION = String(AUTH_CONFIG.termsVersion || '1.0');
 const PRIVACY_VERSION = String(AUTH_CONFIG.privacyVersion || '1.0');
 const authSecurity = { turnstileWidgetId:null, turnstileToken:null, recoveryActive:false };
+
+function loadTurnstileScript(){
+  if(IS_VERCEL_BRANCH_PREVIEW || window.turnstile || document.querySelector('script[data-hub-turnstile]'))return;
+  const script=document.createElement('script');
+  script.src='https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit';
+  script.async=true;
+  script.defer=true;
+  script.dataset.hubTurnstile='1';
+  document.head.appendChild(script);
+}
+loadTurnstileScript();
 const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
   auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true }
 });
@@ -899,8 +910,8 @@ function setTurnstileNote(message,status=''){
 function renderAuthTurnstile(attempt=0){
   const wrap=$('#authTurnstileWrap'),host=$('#authTurnstile');
   if(!wrap||!host)return;
+  if(IS_VERCEL_BRANCH_PREVIEW){wrap.hidden=true;return;}
   wrap.hidden=false;
-  if(IS_VERCEL_BRANCH_PREVIEW)setTurnstileNote('Verificare automată anti-abuz…');
   if(!TURNSTILE_SITE_KEY){
     setTurnstileNote('Verificarea anti-abuz nu este configurată.','error');
     return;
@@ -915,8 +926,6 @@ function renderAuthTurnstile(attempt=0){
     sitekey:TURNSTILE_SITE_KEY,
     theme:'auto',
     action:'auth',
-    appearance:IS_VERCEL_BRANCH_PREVIEW?'interaction-only':'always',
-    execution:'render',
     callback:(token)=>{
       authSecurity.turnstileToken=token||null;
       setTurnstileNote('Verificare anti-abuz completă.','ok');
@@ -941,6 +950,7 @@ function resetAuthCaptcha(){
 }
 
 function requireAuthCaptchaToken(){
+  if(IS_VERCEL_BRANCH_PREVIEW)throw new Error('Autentificarea reală este dezactivată în Preview. Folosește Admin UI Preview pentru testele de interfață.');
   if(!TURNSTILE_SITE_KEY)throw new Error('Verificarea anti-abuz nu este configurată momentan.');
   if(!authSecurity.turnstileToken)throw new Error('Completează verificarea anti-abuz pentru a continua.');
   return authSecurity.turnstileToken;
