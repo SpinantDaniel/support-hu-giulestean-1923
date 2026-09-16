@@ -34,3 +34,26 @@ button:disabled{opacity:.6;cursor:not-allowed}.muted{color:var(--muted);font-siz
 .auth-turnstile p[data-status="ok"]{font-weight:800}
 .auth-turnstile p[data-status="error"]{font-weight:800;text-decoration:underline}
 #passwordResetForm .muted{line-height:1.55}
+
+
+/* v5.37 — login-only HUB logo in nickname slot */
+.auth-login-logo{
+  min-height:96px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  margin:2px 0 8px;
+}
+.auth-login-logo img{
+  width:86px;
+  height:86px;
+  object-fit:cover;
+  border-radius:18px;
+  border:1px solid var(--line);
+  background:#fff;
+  box-shadow:0 8px 24px rgba(65,18,35,.12);
+}
+@media(max-width:650px){
+  .auth-login-logo{min-height:88px;margin:0 0 6px}
+  .auth-login-logo img{width:78px;height:78px;border-radius:16px}
+}
