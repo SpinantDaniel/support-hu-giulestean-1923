@@ -1866,3 +1866,59 @@ footer.global-footer .global-footer-note{
     padding:10px 11px;
   }
 }
+
+
+/* v5.25 — numeric seller rating + administrative notices */
+.seller-rating-average{
+  color:var(--wine);
+  font-size:12px;
+  font-weight:950;
+  white-space:nowrap;
+}
+.admin-notice-list{
+  grid-column:1/-1;
+  display:grid;
+  gap:8px;
+  margin-bottom:4px;
+}
+.admin-notice-head{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  padding:0 2px 3px;
+}
+.admin-notice-head b{font-size:12px}
+.admin-notice-head span{font-size:9px;color:var(--muted)}
+.admin-notice-card{
+  display:grid;
+  grid-template-columns:auto minmax(0,1fr);
+  gap:10px;
+  align-items:start;
+  padding:11px 12px;
+  border:1px solid rgba(111,21,48,.14);
+  border-radius:12px;
+  background:#fbf5f7;
+}
+.admin-notice-badge{
+  padding:5px 7px;
+  border-radius:7px;
+  background:var(--wine);
+  color:#fff;
+  font-size:8px;
+  font-weight:950;
+  letter-spacing:.08em;
+}
+.admin-notice-card p{
+  margin:0;
+  color:var(--ink);
+  font-size:12px;
+  line-height:1.5;
+  white-space:pre-wrap;
+}
+.admin-notice-card small{
+  display:block;
+  margin-top:4px;
+  color:var(--muted);
+  font-size:8px;
+}
