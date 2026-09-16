@@ -223,3 +223,21 @@ button:disabled{opacity:.6;cursor:not-allowed}.muted{color:var(--muted);font-siz
     max-width:58%;
   }
 }
+
+
+/* v5.43 — featured media title */
+.featured-media-title{
+  margin:0 0 18px;
+  text-align:center;
+  color:var(--ink);
+  font-size:clamp(28px,3.4vw,42px);
+  line-height:1.05;
+  font-weight:900;
+  letter-spacing:-.035em;
+}
+@media(max-width:650px){
+  .featured-media-title{
+    margin-bottom:16px;
+    font-size:30px;
+  }
+}
