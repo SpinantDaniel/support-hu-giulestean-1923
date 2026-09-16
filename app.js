@@ -221,7 +221,16 @@ function renderListingImageEditor(){
 }
 
 function esc(value=''){return String(value).replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#039;','"':'&quot;'}[c]));}
-function money(n,c='RON'){return new Intl.NumberFormat('ro-RO',{style:'currency',currency:c,maximumFractionDigits:c==='RON'?0:2}).format(Number(n||0));}
+function money(n,c='RON'){
+  const value=Number(n||0);
+  const hasDecimals=Math.abs(value-Math.trunc(value))>Number.EPSILON;
+  return new Intl.NumberFormat('ro-RO',{
+    style:'currency',
+    currency:c,
+    minimumFractionDigits:hasDecimals?2:0,
+    maximumFractionDigits:hasDecimals?2:0
+  }).format(value);
+}
 function since(iso){const d=(Date.now()-new Date(iso).getTime())/1000;if(d<60)return 'acum';if(d<3600)return `acum ${Math.floor(d/60)} min`;if(d<86400)return `acum ${Math.floor(d/3600)} h`;if(d<172800)return 'ieri';return new Intl.DateTimeFormat('ro-RO',{day:'2-digit',month:'short'}).format(new Date(iso));}
 function cleanPhone(v=''){return String(v).replace(/[^0-9+]/g,'');}
 function whatsappPhone(v=''){let p=cleanPhone(v);if(p.startsWith('0'))p='40'+p.slice(1);if(p.startsWith('+'))p=p.slice(1);return p;}
@@ -1123,11 +1132,41 @@ async function submitPasswordReset(e){
   }finally{setBusy(btn,false);}
 }
 
+function updateListingCharCounters(){
+  const form=$('#sellForm');
+  if(!form)return;
+  const pairs=[
+    {field:form.elements.title,counter:$('#listingTitleCounter'),max:120},
+    {field:form.elements.description,counter:$('#listingDescriptionCounter'),max:5000}
+  ];
+  pairs.forEach(({field,counter,max})=>{
+    if(!field||!counter)return;
+    const used=String(field.value||'').length;
+    counter.textContent=`${used} / ${max} caractere`;
+    counter.classList.toggle('near-limit',used>=Math.floor(max*.85)&&used<max);
+    counter.classList.toggle('at-limit',used>=max);
+  });
+}
+
+function bindListingCharCounters(){
+  const form=$('#sellForm');
+  if(!form)return;
+  ['title','description'].forEach(name=>{
+    const field=form.elements[name];
+    if(field&&!field.dataset.counterBound){
+      field.dataset.counterBound='1';
+      field.addEventListener('input',updateListingCharCounters);
+    }
+  });
+  updateListingCharCounters();
+}
+
 function prepareSellForm(mode='new'){
   const form=$('#sellForm');
   resetListingImageEditor();
   form.reset();
   form.elements.location.value='București';
+  updateListingCharCounters();
   $('#sellModal .kicker').textContent=mode==='edit'?'EDITARE ANUNȚ':'ANUNȚ NOU';
   $('#sellModal h2').textContent=mode==='edit'?'Editează anunțul':'Ce vrei să vinzi?';
   $('#publishBtn').textContent=mode==='edit'?'Salvează modificările':'Publică anunț';
@@ -1182,6 +1221,7 @@ async function openEditListing(id,returnToAccount=true){
   form.elements.location.value=l.location||'';
   form.elements.negotiable.checked=!!l.negotiable;
   form.elements.description.value=l.description||'';
+  updateListingCharCounters();
   const {data:contact,error}=await db.from('listing_contacts').select('phone,whatsapp').eq('listing_id',id).maybeSingle();
   if(error)console.warn('contact edit load',error);
   form.elements.phone.value=contact?.phone||'';
@@ -1625,6 +1665,7 @@ function bindMobileHeaderMenu(){
 function bindStaticEvents(){
   bindCloseButtons();
   bindMobileHeaderMenu();
+  bindListingCharCounters();
   qsa('[data-open-sell]').forEach(b=>b.onclick=openSell);
   $('#loginBtn').onclick=()=>state.user?openAccount():openAuth('login');$('#mobileAccount').onclick=$('#loginBtn').onclick;
   qsa('[data-auth-mode]').forEach(b=>b.onclick=()=>{state.authMode=b.dataset.authMode;updateAuthMode();renderAuthTurnstile();resetAuthCaptcha();});
