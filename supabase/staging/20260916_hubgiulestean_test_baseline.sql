@@ -306,7 +306,7 @@ begin
           case when coalesce(needs_moderation,false) then null else now() end);
   return new;
 end;
-$function$
+$function$;
 
 CREATE OR REPLACE FUNCTION private.enforce_active_listing_limit()
  RETURNS trigger
@@ -343,7 +343,7 @@ begin
 
   return new;
 end;
-$function$
+$function$;
 
 CREATE OR REPLACE FUNCTION private.handle_new_user()
  RETURNS trigger
@@ -384,7 +384,7 @@ begin
   insert into public.user_flags (user_id) values (new.id);
   return new;
 end;
-$function$
+$function$;
 
 CREATE OR REPLACE FUNCTION private.limit_listing_images()
  RETURNS trigger
@@ -397,7 +397,7 @@ begin
   end if;
   return new;
 end;
-$function$
+$function$;
 
 CREATE OR REPLACE FUNCTION private.reset_approval_on_image_change()
  RETURNS trigger
@@ -419,7 +419,7 @@ begin
     where listing_id = target_listing;
   return coalesce(new, old);
 end;
-$function$
+$function$;
 
 CREATE OR REPLACE FUNCTION private.reset_listing_approval()
  RETURNS trigger
@@ -443,7 +443,7 @@ begin
   end if;
   return new;
 end;
-$function$
+$function$;
 
 CREATE OR REPLACE FUNCTION private.reveal_conversation_on_new_message()
  RETURNS trigger
@@ -456,7 +456,7 @@ begin
   where conversation_id = new.conversation_id;
   return new;
 end;
-$function$
+$function$;
 
 CREATE OR REPLACE FUNCTION private.set_updated_at()
  RETURNS trigger
@@ -467,7 +467,7 @@ begin
   new.updated_at = now();
   return new;
 end;
-$function$
+$function$;
 
 CREATE OR REPLACE FUNCTION private.touch_conversation_on_message()
  RETURNS trigger
@@ -479,7 +479,7 @@ begin
   update public.conversations set updated_at = now() where id = new.conversation_id;
   return new;
 end;
-$function$
+$function$;
 
 CREATE OR REPLACE FUNCTION app_private.blog_post_comment_counts()
  RETURNS TABLE(post_id uuid, comments_count bigint)
@@ -490,7 +490,7 @@ AS $function$
   select c.post_id, count(*)::bigint
   from public.blog_comments c
   group by c.post_id;
-$function$
+$function$;
 
 CREATE OR REPLACE FUNCTION app_private.blog_post_like_counts()
  RETURNS TABLE(post_id uuid, likes_count bigint)
@@ -501,7 +501,7 @@ AS $function$
   select l.post_id, count(*)::bigint
   from public.blog_post_likes l
   group by l.post_id;
-$function$
+$function$;
 
 CREATE OR REPLACE FUNCTION app_private.can_read_listing(target_listing uuid)
  RETURNS boolean
@@ -528,7 +528,7 @@ AS $function$
         )
       )
   );
-$function$
+$function$;
 
 CREATE OR REPLACE FUNCTION app_private.is_newsletter_editor()
  RETURNS boolean
@@ -548,7 +548,7 @@ AS $function$
     ),
     false
   );
-$function$
+$function$;
 
 CREATE OR REPLACE FUNCTION app_private.is_user_suspended(target_user uuid DEFAULT auth.uid())
  RETURNS boolean
@@ -563,7 +563,7 @@ AS $function$
       and f.suspended = true
       and (f.suspended_until is null or f.suspended_until > now())
   );
-$function$
+$function$;
 
 CREATE OR REPLACE FUNCTION app_private.seller_rating_stats()
  RETURNS TABLE(seller_id uuid, average_rating numeric, review_count integer)
@@ -576,7 +576,7 @@ AS $function$
          count(*)::integer as review_count
   from public.user_ratings r
   group by r.seller_id;
-$function$
+$function$;
 
 CREATE OR REPLACE FUNCTION public.blog_posts_touch()
  RETURNS trigger
@@ -590,7 +590,7 @@ begin
   end if;
   return new;
 end;
-$function$
+$function$;
 
 CREATE OR REPLACE FUNCTION public.can_read_listing(target_listing uuid)
  RETURNS boolean
@@ -617,7 +617,7 @@ AS $function$
         )
       )
   );
-$function$
+$function$;
 
 CREATE OR REPLACE FUNCTION public.create_my_listing_atomic(p_category_id uuid, p_title text, p_description text, p_price numeric, p_currency text, p_condition text, p_location text, p_negotiable boolean, p_phone text, p_whatsapp text)
  RETURNS uuid
@@ -665,7 +665,7 @@ begin
 
   return v_listing_id;
 end;
-$function$
+$function$;
 
 CREATE OR REPLACE FUNCTION public.get_my_user_flag_private()
  RETURNS TABLE(suspended boolean, suspended_until timestamp with time zone, suspension_reason text, verified boolean)
@@ -676,7 +676,7 @@ AS $function$
   select f.suspended, f.suspended_until, f.suspension_reason, f.verified
   from public.user_flags f
   where f.user_id = auth.uid();
-$function$
+$function$;
 
 CREATE OR REPLACE FUNCTION public.is_admin()
  RETURNS boolean
@@ -685,7 +685,7 @@ CREATE OR REPLACE FUNCTION public.is_admin()
  SET search_path TO ''
 AS $function$
   select coalesce((auth.jwt() -> 'app_metadata' ->> 'role') = 'admin', false);
-$function$
+$function$;
 
 CREATE OR REPLACE FUNCTION public.is_newsletter_editor()
  RETURNS boolean
@@ -703,7 +703,7 @@ AS $function$
       )
     ), false
   );
-$function$
+$function$;
 
 CREATE OR REPLACE FUNCTION public.is_user_suspended(target_user uuid DEFAULT auth.uid())
  RETURNS boolean
@@ -718,7 +718,7 @@ AS $function$
       and f.suspended = true
       and (f.suspended_until is null or f.suspended_until > now())
   );
-$function$
+$function$;
 
 CREATE OR REPLACE FUNCTION public.update_my_listing_atomic(p_listing_id uuid, p_category_id uuid, p_title text, p_description text, p_price numeric, p_currency text, p_condition text, p_location text, p_negotiable boolean, p_phone text, p_whatsapp text, p_image_paths text[])
  RETURNS void
@@ -819,7 +819,7 @@ begin
   set sort_order = excluded.sort_order
   where public.listing_images.listing_id = p_listing_id;
 end;
-$function$
+$function$;
 
 CREATE OR REPLACE FUNCTION public.validate_blog_comment_parent()
  RETURNS trigger
@@ -845,7 +845,7 @@ begin
   end if;
   return new;
 end;
-$function$
+$function$;
 
 -- Indexes
 CREATE INDEX blog_comments_parent_id_idx ON public.blog_comments USING btree (parent_id);
