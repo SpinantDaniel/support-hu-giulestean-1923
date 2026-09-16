@@ -2,6 +2,7 @@ const SUPABASE_URL='https://bhqpixyiojthpfqnyhsh.supabase.co';
 const SUPABASE_PUBLISHABLE_KEY='sb_publishable_U2IRhs6K85S43ZRqKK5U8Q_HSknWMNY';
 const db=window.supabase.createClient(SUPABASE_URL,SUPABASE_PUBLISHABLE_KEY,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});
 const $=(s,el=document)=>el.querySelector(s);const $$=(s,el=document)=>[...el.querySelectorAll(s)];
+const IS_VERCEL_BRANCH_PREVIEW=location.hostname.endsWith('.vercel.app')&&location.hostname.includes('-git-');
 const state={session:null,user:null,profile:null,role:'none',dashboard:null,posts:[],editors:[],activeTab:'overview'};
 const esc=(v='')=>String(v).replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt',"'":'&#039;','"':'&quot;'}[c]));
 const fmt=d=>d?new Intl.DateTimeFormat('ro-RO',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'}).format(new Date(d)):'—';
@@ -63,6 +64,50 @@ function revealAdminShell(){
 
 async function init(){
   try{
+    if(IS_VERCEL_BRANCH_PREVIEW){
+      state.role='admin';
+      state.activeTab='overview';
+      document.body.classList.add('preview-ui-mode');
+      revealAdminShell();
+      const badge=$('#roleBadge');
+      if(badge)badge.textContent='Admin UI Preview';
+
+      $('.sidebar [data-tab]').forEach(button=>{
+        button.onclick=()=>showTab(button.dataset.tab);
+      });
+
+      $('form').forEach(form=>form.addEventListener('submit',event=>{
+        event.preventDefault();
+        toast('Preview UI: operațiunile backend sunt dezactivate.');
+      }));
+
+      const refresh=$('#refreshDashboard');
+      if(refresh)refresh.onclick=()=>toast('Preview UI: fără backend.');
+
+      const stats=$('#stats');
+      if(stats)stats.innerHTML='<div class="stat"><b>4</b><span>Utilizatori</span></div><div class="stat"><b>8</b><span>Anunțuri</span></div><div class="stat"><b>0</b><span>Raportări deschise</span></div><div class="stat"><b>0</b><span>Suspendați</span></div>';
+
+      const reported=$('#reportedPreview');
+      if(reported)reported.innerHTML='<div class="empty">Nu există utilizatori raportați.</div>';
+
+      const users=$('#usersList');
+      if(users)users.innerHTML='<div class="admin-row"><div class="main"><b>Utilizator preview</b><span>preview@example.test · 2 anunțuri · 0 raportări</span></div></div>';
+
+      const reports=$('#reportsList');
+      if(reports)reports.innerHTML='<div class="empty">Nu există raportări deschise.</div>';
+
+      const listings=$('#adminListings');
+      if(listings)listings.innerHTML='<div class="admin-row"><div class="main"><b>Anunț preview</b><span>UI test · active</span><small>Preview fără backend</small></div></div>';
+
+      const editors=$('#editorsList');
+      if(editors)editors.innerHTML='<div class="admin-row"><div class="main"><b>editor@example.test</b><span>Editor preview</span></div></div>';
+
+      const posts=$('#postsList');
+      if(posts)posts.innerHTML='<div class="post-item"><b>Articol preview</b><span>Exemplu pentru verificarea interfeței</span><small>Preview fără backend</small></div>';
+
+      showTab('overview');
+      return;
+    }
     const session=await currentSession();
     if(!session)return deny('Trebuie să fii autentificat în Support Hub pentru a deschide acest panou.');
 
