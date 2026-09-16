@@ -664,7 +664,7 @@ function sellerRatingHtml(sellerId,stats=null,myRating=0,own=false){
   const avg=Number(stats?.average_rating||0);
   const count=Number(stats?.review_count||0);
   const rounded=Math.max(0,Math.min(5,Math.round(avg)));
-  const averageLabel=count?new Intl.NumberFormat('ro-RO',{maximumFractionDigits:1}).format(avg):'0';
+  const averageLabel=count?String(Math.round(avg*10)/10):'0';
   const stars=Array.from({length:5},(_,i)=>{
     const value=i+1;
     const filled=value<=rounded;
@@ -679,6 +679,7 @@ function sellerRatingHtml(sellerId,stats=null,myRating=0,own=false){
   return `<div class="seller-rating-block" id="sellerRatingBlock" data-seller-id="${esc(sellerId)}">
     <div class="seller-rating-row" title="Media evaluărilor: ${esc(averageLabel)} din 5">
       <div class="seller-rating-stars" aria-label="Evaluare medie ${esc(averageLabel)} din 5">${stars}</div>
+      <span class="seller-rating-average">${esc(averageLabel)}/5</span>
       <span class="seller-rating-count">— ${ratingCountText(count)}</span>
     </div>
     ${own?'':`<small class="seller-rating-hint">${state.user?(myRating?`Evaluarea ta: ${myRating}/5 · poți apăsa altă stea pentru a o modifica.`:'Apasă pe o stea pentru a evalua utilizatorul.'):'Intră în cont pentru a acorda o evaluare.'}</small>`}
@@ -1517,21 +1518,31 @@ async function hideConversationForMe(conversationId){
 
 async function renderMessages(root){
   const ownFilter=`buyer_id.eq.${state.user.id},seller_id.eq.${state.user.id}`;
-  const {data:rows,error}=await db.from('conversations')
-    .select(`
-      id,
-      listing_id,
-      buyer_id,
-      seller_id,
-      updated_at,
-      messages(id,sender_id,body,created_at),
-      conversation_hidden(hidden_at)
-    `)
-    .or(ownFilter)
-    .order('created_at',{referencedTable:'messages',ascending:false})
-    .limit(1,{referencedTable:'messages'});
+  const [adminMessagesRes,conversationsRes]=await Promise.all([
+    db.from('admin_messages')
+      .select('id,body,context,created_at')
+      .eq('recipient_id',state.user.id)
+      .order('created_at',{ascending:false})
+      .limit(20),
+    db.from('conversations')
+      .select(`
+        id,
+        listing_id,
+        buyer_id,
+        seller_id,
+        updated_at,
+        messages(id,sender_id,body,created_at),
+        conversation_hidden(hidden_at)
+      `)
+      .or(ownFilter)
+      .order('created_at',{referencedTable:'messages',ascending:false})
+      .limit(1,{referencedTable:'messages'})
+  ]);
 
-  if(error)throw error;
+  if(adminMessagesRes.error)throw adminMessagesRes.error;
+  if(conversationsRes.error)throw conversationsRes.error;
+  const adminMessages=adminMessagesRes.data||[];
+  const rows=conversationsRes.data||[];
 
   const convs=(rows||[])
     .map(c=>{
@@ -1543,8 +1554,16 @@ async function renderMessages(root){
     .filter(c=>!c.hiddenAt||new Date(c.activityAt).getTime()>new Date(c.hiddenAt).getTime())
     .sort((a,b)=>new Date(b.activityAt).getTime()-new Date(a.activityAt).getTime());
 
+  const adminMessagesHtml=adminMessages.length?`<section class="admin-notice-list">
+    <div class="admin-notice-head"><b>Mesaje administrative</b><span>${adminMessages.length} recente</span></div>
+    ${adminMessages.map(m=>`<article class="admin-notice-card">
+      <div class="admin-notice-badge">ADMIN</div>
+      <div><p>${esc(m.body)}</p>${m.context?`<small>${esc(m.context)} · ${since(m.created_at)}</small>`:`<small>${since(m.created_at)}</small>`}</div>
+    </article>`).join('')}
+  </section>`:'';
+
   if(!convs.length){
-    root.innerHTML='<div class="empty compact"><b>N-ai conversații.</b><span>Mesajele pornite din anunțuri vor apărea aici.</span></div>';
+    root.innerHTML=adminMessagesHtml||'<div class="empty compact"><b>N-ai conversații.</b><span>Mesajele pornite din anunțuri sau mesajele administrative vor apărea aici.</span></div>';
     return;
   }
 
@@ -1558,7 +1577,7 @@ async function renderMessages(root){
       <button type="button" class="conversation-delete" data-delete-conv="${c.id}" aria-label="Șterge conversația" title="Șterge conversația">×</button>
     </div>`);
 
-  root.innerHTML=`<div class="conversation-list">${cards.join('')}</div><div class="thread" id="threadPane"><div class="thread-placeholder">Alege o conversație.</div></div>`;
+  root.innerHTML=`${adminMessagesHtml}<div class="conversation-list">${cards.join('')}</div><div class="thread" id="threadPane"><div class="thread-placeholder">Alege o conversație.</div></div>`;
 
   qsa('[data-conv]',root).forEach(b=>b.onclick=()=>openThread(b));
   qsa('[data-delete-conv]',root).forEach(b=>b.onclick=e=>{
