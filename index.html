@@ -19,7 +19,7 @@
   <meta property="og:description" content="Anunțuri între oameni din comunitate. Fără comision." />
   <title>Support Hub Giuleștean 1923 — Anunțuri între rapidiști</title>
   
-  <link rel="stylesheet" href="/styles.css?v=5.45">
+  <link rel="stylesheet" href="/styles.css?v=5.46">
   <link rel="stylesheet" href="/brand.css?v=5.16">
   <link rel="stylesheet" href="/dynamics.css?v=5.24">
 </head>
@@ -97,11 +97,19 @@
       </div>
     </section>
     <section class="featured-media-section" aria-labelledby="featuredMediaTitle">
-      <h2 class="featured-media-title" id="featuredMediaTitle">Media Rapid</h2>
-      <div class="featured-media-card" id="featuredMediaCard">
-        <div class="featured-media-fallback" id="featuredMediaFallback">
-          <img src="/brand-logo-auth.webp" alt="Support Hub Giuleștean 1923">
+      <div class="featured-media-head">
+        <h2 class="featured-media-title" id="featuredMediaTitle">Hub Media Giulestean</h2>
+        <div class="featured-media-arrows" aria-label="Navigare carusel media">
+          <button type="button" id="featuredMediaPrev" aria-label="Video anterior">←</button>
+          <button type="button" id="featuredMediaNext" aria-label="Video următor">→</button>
         </div>
+      </div>
+      <div class="featured-media-carousel" id="featuredMediaCarousel" tabindex="0" aria-live="polite">
+        <article class="featured-media-video-card featured-media-fallback-card is-single">
+          <div class="featured-media-fallback">
+            <img src="/brand-logo-auth.webp" alt="Support Hub Giuleștean 1923">
+          </div>
+        </article>
       </div>
     </section>
     <section class="cta">
@@ -227,6 +235,6 @@
 <script src="/parallax.js"></script>
   <script src="/pwa-refresh.js?v=5.32"></script>
 <script src="/app.js?v=5.39"></script>
-  <script src="/featured-media.js?v=1.0"></script>
+  <script src="/featured-media.js?v=2.0"></script>
 </body>
 </html>
