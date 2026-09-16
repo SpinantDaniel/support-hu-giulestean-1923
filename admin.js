@@ -130,12 +130,14 @@ function showTab(tab){state.activeTab=tab;$$('[data-panel]').forEach(p=>p.hidden
 async function loadDashboard(){
   if(state.role!=='admin')return;const btn=$('#refreshDashboard');setBusy(btn,true,'Se încarcă…');
   try{
-    const [dashboardRes,commentRes]=await Promise.all([
-      adminAction('dashboard'),
-      commentModerationAction('dashboard')
-    ]);
-    state.dashboard=dashboardRes;
-    state.commentReports=commentRes.comment_reports||[];
+    state.dashboard=await adminAction('dashboard');
+    try{
+      const commentRes=await commentModerationAction('dashboard');
+      state.commentReports=commentRes.comment_reports||[];
+    }catch(commentError){
+      console.warn('comment moderation dashboard',commentError);
+      state.commentReports=[];
+    }
     renderOverview();renderUsers();renderReports();renderListings();
   }catch(e){console.error(e);toast(e.message,'error');}finally{setBusy(btn,false);}
 }
