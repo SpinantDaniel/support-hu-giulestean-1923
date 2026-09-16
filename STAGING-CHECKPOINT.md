@@ -41,3 +41,5 @@ The reproducible staging baseline is:
 `supabase/staging/20260916_hubgiulestean_test_baseline.sql`
 
 Do not apply that baseline to the production Supabase project.
+
+Staging branch initialized on 2026-09-16.
