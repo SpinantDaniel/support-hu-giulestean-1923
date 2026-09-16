@@ -3,6 +3,7 @@ const SUPABASE_URL = 'https://bhqpixyiojthpfqnyhsh.supabase.co';
 const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_U2IRhs6K85S43ZRqKK5U8Q_HSknWMNY';
 const INITIAL_AUTH_URL = location.href;
 const AUTH_CONFIG = window.HUB_AUTH_CONFIG || {};
+const IS_VERCEL_BRANCH_PREVIEW = location.hostname.endsWith('.vercel.app') && location.hostname.includes('-git-');
 const TURNSTILE_SITE_KEY = String(AUTH_CONFIG.turnstileSiteKey || '').trim();
 const TERMS_VERSION = String(AUTH_CONFIG.termsVersion || '1.0');
 const PRIVACY_VERSION = String(AUTH_CONFIG.privacyVersion || '1.0');
@@ -899,6 +900,7 @@ function renderAuthTurnstile(attempt=0){
   const wrap=$('#authTurnstileWrap'),host=$('#authTurnstile');
   if(!wrap||!host)return;
   wrap.hidden=false;
+  if(IS_VERCEL_BRANCH_PREVIEW)setTurnstileNote('Verificare automată anti-abuz…');
   if(!TURNSTILE_SITE_KEY){
     setTurnstileNote('Verificarea anti-abuz nu este configurată.','error');
     return;
@@ -913,6 +915,8 @@ function renderAuthTurnstile(attempt=0){
     sitekey:TURNSTILE_SITE_KEY,
     theme:'auto',
     action:'auth',
+    appearance:IS_VERCEL_BRANCH_PREVIEW?'interaction-only':'always',
+    execution:'render',
     callback:(token)=>{
       authSecurity.turnstileToken=token||null;
       setTurnstileNote('Verificare anti-abuz completă.','ok');
