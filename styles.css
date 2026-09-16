@@ -230,10 +230,11 @@ button:disabled{opacity:.6;cursor:not-allowed}.muted{color:var(--muted);font-siz
   margin:0 0 18px;
   text-align:center;
   color:var(--ink);
-  font-size:clamp(28px,3.4vw,42px);
+  font-family:'Knewave',cursive;
+  font-size:clamp(32px,4vw,48px);
   line-height:1.05;
-  font-weight:900;
-  letter-spacing:-.035em;
+  font-weight:400;
+  letter-spacing:.01em;
 }
 @media(max-width:650px){
   .featured-media-title{
