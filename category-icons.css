@@ -23,3 +23,18 @@
 
 /* Mobile UI — keep Hub Media title clear of carousel arrows. */
 @media(max-width:650px){.featured-media-head{display:grid!important;grid-template-columns:74px minmax(0,1fr) 74px!important;align-items:center!important}.featured-media-title{grid-column:2!important;font-size:19px!important;line-height:1.05!important;text-align:center!important;white-space:nowrap!important}.featured-media-arrows{position:static!important;grid-column:3!important;justify-self:end!important}}
+
+/* Mobile UI — contain long account names in header and bottom navigation. */
+.nickname-policy-help{display:block;margin-top:5px;color:#777277;font-size:9px;font-weight:600;line-height:1.35}
+@media(max-width:650px){
+  .site-header{gap:6px!important;min-width:0!important;overflow:hidden!important}
+  .site-header>.brand-lockup{min-width:0!important;flex:0 1 auto!important}
+  .site-header>.brand-lockup .brand-lockup-copy{min-width:0!important;overflow:hidden!important}
+  .site-header>.brand-lockup .brand-lockup-copy strong{overflow:hidden!important;text-overflow:ellipsis!important;white-space:nowrap!important}
+  .header-actions{display:flex!important;align-items:center!important;justify-content:flex-end!important;gap:6px!important;margin-left:auto!important;min-width:0!important;flex:1 1 auto!important}
+  .header-actions #loginBtn{display:inline-flex!important;align-items:center!important;justify-content:center!important;min-width:0!important;max-width:clamp(76px,22vw,100px)!important;padding:9px 9px!important;overflow:hidden!important;white-space:nowrap!important;flex:0 1 auto!important}
+  .header-actions #loginBtn>span:not(.nav-avatar){display:block!important;min-width:0!important;max-width:100%!important;overflow:hidden!important;text-overflow:ellipsis!important;white-space:nowrap!important}
+  .header-actions .primary{flex:0 0 auto!important}
+  .mobile-nav button{min-width:0!important;overflow:hidden!important}
+  .mobile-nav button .mobile-account-name{display:block!important;width:100%!important;max-width:68px!important;overflow:hidden!important;text-overflow:ellipsis!important;white-space:nowrap!important;font-size:9px!important;line-height:1.1!important;font-weight:700!important}
+}
