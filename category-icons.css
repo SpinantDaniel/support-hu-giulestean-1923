@@ -35,6 +35,12 @@
   .header-actions #loginBtn{display:inline-flex!important;align-items:center!important;justify-content:center!important;min-width:0!important;max-width:clamp(76px,22vw,100px)!important;padding:9px 9px!important;overflow:hidden!important;white-space:nowrap!important;flex:0 1 auto!important}
   .header-actions #loginBtn>span:not(.nav-avatar){display:block!important;min-width:0!important;max-width:100%!important;overflow:hidden!important;text-overflow:ellipsis!important;white-space:nowrap!important}
   .header-actions .primary{flex:0 0 auto!important}
-  .mobile-nav button{min-width:0!important;overflow:hidden!important}
+  .mobile-nav button:not(.sell-fab){min-width:0!important;overflow:hidden!important}
   .mobile-nav button .mobile-account-name{display:block!important;width:100%!important;max-width:68px!important;overflow:hidden!important;text-overflow:ellipsis!important;white-space:nowrap!important;font-size:9px!important;line-height:1.1!important;font-weight:700!important}
+}
+
+/* Mobile UI — keep the central Sell FAB perfectly circular and unclipped. */
+@media(max-width:650px){
+  .mobile-nav .sell-fab{min-width:0!important;overflow:visible!important}
+  .mobile-nav .sell-fab>span{width:40px!important;height:40px!important;min-width:40px!important;min-height:40px!important;max-width:40px!important;max-height:40px!important;aspect-ratio:1/1!important;flex:0 0 40px!important;box-sizing:border-box!important;border-radius:50%!important;padding:0!important;display:grid!important;place-items:center!important;line-height:1!important}
 }
