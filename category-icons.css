@@ -1,161 +1,52 @@
 /* Batch 1 + 2 — animated category icons */
-.category .category-modern-icon{
-  width:52px;
-  height:52px;
-  margin:0 0 10px;
-  display:grid;
-  place-items:center;
-  background:transparent!important;
-  border-radius:0!important;
-  overflow:visible;
-  pointer-events:none;
-}
-.category .category-modern-icon img{
-  width:100%;
-  height:100%;
-  object-fit:contain;
-  display:block;
-  pointer-events:none;
-  will-change:transform;
-  transform-origin:center;
-  filter:drop-shadow(0 7px 10px rgba(60,15,30,.14));
-}
-@keyframes catFloatSoft{
-  0%,100%{transform:translateY(0) rotate(0)}
-  50%{transform:translateY(-5px) rotate(1.5deg)}
-}
-@keyframes catFloatCar{
-  0%,100%{transform:translate(0,0)}
-  50%{transform:translate(3px,-4px)}
-}
-@keyframes catPulseTech{
-  0%,100%{transform:scale(1)}
-  50%{transform:scale(1.045)}
-}
-@keyframes catVibratePhone{
-  0%,70%,100%{transform:rotate(0) translateX(0)}
-  76%{transform:rotate(-1.5deg) translateX(-1px)}
-  82%{transform:rotate(1.5deg) translateX(1px)}
-  88%{transform:rotate(-1deg) translateX(-1px)}
-  94%{transform:rotate(1deg) translateX(1px)}
-}
-@keyframes catSwingFashion{
-  0%,100%{transform:rotate(0) translateY(0)}
-  50%{transform:rotate(2deg) translateY(-4px)}
-}
-@keyframes catGrowHome{
-  0%,100%{transform:translateY(0) scale(1)}
-  50%{transform:translateY(-4px) scale(1.025)}
-}
-.cat-anim-scarf{animation:catFloatSoft 3.6s ease-in-out infinite}
-.cat-anim-car{animation:catFloatCar 3.1s ease-in-out infinite}
-.cat-anim-tech{animation:catPulseTech 2.8s ease-in-out infinite}
-.cat-anim-phone{animation:catVibratePhone 2.5s ease-in-out infinite}
-.cat-anim-fashion{animation:catSwingFashion 3.5s ease-in-out infinite}
-.cat-anim-home{animation:catGrowHome 3.8s ease-in-out infinite}
-
-@keyframes catTools{
-  0%,100%{transform:translateY(0) rotate(-1deg)}
-  50%{transform:translateY(-4px) rotate(2deg)}
-}
-@keyframes catTravel{
-  0%,100%{transform:translate(-2px,0) rotate(-.5deg)}
-  50%{transform:translate(3px,-3px) rotate(.8deg)}
-}
-@keyframes catRealEstate{
-  0%,100%{transform:translateY(0) rotate(0)}
-  50%{transform:translateY(-4px) rotate(-1.4deg)}
-}
-@keyframes catJobs{
-  0%,100%{transform:translateY(0) scale(1)}
-  50%{transform:translateY(-5px) scale(1.025)}
-}
-@keyframes catHeart{
-  0%,38%,100%{transform:translateY(0) scale(1)}
-  44%{transform:translateY(-2px) scale(1.06)}
-  50%{transform:translateY(0) scale(1)}
-  56%{transform:translateY(-1px) scale(1.035)}
-}
-@keyframes catMisc{
-  0%,100%{transform:translateY(0) rotate(-1deg)}
-  50%{transform:translateY(-4px) rotate(1.8deg)}
-}
-.cat-anim-tools{animation:catTools 3.7s ease-in-out infinite .08s}
-.cat-anim-travel{animation:catTravel 3.9s ease-in-out infinite .2s}
-.cat-anim-realestate{animation:catRealEstate 4.1s ease-in-out infinite .15s}
-.cat-anim-jobs{animation:catJobs 3.65s ease-in-out infinite .26s}
-.cat-anim-heart{animation:catHeart 3.2s ease-in-out infinite .1s}
-.cat-anim-misc{animation:catMisc 4.05s ease-in-out infinite .3s}
-@media(max-width:650px){
-  .category .category-modern-icon{
-    width:46px;
-    height:46px;
-    margin-bottom:7px;
-  }
-  .category .category-modern-icon img{
-    filter:drop-shadow(0 5px 8px rgba(60,15,30,.13));
-  }
-}
-@media(prefers-reduced-motion:reduce){
-  .category-modern-icon img{animation:none!important}
-}
+.category .category-modern-icon{width:52px;height:52px;margin:0 0 10px;display:grid;place-items:center;background:transparent!important;border-radius:0!important;overflow:visible;pointer-events:none}
+.category .category-modern-icon img{width:100%;height:100%;object-fit:contain;display:block;pointer-events:none;will-change:transform;transform-origin:center;filter:drop-shadow(0 7px 10px rgba(60,15,30,.14))}
+@keyframes catFloatSoft{0%,100%{transform:translateY(0) rotate(0)}50%{transform:translateY(-5px) rotate(1.5deg)}}
+@keyframes catFloatCar{0%,100%{transform:translate(0,0)}50%{transform:translate(3px,-4px)}}
+@keyframes catPulseTech{0%,100%{transform:scale(1)}50%{transform:scale(1.045)}}
+@keyframes catVibratePhone{0%,70%,100%{transform:rotate(0) translateX(0)}76%{transform:rotate(-1.5deg) translateX(-1px)}82%{transform:rotate(1.5deg) translateX(1px)}88%{transform:rotate(-1deg) translateX(-1px)}94%{transform:rotate(1deg) translateX(1px)}}
+@keyframes catSwingFashion{0%,100%{transform:rotate(0) translateY(0)}50%{transform:rotate(2deg) translateY(-4px)}}
+@keyframes catGrowHome{0%,100%{transform:translateY(0) scale(1)}50%{transform:translateY(-4px) scale(1.025)}}
+.cat-anim-scarf{animation:catFloatSoft 3.6s ease-in-out infinite}.cat-anim-car{animation:catFloatCar 3.1s ease-in-out infinite}.cat-anim-tech{animation:catPulseTech 2.8s ease-in-out infinite}.cat-anim-phone{animation:catVibratePhone 2.5s ease-in-out infinite}.cat-anim-fashion{animation:catSwingFashion 3.5s ease-in-out infinite}.cat-anim-home{animation:catGrowHome 3.8s ease-in-out infinite}
+@keyframes catTools{0%,100%{transform:translateY(0) rotate(-1deg)}50%{transform:translateY(-4px) rotate(2deg)}}
+@keyframes catTravel{0%,100%{transform:translate(-2px,0) rotate(-.5deg)}50%{transform:translate(3px,-3px) rotate(.8deg)}}
+@keyframes catRealEstate{0%,100%{transform:translateY(0) rotate(0)}50%{transform:translateY(-4px) rotate(-1.4deg)}}
+@keyframes catJobs{0%,100%{transform:translateY(0) scale(1)}50%{transform:translateY(-5px) scale(1.025)}}
+@keyframes catHeart{0%,38%,100%{transform:translateY(0) scale(1)}44%{transform:translateY(-2px) scale(1.06)}50%{transform:translateY(0) scale(1)}56%{transform:translateY(-1px) scale(1.035)}}
+@keyframes catMisc{0%,100%{transform:translateY(0) rotate(-1deg)}50%{transform:translateY(-4px) rotate(1.8deg)}}
+.cat-anim-tools{animation:catTools 3.7s ease-in-out infinite .08s}.cat-anim-travel{animation:catTravel 3.9s ease-in-out infinite .2s}.cat-anim-realestate{animation:catRealEstate 4.1s ease-in-out infinite .15s}.cat-anim-jobs{animation:catJobs 3.65s ease-in-out infinite .26s}.cat-anim-heart{animation:catHeart 3.2s ease-in-out infinite .1s}.cat-anim-misc{animation:catMisc 4.05s ease-in-out infinite .3s}
+@media(max-width:650px){.category .category-modern-icon{width:46px;height:46px;margin-bottom:7px}.category .category-modern-icon img{filter:drop-shadow(0 5px 8px rgba(60,15,30,.13))}}
+@media(prefers-reduced-motion:reduce){.category-modern-icon img{animation:none!important}}
 
 /* Mobile UI — uniform circular close control for all dialogs. */
-@media(max-width:650px){
-  button.close{
-    inline-size:48px!important;
-    block-size:48px!important;
-    width:48px!important;
-    height:48px!important;
-    min-width:48px!important;
-    min-height:48px!important;
-    max-width:48px!important;
-    max-height:48px!important;
-    flex:0 0 48px!important;
-    aspect-ratio:1 / 1!important;
-    box-sizing:border-box!important;
-    padding:0!important;
-    display:grid!important;
-    place-items:center!important;
-    -webkit-appearance:none!important;
-    appearance:none!important;
-    border:3px solid #79c6f6!important;
-    border-radius:50%!important;
-    background:rgba(255,255,255,.98)!important;
-    color:#0a8cf0!important;
-    font-family:Arial,Helvetica,sans-serif!important;
-    font-size:31px!important;
-    font-weight:400!important;
-    line-height:1!important;
-    text-align:center!important;
-    box-shadow:none!important;
-    outline:none!important;
-    overflow:hidden!important;
-  }
-  button.close:focus,
-  button.close:focus-visible{
-    outline:none!important;
-    box-shadow:none!important;
-  }
-}
+@media(max-width:650px){button.close{inline-size:48px!important;block-size:48px!important;width:48px!important;height:48px!important;min-width:48px!important;min-height:48px!important;max-width:48px!important;max-height:48px!important;flex:0 0 48px!important;aspect-ratio:1/1!important;box-sizing:border-box!important;padding:0!important;display:grid!important;place-items:center!important;-webkit-appearance:none!important;appearance:none!important;border:3px solid #79c6f6!important;border-radius:50%!important;background:rgba(255,255,255,.98)!important;color:#0a8cf0!important;font-family:Arial,Helvetica,sans-serif!important;font-size:31px!important;font-weight:400!important;line-height:1!important;text-align:center!important;box-shadow:none!important;outline:none!important;overflow:hidden!important}button.close:focus,button.close:focus-visible{outline:none!important;box-shadow:none!important}}
 
 /* Mobile UI — keep Hub Media title clear of carousel arrows. */
+@media(max-width:650px){.featured-media-head{display:grid!important;grid-template-columns:74px minmax(0,1fr) 74px!important;align-items:center!important}.featured-media-title{grid-column:2!important;font-size:19px!important;line-height:1.05!important;text-align:center!important;white-space:nowrap!important}.featured-media-arrows{position:static!important;grid-column:3!important;justify-self:end!important}}
+
+/* Mobile UI — contain long account names in header and bottom navigation. */
+.nickname-policy-help{display:block;margin-top:5px;color:#777277;font-size:9px;font-weight:600;line-height:1.35}
 @media(max-width:650px){
-  .featured-media-head{
-    display:grid!important;
-    grid-template-columns:74px minmax(0,1fr) 74px!important;
-    align-items:center!important;
-  }
-  .featured-media-title{
-    grid-column:2!important;
-    font-size:19px!important;
-    line-height:1.05!important;
-    text-align:center!important;
-    white-space:nowrap!important;
-  }
-  .featured-media-arrows{
-    position:static!important;
-    grid-column:3!important;
-    justify-self:end!important;
-  }
+  .site-header{gap:6px!important;min-width:0!important;overflow:visible!important}
+  .site-header>.brand-lockup{min-width:0!important;flex:0 1 auto!important}
+  .site-header>.brand-lockup .brand-lockup-copy{min-width:0!important;overflow:hidden!important}
+  .site-header>.brand-lockup .brand-lockup-copy strong{overflow:hidden!important;text-overflow:ellipsis!important;white-space:nowrap!important}
+  .header-actions{display:flex!important;align-items:center!important;justify-content:flex-end!important;gap:6px!important;margin-left:auto!important;min-width:0!important;flex:1 1 auto!important}
+  .header-actions #loginBtn{display:inline-flex!important;align-items:center!important;justify-content:center!important;min-width:0!important;max-width:clamp(76px,22vw,100px)!important;padding:9px 9px!important;overflow:hidden!important;white-space:nowrap!important;flex:0 1 auto!important}
+  .header-actions #loginBtn>span:not(.nav-avatar){display:block!important;min-width:0!important;max-width:100%!important;overflow:hidden!important;text-overflow:ellipsis!important;white-space:nowrap!important}
+  .header-actions .primary{flex:0 0 auto!important}
+  .mobile-nav button:not(.sell-fab){min-width:0!important;overflow:hidden!important}
+  .mobile-nav button .mobile-account-name{display:block!important;width:100%!important;max-width:68px!important;overflow:hidden!important;text-overflow:ellipsis!important;white-space:nowrap!important;font-size:9px!important;line-height:1.1!important;font-weight:700!important}
+}
+
+/* Mobile UI — keep the central Sell FAB perfectly circular and unclipped. */
+@media(max-width:650px){
+  .mobile-nav .sell-fab{min-width:0!important;overflow:visible!important}
+  .mobile-nav .sell-fab>span{width:40px!important;height:40px!important;min-width:40px!important;min-height:40px!important;max-width:40px!important;max-height:40px!important;aspect-ratio:1/1!important;flex:0 0 40px!important;box-sizing:border-box!important;border-radius:50%!important;padding:0!important;display:grid!important;place-items:center!important;line-height:1!important}
+}
+
+/* Mobile UI — header dropdown must be allowed to extend below the sticky header. */
+@media(max-width:900px){
+  .site-header{overflow:visible!important}
+  .mobile-header-menu{z-index:80!important}
 }
