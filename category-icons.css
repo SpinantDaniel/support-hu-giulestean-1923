@@ -27,7 +27,7 @@
 /* Mobile UI — contain long account names in header and bottom navigation. */
 .nickname-policy-help{display:block;margin-top:5px;color:#777277;font-size:9px;font-weight:600;line-height:1.35}
 @media(max-width:650px){
-  .site-header{gap:6px!important;min-width:0!important;overflow:hidden!important}
+  .site-header{gap:6px!important;min-width:0!important;overflow:visible!important}
   .site-header>.brand-lockup{min-width:0!important;flex:0 1 auto!important}
   .site-header>.brand-lockup .brand-lockup-copy{min-width:0!important;overflow:hidden!important}
   .site-header>.brand-lockup .brand-lockup-copy strong{overflow:hidden!important;text-overflow:ellipsis!important;white-space:nowrap!important}
@@ -43,4 +43,10 @@
 @media(max-width:650px){
   .mobile-nav .sell-fab{min-width:0!important;overflow:visible!important}
   .mobile-nav .sell-fab>span{width:40px!important;height:40px!important;min-width:40px!important;min-height:40px!important;max-width:40px!important;max-height:40px!important;aspect-ratio:1/1!important;flex:0 0 40px!important;box-sizing:border-box!important;border-radius:50%!important;padding:0!important;display:grid!important;place-items:center!important;line-height:1!important}
+}
+
+/* Mobile UI — header dropdown must be allowed to extend below the sticky header. */
+@media(max-width:900px){
+  .site-header{overflow:visible!important}
+  .mobile-header-menu{z-index:80!important}
 }
