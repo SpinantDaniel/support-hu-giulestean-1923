@@ -99,3 +99,42 @@
 @media(prefers-reduced-motion:reduce){
   .category-modern-icon img{animation:none!important}
 }
+
+/* Mobile UI — uniform circular close control for all dialogs. */
+@media(max-width:650px){
+  button.close{
+    inline-size:48px!important;
+    block-size:48px!important;
+    width:48px!important;
+    height:48px!important;
+    min-width:48px!important;
+    min-height:48px!important;
+    max-width:48px!important;
+    max-height:48px!important;
+    flex:0 0 48px!important;
+    aspect-ratio:1 / 1!important;
+    box-sizing:border-box!important;
+    padding:0!important;
+    display:grid!important;
+    place-items:center!important;
+    -webkit-appearance:none!important;
+    appearance:none!important;
+    border:3px solid #79c6f6!important;
+    border-radius:50%!important;
+    background:rgba(255,255,255,.98)!important;
+    color:#0a8cf0!important;
+    font-family:Arial,Helvetica,sans-serif!important;
+    font-size:31px!important;
+    font-weight:400!important;
+    line-height:1!important;
+    text-align:center!important;
+    box-shadow:none!important;
+    outline:none!important;
+    overflow:hidden!important;
+  }
+  button.close:focus,
+  button.close:focus-visible{
+    outline:none!important;
+    box-shadow:none!important;
+  }
+}
