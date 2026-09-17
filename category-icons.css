@@ -138,3 +138,24 @@
     box-shadow:none!important;
   }
 }
+
+/* Mobile UI — keep Hub Media title clear of carousel arrows. */
+@media(max-width:650px){
+  .featured-media-head{
+    display:grid!important;
+    grid-template-columns:74px minmax(0,1fr) 74px!important;
+    align-items:center!important;
+  }
+  .featured-media-title{
+    grid-column:2!important;
+    font-size:19px!important;
+    line-height:1.05!important;
+    text-align:center!important;
+    white-space:nowrap!important;
+  }
+  .featured-media-arrows{
+    position:static!important;
+    grid-column:3!important;
+    justify-self:end!important;
+  }
+}
