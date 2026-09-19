@@ -411,9 +411,8 @@ button:disabled{opacity:.6;cursor:not-allowed}.muted{color:var(--muted);font-siz
 .install-guide-head{display:flex;align-items:center;justify-content:space-between;gap:28px;padding:28px 30px;border:1px solid rgba(111,21,48,.12);border-radius:22px 22px 0 0;background:rgba(255,255,255,.91);box-shadow:0 10px 30px rgba(45,18,27,.055)}
 .install-guide-head h2{font-size:28px;letter-spacing:-.035em;margin:6px 0 8px;color:var(--ink)}
 .install-guide-head p{max-width:760px;margin:0;color:var(--muted);font-size:13px;line-height:1.6}
-.install-phone-icon{width:58px;height:78px;flex:0 0 58px;border:3px solid var(--wine);border-radius:14px;display:grid;place-items:end center;padding:0 0 7px;background:linear-gradient(180deg,#fff,#f8eef1)}
-.install-phone-icon::before{content:"";width:20px;height:4px;border-radius:999px;background:var(--wine);align-self:start;margin-top:8px}
-.install-phone-icon span{width:22px;height:4px;border-radius:999px;background:rgba(111,21,48,.28)}
+.install-phone-icon{width:92px;height:92px;flex:0 0 92px;display:grid;place-items:center}
+.install-phone-icon-svg{display:block;width:100%;height:100%;overflow:visible}
 .install-guide-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;padding:14px;border:1px solid rgba(111,21,48,.12);border-top:0;border-radius:0 0 22px 22px;background:rgba(255,255,255,.66)}
 .install-card{padding:22px;border:1px solid rgba(111,21,48,.10);border-radius:16px;background:rgba(255,255,255,.96);box-shadow:0 7px 20px rgba(45,18,27,.04)}
 .install-card-title{display:flex;align-items:center;gap:10px;margin-bottom:16px}
@@ -429,7 +428,7 @@ button:disabled{opacity:.6;cursor:not-allowed}.muted{color:var(--muted);font-siz
   .install-guide-head{padding:22px 20px;gap:14px}
   .install-guide-head h2{font-size:23px;line-height:1.08}
   .install-guide-head p{font-size:12px}
-  .install-phone-icon{width:46px;height:64px;flex-basis:46px;border-width:2px;border-radius:11px}
+  .install-phone-icon{width:72px;height:72px;flex-basis:72px}
   .install-guide-grid{grid-template-columns:1fr;padding:10px;gap:10px}
   .install-card{padding:18px}
 }
