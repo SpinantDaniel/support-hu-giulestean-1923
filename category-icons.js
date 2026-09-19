@@ -80,8 +80,14 @@
   }
 
   function showNicknameError(message){
-    if(typeof toast==='function')toast(message,'error');
-    else alert(message);
+    const popup=document.getElementById('nicknameErrorModal');
+    const text=document.getElementById('nicknameErrorText');
+    if(popup&&text&&typeof popup.showModal==='function'){
+      text.textContent=message;
+      if(!popup.open)popup.showModal();
+      return;
+    }
+    alert(message);
   }
 
   function ensureNicknameHelp(input,text){
