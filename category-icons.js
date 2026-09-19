@@ -137,7 +137,7 @@
       const full=loginName.textContent.trim();
       login.title=full;
       if(mobileName&&full){
-        mobileName.textContent=full;
+        mobileName.textContent='Cont';
         mobileName.title=full;
       }
     }
