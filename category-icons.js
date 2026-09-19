@@ -46,6 +46,7 @@
   }
 
   const RESERVED_NICKNAME_TERMS=[
+    {key:'administrator',label:'Administrator'},
     {key:'admin',label:'admin'},
     {key:'rapidistpursange',label:'RapidistPurSange'},
     {key:'premium',label:'Premium'},
@@ -62,40 +63,51 @@
       .replace(/[^a-z0-9]+/g,'');
   }
 
-  function nicknameValidation(value,{allowReserved=false,legacyValue=''}={}){
+  function nicknameValidation(value,{legacyValue=''}={}){
     const clean=String(value||'').trim();
     const legacy=String(legacyValue||'').trim();
     if(legacy&&clean===legacy)return {ok:true,value:clean,legacy:true};
 
     const normalized=normalizedNickname(clean);
     const reserved=RESERVED_NICKNAME_TERMS.find(term=>normalized.includes(term.key));
-    if(reserved&&!allowReserved){
-      return {ok:false,message:`Termenul „${reserved.label}” este rezervat și nu poate fi folosit în nickname.`};
-    }
+    if(reserved)return {ok:false,reason:'reserved'};
 
     if(clean.length<NICKNAME_MIN||clean.length>NICKNAME_MAX){
-      return {ok:false,message:`Nickname-ul trebuie să aibă între ${NICKNAME_MIN} și ${NICKNAME_MAX} caractere.`};
+      return {ok:false,reason:'length'};
     }
     return {ok:true,value:clean};
   }
 
-  function showNicknameError(message){
-    const popup=document.getElementById('nicknameErrorModal');
-    const text=document.getElementById('nicknameErrorText');
-    if(popup&&text&&typeof popup.showModal==='function'){
-      text.textContent=message;
-      if(!popup.open)popup.showModal();
-      return;
+  function ensureNicknameHelp(input,text){
+    if(!input)return null;
+    let help=input.parentElement?.querySelector('.nickname-policy-help');
+    if(!help){
+      help=document.createElement('small');
+      help.className='nickname-policy-help';
+      input.insertAdjacentElement('afterend',help);
     }
-    alert(message);
+    if(!help.dataset.defaultText)help.dataset.defaultText=text;
+    help.textContent=text;
+    return help;
   }
 
-  function ensureNicknameHelp(input,text){
-    if(!input||input.parentElement?.querySelector('.nickname-policy-help'))return;
-    const help=document.createElement('small');
-    help.className='nickname-policy-help';
-    help.textContent=text;
-    input.insertAdjacentElement('afterend',help);
+  function setNicknameInlineError(input,invalid){
+    if(!input)return;
+    const help=input.parentElement?.querySelector('.nickname-policy-help');
+    input.classList.toggle('nickname-invalid',!!invalid);
+    if(invalid){
+      input.setAttribute('aria-invalid','true');
+      if(help){
+        help.textContent='Nume invalid.';
+        help.classList.add('is-error');
+      }
+    }else{
+      input.removeAttribute('aria-invalid');
+      if(help){
+        help.textContent=help.dataset.defaultText||'3–14 caractere.';
+        help.classList.remove('is-error');
+      }
+    }
   }
 
   function configureSignupNickname(){
@@ -106,15 +118,19 @@
     input.maxLength=NICKNAME_MAX;
     ensureNicknameHelp(input,'3–14 caractere.');
 
+    input.addEventListener('input',()=>setNicknameInlineError(input,false));
     form.addEventListener('submit',event=>{
       const signupActive=document.getElementById('displayNameField')?.hidden===false;
       if(!signupActive)return;
-      const result=nicknameValidation(input.value,{allowReserved:false});
-      if(result.ok)return;
+      const result=nicknameValidation(input.value);
+      if(result.ok){
+        setNicknameInlineError(input,false);
+        return;
+      }
       event.preventDefault();
       event.stopImmediatePropagation();
-      input.focus();
-      showNicknameError(result.message);
+      setNicknameInlineError(input,true);
+      input.focus({preventScroll:true});
     },true);
   }
 
@@ -137,16 +153,20 @@
       const initial=String(input.dataset.nicknameInitial||'').trim();
       const current=String(input.value||'').trim();
       if(current!==initial&&input.maxLength!==NICKNAME_MAX)input.maxLength=NICKNAME_MAX;
+      setNicknameInlineError(input,false);
     });
 
     form.addEventListener('submit',event=>{
       const initial=String(input.dataset.nicknameInitial||'').trim();
-      const result=nicknameValidation(input.value,{allowReserved:typeof isAdmin==='function'&&isAdmin(),legacyValue:initial});
-      if(result.ok)return;
+      const result=nicknameValidation(input.value,{legacyValue:initial});
+      if(result.ok){
+        setNicknameInlineError(input,false);
+        return;
+      }
       event.preventDefault();
       event.stopImmediatePropagation();
-      input.focus();
-      showNicknameError(result.message);
+      setNicknameInlineError(input,true);
+      input.focus({preventScroll:true});
     },true);
   }
 

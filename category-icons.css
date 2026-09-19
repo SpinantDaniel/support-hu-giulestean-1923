@@ -50,3 +50,6 @@
   .site-header{overflow:visible!important}
   .mobile-header-menu{z-index:80!important}
 }
+
+.nickname-policy-help.is-error{color:#a52626!important;font-weight:850!important}
+input.nickname-invalid{border-color:#b5253f!important;box-shadow:0 0 0 2px rgba(181,37,63,.10)!important}
