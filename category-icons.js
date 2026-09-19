@@ -45,19 +45,36 @@
     });
   }
 
+  const RESERVED_NICKNAME_TERMS=[
+    {key:'admin',label:'admin'},
+    {key:'rapidistpursange',label:'RapidistPurSange'},
+    {key:'premium',label:'Premium'},
+    {key:'gold',label:'Gold'},
+    {key:'silver',label:'Silver'}
+  ];
+
   function normalizedNickname(value=''){
-    return String(value).trim().toLowerCase().replace(/[^a-z0-9]+/g,'');
+    return String(value)
+      .trim()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g,'')
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g,'');
   }
 
   function nicknameValidation(value,{allowReserved=false,legacyValue=''}={}){
     const clean=String(value||'').trim();
     const legacy=String(legacyValue||'').trim();
     if(legacy&&clean===legacy)return {ok:true,value:clean,legacy:true};
+
+    const normalized=normalizedNickname(clean);
+    const reserved=RESERVED_NICKNAME_TERMS.find(term=>normalized.includes(term.key));
+    if(reserved&&!allowReserved){
+      return {ok:false,message:`Termenul „${reserved.label}” este rezervat și nu poate fi folosit în nickname.`};
+    }
+
     if(clean.length<NICKNAME_MIN||clean.length>NICKNAME_MAX){
       return {ok:false,message:`Nickname-ul trebuie să aibă între ${NICKNAME_MIN} și ${NICKNAME_MAX} caractere.`};
-    }
-    if(normalizedNickname(clean).includes('admin')&&!allowReserved){
-      return {ok:false,message:'Termenul „admin” este rezervat și nu poate fi folosit în nickname.'};
     }
     return {ok:true,value:clean};
   }
@@ -81,7 +98,7 @@
     if(!form||!input)return;
     input.minLength=NICKNAME_MIN;
     input.maxLength=NICKNAME_MAX;
-    ensureNicknameHelp(input,'3–14 caractere. „admin” este rezervat.');
+    ensureNicknameHelp(input,'3–14 caractere.');
 
     form.addEventListener('submit',event=>{
       const signupActive=document.getElementById('displayNameField')?.hidden===false;
@@ -99,7 +116,7 @@
     const form=document.getElementById('profileForm');
     const input=form?.elements?.display_name;
     if(!form||!input)return;
-    ensureNicknameHelp(input,'La următoarea schimbare: 3–14 caractere. „admin” este rezervat.');
+    ensureNicknameHelp(input,'La următoarea schimbare: 3–14 caractere.');
 
     document.getElementById('editProfileBtn')?.addEventListener('click',()=>{
       setTimeout(()=>{
