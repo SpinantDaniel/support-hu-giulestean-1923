@@ -534,3 +534,39 @@ button:disabled{opacity:.6;cursor:not-allowed}.muted{color:var(--muted);font-siz
     box-sizing:border-box;
   }
 }
+
+
+/* Mobile profile editor — single scroll surface + always-reachable actions. */
+@media(max-width:650px){
+  #profileModal{
+    width:calc(100vw - 26px)!important;
+    max-width:calc(100vw - 26px)!important;
+    max-height:calc(100dvh - 26px)!important;
+    overflow-x:hidden!important;
+    overflow-y:auto!important;
+    overscroll-behavior:contain;
+    -webkit-overflow-scrolling:touch;
+  }
+  #profileModal .profile-modal{
+    width:100%!important;
+    max-width:100%!important;
+    min-width:0!important;
+    max-height:none!important;
+    height:auto!important;
+    overflow:visible!important;
+    box-sizing:border-box!important;
+  }
+  #profileModal .modal-actions{
+    position:sticky;
+    left:0;
+    right:0;
+    bottom:0;
+    z-index:6;
+    margin:18px -20px -20px;
+    padding:12px 20px calc(12px + env(safe-area-inset-bottom));
+    background:rgba(255,255,255,.96);
+    border-top:1px solid var(--line);
+    -webkit-backdrop-filter:blur(14px) saturate(1.1);
+    backdrop-filter:blur(14px) saturate(1.1);
+  }
+}
