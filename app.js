@@ -1920,9 +1920,6 @@ concretă;</li>
 <p>Furnizorii care prelucrează date în numele nostru trebuie să aibă
 obligații contractuale adecvate privind confidențialitatea, securitatea
 și utilizarea datelor.</p>
-<p><strong>[De completat înainte de publicare: furnizorii efectiv
-utilizați, rolul fiecăruia, categoriile de date accesate și țările
-relevante pentru prelucrare.]</strong></p>
 <p>Faptul că nu vindem date nu exclude comunicarea lor către furnizorii
 necesari funcționării serviciului.</p>
 <h4>8. Prelucrarea în afara Spațiului Economic
@@ -1933,9 +1930,6 @@ din afara Spațiului Economic European.</p>
 mecanismele prevăzute de GDPR, precum o decizie de adecvare aplicabilă
 sau clauze contractuale standard, împreună cu evaluările și măsurile
 suplimentare necesare.</p>
-<p><strong>[De completat înainte de publicare: transferurile efective,
-țările, furnizorii și mecanismul aplicabil fiecărui
-transfer.]</strong></p>
 <p>Poți solicita informații despre garanțiile aplicabile și o copie a
 acestora, cu protejarea informațiilor confidențiale justificate, la <a
 href="mailto:office.casadeldaniel@aol.com">office.casadeldaniel@aol.com</a>.</p>
@@ -2067,8 +2061,6 @@ cookie-urile.</p>
 <p>Tehnologiile de analiză sau publicitate care necesită consimțământ
 vor fi activate numai după exprimarea acestuia. Refuzul și retragerea
 trebuie să fie accesibile.</p>
-<p><strong>[De completat în politica de cookie-uri: inventarul real,
-furnizorii, scopurile și duratele.]</strong></p>
 <p>E-mailurile de confirmare a contului, recuperare a accesului și
 notificările necesare serviciului sunt distincte de comunicările de
 marketing.</p>
@@ -2085,9 +2077,6 @@ altor persoane codurile de autentificare.</p>
 conform Termenilor de utilizare. Dacă aflăm că un cont nu respectă
 această condiție, verificăm situația și luăm măsuri proporționale
 privind contul și datele sale.</p>
-<p><strong>[De confirmat înainte de publicare: Platforma nu adoptă
-decizii exclusiv automate care produc efecte juridice sau afectează
-similar, în mod semnificativ, utilizatorii.]</strong></p>
 <p>Dacă sunt introduse asemenea prelucrări, informarea va explica logica
 relevantă, consecințele și garanțiile aplicabile.</p>
 <h4>15. Reclamații și actualizarea politicii</h4>
