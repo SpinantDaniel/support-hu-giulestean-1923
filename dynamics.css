@@ -1922,3 +1922,32 @@ footer.global-footer .global-footer-note{
   color:var(--muted);
   font-size:8px;
 }
+
+
+/* v5.26 — iOS/PWA legal tables: keep typography consistent across cells. */
+.legal-table-wrap,
+.legal-doc table,
+.legal-doc thead,
+.legal-doc tbody,
+.legal-doc tr,
+.legal-doc th,
+.legal-doc td{
+  font-family:inherit!important;
+  -webkit-text-size-adjust:100%;
+  text-size-adjust:100%;
+}
+.legal-doc th,
+.legal-doc td{
+  font-size:inherit!important;
+  line-height:1.48!important;
+}
+@media(max-width:650px){
+  .legal-doc table{
+    font-size:10.5px!important;
+  }
+  .legal-doc th,
+  .legal-doc td{
+    font-size:10.5px!important;
+    line-height:1.48!important;
+  }
+}
