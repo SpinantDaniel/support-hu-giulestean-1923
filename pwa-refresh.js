@@ -10,6 +10,10 @@
     window.matchMedia?.('(display-mode: standalone)').matches ||
     window.navigator.standalone === true;
 
+  if(isStandalone){
+    document.documentElement.classList.add('is-standalone-pwa');
+  }
+
   if(!isStandalone || !('ontouchstart' in window)) return;
 
   const THRESHOLD = 78;
