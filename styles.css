@@ -433,3 +433,24 @@ button:disabled{opacity:.6;cursor:not-allowed}.muted{color:var(--muted);font-siz
   .install-guide-grid{grid-template-columns:1fr;padding:10px;gap:10px}
   .install-card{padding:18px}
 }
+
+
+/* Gentle scale pulse for the Home Screen install guide */
+@keyframes installGuideScalePulse{
+  0%,100%{transform:scale(1)}
+  50%{transform:scale(1.012)}
+}
+.install-guide{
+  transform-origin:center center;
+  animation:installGuideScalePulse 4.6s ease-in-out infinite;
+  will-change:transform;
+}
+@media(max-width:650px){
+  @keyframes installGuideScalePulse{
+    0%,100%{transform:scale(1)}
+    50%{transform:scale(1.006)}
+  }
+}
+@media(prefers-reduced-motion:reduce){
+  .install-guide{animation:none!important;transform:none!important}
+}
