@@ -404,3 +404,52 @@ button:disabled{opacity:.6;cursor:not-allowed}.muted{color:var(--muted);font-siz
   .field-label-row{align-items:baseline}
   .field-counter{font-size:8px}
 }
+
+
+/* Home Screen install guide */
+.install-guide{max-width:1180px;margin:0 auto 55px;padding:0 24px}
+.install-guide-head{display:flex;align-items:center;justify-content:space-between;gap:28px;padding:28px 30px;border:1px solid rgba(111,21,48,.12);border-radius:22px 22px 0 0;background:rgba(255,255,255,.91);box-shadow:0 10px 30px rgba(45,18,27,.055)}
+.install-guide-head h2{font-size:28px;letter-spacing:-.035em;margin:6px 0 8px;color:var(--ink)}
+.install-guide-head p{max-width:760px;margin:0;color:var(--muted);font-size:13px;line-height:1.6}
+.install-phone-icon{width:58px;height:78px;flex:0 0 58px;border:3px solid var(--wine);border-radius:14px;display:grid;place-items:end center;padding:0 0 7px;background:linear-gradient(180deg,#fff,#f8eef1)}
+.install-phone-icon::before{content:"";width:20px;height:4px;border-radius:999px;background:var(--wine);align-self:start;margin-top:8px}
+.install-phone-icon span{width:22px;height:4px;border-radius:999px;background:rgba(111,21,48,.28)}
+.install-guide-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;padding:14px;border:1px solid rgba(111,21,48,.12);border-top:0;border-radius:0 0 22px 22px;background:rgba(255,255,255,.66)}
+.install-card{padding:22px;border:1px solid rgba(111,21,48,.10);border-radius:16px;background:rgba(255,255,255,.96);box-shadow:0 7px 20px rgba(45,18,27,.04)}
+.install-card-title{display:flex;align-items:center;gap:10px;margin-bottom:16px}
+.install-card-title strong{font-size:16px;color:var(--ink)}
+.install-os{display:inline-flex;align-items:center;justify-content:center;min-width:54px;height:27px;padding:0 9px;border-radius:999px;background:var(--wine);color:#fff;font-size:10px;font-weight:900;letter-spacing:.04em}
+.install-card ol{list-style:none;margin:0;padding:0;display:grid;gap:12px}
+.install-card li{display:grid;grid-template-columns:26px 1fr;gap:10px;align-items:start}
+.install-card li>span{width:26px;height:26px;border-radius:50%;display:grid;place-items:center;background:#f5e9ed;color:var(--wine);font-size:10px;font-weight:900}
+.install-card li p{margin:2px 0 0;color:var(--muted);font-size:12px;line-height:1.5}
+.install-card li strong{color:var(--ink)}
+@media(max-width:650px){
+  .install-guide{margin:0 17px 38px;padding:0}
+  .install-guide-head{padding:22px 20px;gap:14px}
+  .install-guide-head h2{font-size:23px;line-height:1.08}
+  .install-guide-head p{font-size:12px}
+  .install-phone-icon{width:46px;height:64px;flex-basis:46px;border-width:2px;border-radius:11px}
+  .install-guide-grid{grid-template-columns:1fr;padding:10px;gap:10px}
+  .install-card{padding:18px}
+}
+
+/* Gentle scale pulse for the Home Screen install guide */
+@keyframes installGuideScalePulse{
+  0%,100%{transform:scale(1)}
+  50%{transform:scale(1.012)}
+}
+.install-guide{
+  transform-origin:center center;
+  animation:installGuideScalePulse 4.6s ease-in-out infinite;
+  will-change:transform;
+}
+@media(max-width:650px){
+  @keyframes installGuideScalePulse{
+    0%,100%{transform:scale(1)}
+    50%{transform:scale(1.006)}
+  }
+}
+@media(prefers-reduced-motion:reduce){
+  .install-guide{animation:none!important;transform:none!important}
+}
