@@ -454,3 +454,26 @@ button:disabled{opacity:.6;cursor:not-allowed}.muted{color:var(--muted);font-siz
 @media(prefers-reduced-motion:reduce){
   .install-guide{animation:none!important;transform:none!important}
 }
+
+
+/* Standalone PWA — prevent the account label from being vertically clipped on iOS. */
+@media(max-width:650px){
+  html.is-standalone-pwa #mobileAccount{
+    overflow:visible!important;
+  }
+  html.is-standalone-pwa #mobileAccount .mobile-account-name{
+    overflow:visible!important;
+    text-overflow:clip!important;
+    line-height:1.25!important;
+    padding-bottom:1px;
+  }
+}
+
+/* In the standalone PWA only, keep the install-guide pulse even when Reduced Motion is enabled. */
+@media(prefers-reduced-motion:reduce){
+  html.is-standalone-pwa .install-guide{
+    animation:installGuideScalePulse 4.6s ease-in-out infinite!important;
+    transform-origin:center center!important;
+    will-change:transform!important;
+  }
+}
