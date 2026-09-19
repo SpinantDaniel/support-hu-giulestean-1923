@@ -22,7 +22,7 @@
   <link rel="stylesheet" href="/styles.css?v=5.54">
   <link rel="stylesheet" href="/brand.css?v=5.16">
   <link rel="stylesheet" href="/dynamics.css?v=5.25">
-  <link rel="stylesheet" href="/category-icons.css?v=2.1">
+  <link rel="stylesheet" href="/category-icons.css?v=2.2">
 </head>
 <body>
   <div class="top-strip">Platformă independentă a comunității • fără afiliere oficială • tranzacțiile se stabilesc direct între utilizatori</div>
@@ -261,21 +261,6 @@
 </div></div><div class="admin-access-zone" id="adminAccessZone" hidden><div><b id="adminAccessTitle">Administrare</b><span id="adminAccessText">Panou separat pentru administrare și newsletter.</span></div><button type="button" class="ghost" id="adminPanelBtn">Deschide panoul</button></div><div class="danger-zone"><div><b>Ștergere cont</b><span>Șterge definitiv contul, anunțurile, favoritele, mesajele și profilul asociat.</span></div><button type="button" class="danger" id="deleteAccountBtn">Șterge contul</button></div><div class="modal-actions"><button type="button" class="ghost" data-close="profileModal">Renunță</button><button class="primary" id="profileSaveBtn">Salvează</button></div></form></dialog>
   <dialog id="deleteAccountModal"><form class="modal" id="deleteAccountForm"><div class="modal-head"><div><span class="kicker">ACȚIUNE IREVERSIBILĂ</span><h2>Șterge contul</h2></div><button class="close" type="button" data-close="deleteAccountModal">×</button></div><div class="notice danger-notice">Această operațiune este definitivă. Anunțurile, fotografiile, mesajele, favoritele și profilul tău vor fi eliminate.</div><label>Pentru confirmare, scrie ȘTERGE<input name="confirmation" required autocomplete="off" placeholder="ȘTERGE"></label><div class="modal-actions"><button type="button" class="ghost" data-close="deleteAccountModal">Renunță</button><button class="danger" id="deleteAccountConfirmBtn">Șterge definitiv</button></div></form></dialog>
   <dialog id="legalModal"><div class="modal detail" id="legalContent"></div></dialog>
-  <dialog id="nicknameErrorModal" class="nickname-error-dialog">
-    <div class="modal nickname-error-modal">
-      <div class="modal-head">
-        <div>
-          <span class="kicker">NICKNAME INDISPONIBIL</span>
-          <h2>Termen rezervat</h2>
-        </div>
-        <button class="close" type="button" data-close="nicknameErrorModal">×</button>
-      </div>
-      <p id="nicknameErrorText">Acest termen nu poate fi folosit în nickname.</p>
-      <div class="modal-actions">
-        <button class="primary" type="button" data-close="nicknameErrorModal">Am înțeles</button>
-      </div>
-    </div>
-  </dialog>
   <div class="toast" id="toast" role="status"></div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.116.0/dist/umd/supabase.min.js"></script>
@@ -283,8 +268,8 @@
   <script src="/auth-config.js?v=5.28"></script>
 <script src="/parallax.js"></script>
   <script src="/pwa-refresh.js?v=5.33"></script>
-<script src="/app.js?v=5.41"></script>
+<script src="/app.js?v=5.43"></script>
   <script src="/featured-media.js?v=2.0"></script>
-  <script src="/category-icons.js?v=2.4"></script>
+  <script src="/category-icons.js?v=2.5"></script>
 </body>
 </html>
