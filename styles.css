@@ -476,3 +476,95 @@ button:disabled{opacity:.6;cursor:not-allowed}.muted{color:var(--muted);font-siz
     will-change:transform!important;
   }
 }
+
+
+/* Mobile profile editor — prevent accidental horizontal panning / intrinsic file-input overflow. */
+.nickname-error-dialog{max-width:min(430px,calc(100vw - 32px))}
+.nickname-error-modal{padding:24px}
+.nickname-error-modal h2{margin-bottom:10px}
+.nickname-error-modal p{margin:0;color:var(--muted);font-size:13px;line-height:1.55}
+.nickname-error-modal .modal-actions{margin-top:18px}
+@media(max-width:650px){
+  #profileModal{
+    overflow:hidden!important;
+    max-width:calc(100vw - 26px)!important;
+    width:calc(100vw - 26px)!important;
+  }
+  #profileModal .profile-modal{
+    width:100%!important;
+    max-width:100%!important;
+    min-width:0!important;
+    box-sizing:border-box!important;
+    overflow-x:hidden!important;
+    overflow-y:auto!important;
+    overscroll-behavior-x:none;
+  }
+  #profileModal .profile-editor,
+  #profileModal .profile-avatar-editor,
+  #profileModal .profile-fields,
+  #profileModal .profile-avatar-editor>*,
+  #profileModal .profile-fields>*{
+    min-width:0!important;
+    max-width:100%;
+  }
+  #profileModal .profile-avatar-editor{
+    width:100%;
+    box-sizing:border-box;
+    grid-template-columns:minmax(0,92px) minmax(0,1fr);
+  }
+  #profileModal .avatar-upload{
+    width:100%;
+    min-width:0;
+    max-width:100%;
+    overflow:hidden;
+  }
+  #profileModal .avatar-upload input[type="file"]{
+    display:block;
+    width:100%!important;
+    min-width:0!important;
+    max-width:100%!important;
+    box-sizing:border-box;
+    overflow:hidden;
+  }
+  #profileModal input,
+  #profileModal textarea,
+  #profileModal select{
+    max-width:100%;
+    box-sizing:border-box;
+  }
+}
+
+/* Mobile profile editor — single scroll surface + always-reachable actions. */
+@media(max-width:650px){
+  #profileModal{
+    width:calc(100vw - 26px)!important;
+    max-width:calc(100vw - 26px)!important;
+    max-height:calc(100dvh - 26px)!important;
+    overflow-x:hidden!important;
+    overflow-y:auto!important;
+    overscroll-behavior:contain;
+    -webkit-overflow-scrolling:touch;
+  }
+  #profileModal .profile-modal{
+    width:100%!important;
+    max-width:100%!important;
+    min-width:0!important;
+    max-height:none!important;
+    height:auto!important;
+    overflow:visible!important;
+    box-sizing:border-box!important;
+  }
+  #profileModal .modal-actions{
+    position:sticky;
+    left:0;
+    right:0;
+    bottom:0;
+    z-index:6;
+    margin:18px -20px -20px;
+    padding:12px 20px calc(12px + env(safe-area-inset-bottom));
+    background:rgba(255,255,255,.96);
+    border-top:1px solid var(--line);
+    -webkit-backdrop-filter:blur(14px) saturate(1.1);
+    backdrop-filter:blur(14px) saturate(1.1);
+  }
+}
